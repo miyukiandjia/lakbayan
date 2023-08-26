@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/pages/notif_page.dart';
+import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
+class NotifPage extends StatelessWidget {
+  const NotifPage({super.key});
 
   Widget _navBar(BuildContext context, int currentIndex) {
     return Align(
@@ -118,7 +118,7 @@ class SearchPage extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
       ),
-      bottomNavigationBar: _navBar(context, 1),
+      bottomNavigationBar: _navBar(context, 2),
     );
   }
 }

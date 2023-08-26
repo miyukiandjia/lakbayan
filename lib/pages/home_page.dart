@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/itinerary_screen.dart';
 import 'package:lakbayan/pages/search_page.dart';
+import 'package:lakbayan/pages/notif_page.dart';
+import 'package:lakbayan/pages/profile_page.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
@@ -100,6 +102,18 @@ class HomePage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) => const SearchPage()),
+                    );
+                  } else if (index == 2) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const NotifPage()),
+                    );
+                  } else if (index == 3) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ProfilePage()),
                     );
                   }
                 },
