@@ -4,67 +4,94 @@ import 'package:lakbayan/pages/home_page.dart';
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
 
-  Widget buttonni(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
-      },
-      child: const Text('HomePage'),
-    );
-  }
-
   Widget _navBar(BuildContext context, int currentIndex) {
-    return BottomNavigationBar(
-      backgroundColor:
-          const Color(0xFFAD547F), // Set background color to AD547F
-      selectedItemColor: const Color(0x0000),
-      unselectedItemColor:
-          const Color(0xFFAD547F), // Set unselected icon color to F9CDDD
-      currentIndex: currentIndex, // Pass the current index of the selected icon
-      iconSize: 90,
-      onTap: (index) {
-        if (index == 0) {
-          // Navigate to the home page
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
-        } else if (index == 1) {
-          // Navigate to the search page
-          // Add similar code for other icons as needed
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const SearchPage()),
-          );
-        }
-      },
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: FractionallySizedBox(
+        widthFactor:
+            0.9, // Adjust this value between 0 and 1 to set the desired width
+        child: Container(
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(30)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black38,
+                spreadRadius: 0,
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          margin: const EdgeInsets.only(
+              bottom: 80), // Adjust this value to change the bottom spacing
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(30)),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                canvasColor: const Color(0xFFAD547F),
+              ),
+              child: BottomNavigationBar(
+                currentIndex: currentIndex,
+                iconSize: 90,
+                onTap: (index) {
+                  if (index == 0) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
+                  } else if (index == 1) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SearchPage()),
+                    );
+                  }
+                },
+                items: <BottomNavigationBarItem>[
+                  BottomNavigationBarItem(
+                    icon: currentIndex == 0
+                        ? const CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 50,
+                            child: Icon(Icons.home, size: 50))
+                        : const Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: currentIndex == 1
+                        ? const CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 50,
+                            child: Icon(Icons.search, size: 50))
+                        : const Icon(Icons.search),
+                    label: 'Search',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: currentIndex == 2
+                        ? const CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 50,
+                            child: Icon(Icons.notifications, size: 50))
+                        : const Icon(Icons.notifications),
+                    label: 'Notifications',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: currentIndex == 3
+                        ? const CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 50,
+                            child: Icon(Icons.person, size: 50))
+                        : const Icon(Icons.person),
+                    label: 'Profile',
+                  ),
+                ],
+                selectedLabelStyle: const TextStyle(color: Color(0xFFAD547F)),
+                unselectedLabelStyle:
+                    const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
+              ),
+            ),
+          ),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Search',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: 'Notifications',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-      selectedLabelStyle: const TextStyle(
-          color: Color.fromARGB(
-              255, 255, 255, 255)), // Set label color when selected
-      unselectedLabelStyle: const TextStyle(
-          color: Color.fromARGB(
-              255, 13, 13, 13)), // Set label color when unselected
+      ),
     );
   }
 
@@ -72,17 +99,12 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Implement your Create Itinerary screen UI here
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-                'Search Page ni'), // Remove "child: <Widget>[" as it's not needed
-            _navBar(context,
-                1), // Assuming buttonni is a function that returns a widget
-          ],
-        ),
+      body: Container(
+        height: double.infinity,
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
       ),
+      bottomNavigationBar: _navBar(context, 1),
     );
   }
 }
