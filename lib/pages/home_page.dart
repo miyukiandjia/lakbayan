@@ -191,7 +191,10 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Set the background color to white
       appBar: AppBar(
+        elevation: 0.0, // Removes the shadow
+        bottomOpacity: 0.0, // Removes the bottom line on Android
         toolbarHeight: 90, // Increase the height of AppBar
         backgroundColor: Colors.white,
         title: Row(
@@ -210,7 +213,23 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: <Widget>[
-            _davaoImage(context),
+            Center(child: _davaoImage(context)), // Center the image
+            const SizedBox(
+                height:
+                    20), // Gives a little space between the image and the heading
+            const Align(
+              alignment: Alignment.centerLeft, // Aligns the text to the left
+              child: Text(
+                'Popular Destinations',
+                style: TextStyle(
+                  fontFamily: 'Nunito', // Use the Nunito font
+                  fontSize: 50, // Adjust the size as needed
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            // You can add more widgets below as needed for other elements
           ],
         ),
       ),

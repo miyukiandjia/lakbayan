@@ -7,29 +7,25 @@ class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
 
   Widget _navBar(BuildContext context, int currentIndex) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: FractionallySizedBox(
-        widthFactor:
-            0.9, // Adjust this value between 0 and 1 to set the desired width
-        child: Container(
-          decoration: const BoxDecoration(
-            borderRadius: BorderRadius.all(Radius.circular(30)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black38,
-                spreadRadius: 0,
-                blurRadius: 10,
-              ),
-            ],
+    return Container(
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
           ),
-          margin: const EdgeInsets.only(
-              bottom: 80), // Adjust this value to change the bottom spacing
-          child: ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
+          ],
+        ),
+        child: ClipRRect(
+            borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(40),
+                topRight: Radius.circular(40),
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40)),
             child: Theme(
               data: Theme.of(context).copyWith(
-                canvasColor: const Color(0xFFAD547F),
+                canvasColor: const Color(0xFFAD547F), // Setting the color here
               ),
               child: BottomNavigationBar(
                 currentIndex: currentIndex,
@@ -102,11 +98,7 @@ class SearchPage extends StatelessWidget {
                 unselectedLabelStyle:
                     const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
+            )));
   }
 
   @override
