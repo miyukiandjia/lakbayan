@@ -189,6 +189,12 @@ class HomePage extends StatelessWidget {
             )));
   }
 
+  List<Map<String, dynamic>> destinations = [
+    {'name': 'Destination 1', 'image': 'lib/images/1.jpg'},
+    {'name': 'Destination 2', 'image': 'lib/images/2.jpg'},
+    // ... Add more destinations
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,27 +220,55 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: <Widget>[
-            Center(child: _davaoImage(context)), // Center the image
-            const SizedBox(
-                height:
-                    20), // Gives a little space between the image and the heading
+            Center(child: _davaoImage(context)),
+            const SizedBox(height: 20),
             const Align(
-              alignment: Alignment.centerLeft, // Aligns the text to the left
+              alignment: Alignment.centerLeft,
               child: Text(
                 'Popular Destinations',
                 style: TextStyle(
-                  fontFamily: 'Nunito', // Use the Nunito font
-                  fontSize: 50, // Adjust the size as needed
+                  fontFamily: 'Nunito',
+                  fontSize: 50,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
             ),
-            // You can add more widgets below as needed for other elements
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: destinations.map((destination) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 20),
+                      child: Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.asset(
+                              destination['image'],
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            destination['name'],
+                            style: const TextStyle(fontFamily: 'Nunito'),
+                          )
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            // Add more widgets as needed
           ],
         ),
       ),
-      bottomNavigationBar: _navBar(context, 0),
     );
   }
 }
