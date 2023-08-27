@@ -105,6 +105,29 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Implement your Create Itinerary screen UI here
     return Scaffold(
+      backgroundColor: Colors.white, // Set the background color to white
+      appBar: AppBar(
+        elevation: 0.0, // Removes the shadow
+        bottomOpacity: 0.0, // Removes the bottom line on Android
+        toolbarHeight: 90, // Increase the height of AppBar
+        backgroundColor: Colors.white,
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Search',
+              style: TextStyle(
+                fontFamily: 'Nunito', // Use the Nunito font
+                fontSize: 60, // Adjust the size as needed
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black),
+      ),
       body: Container(
         height: double.infinity,
         width: double.infinity,

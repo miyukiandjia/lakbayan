@@ -45,8 +45,9 @@ class HomePage extends StatelessWidget {
         ),
         Text(
           email,
-          style: TextStyle(
-            fontSize: fontSize,
+          style: const TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
