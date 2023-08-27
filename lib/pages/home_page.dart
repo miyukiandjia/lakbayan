@@ -51,8 +51,8 @@ class HomePage extends StatelessWidget {
   Widget _davaoImage() {
     return Image.asset(
       'lib/images/Davao_City_Logo.png',
-      width: 80,
-      height: 80,
+      width: 100,
+      height: 100,
     );
   }
 
