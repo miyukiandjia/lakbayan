@@ -12,7 +12,6 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _signOutButton() {
-    //helloooo
     return ElevatedButton(
       onPressed: signOut,
       child: const Text('Sign Out'),
