@@ -50,16 +50,9 @@ class HomePage extends StatelessWidget {
 
   Widget _davaoImage() {
     return Image.asset(
-      'lib/images/Davao_City_Logo.png',
+      'lib/images/dvo_logo.png',
       width: 100,
       height: 100,
-    );
-  }
-
-  Widget _signOutButton() {
-    return ElevatedButton(
-      onPressed: signOut,
-      child: const Text('Sign Out'),
     );
   }
 
@@ -169,40 +162,42 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getGreeting(),
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  _userUid(),
-                ],
-              ),
-              _createItinerary(context),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: AppBar(
+            backgroundColor: Colors.white,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getGreeting(),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                    _userUid(),
+                  ],
+                ),
+                _createItinerary(context),
+              ],
+            ),
+            iconTheme: const IconThemeData(color: Colors.black),
+            titleTextStyle: const TextStyle(color: Colors.black),
+          ),
+        ),
+        body: Container(
+          height: double.infinity,
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: <Widget>[
+              _davaoImage(),
             ],
           ),
-          iconTheme: const IconThemeData(color: Colors.black),
-          titleTextStyle: const TextStyle(color: Colors.black),
-        ),
-      ),
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: _signOutButton(),
-        ),
-      ),
-      bottomNavigationBar:
-          _navBar(context, 0), // This places the navbar at the bottom
-    );
+        )); //,
+    //bottomNavigationBar:
+    // _navBar(context, 0), // This places the navbar at the bottom
+    // );
   }
 }
