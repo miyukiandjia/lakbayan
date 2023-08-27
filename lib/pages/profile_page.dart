@@ -12,6 +12,7 @@ class ProfilePage extends StatelessWidget {
       MaterialPageRoute(builder: (context) => LoginPage()),
     );
   }
+  //new
 
   Widget _signOutButton(BuildContext context) {
     return ElevatedButton(
