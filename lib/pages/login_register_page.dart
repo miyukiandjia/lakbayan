@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/pages/home_page.dart';
 
-//helloooooo
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -22,11 +20,6 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await Auth().signInWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
-
-      // After successful login, navigate to the HomePage
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message;
@@ -45,31 +38,32 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Widget _title() {
-    return const Text('Register');
-  }
-
   Widget _entryField(
     String title,
     TextEditingController controller,
     int maxLength,
     bool isPassword,
   ) {
-    return Container(
-        width: 800, // Set the desired width
-        child: TextField(
-          controller: controller,
-          obscureText: isPassword,
-          style: const TextStyle(
-            fontSize: 40,
-          ),
-          textAlign: TextAlign.center,
-          decoration: InputDecoration(
-            labelText: title,
-            contentPadding: const EdgeInsets.symmetric(vertical: 30),
-            labelStyle: const TextStyle(fontSize: 40),
-          ),
-        ));
+    double fontSize = MediaQuery.of(context).size.width * 0.04;
+
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.8, // Adjust the width
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        style: TextStyle(
+          fontSize: fontSize,
+        ),
+        textAlign: TextAlign.center,
+        decoration: InputDecoration(
+          labelText: title,
+          contentPadding: EdgeInsets.symmetric(
+            vertical: fontSize * 0.5,
+          ), // Set a relative padding
+          labelStyle: TextStyle(fontSize: fontSize), // Set a relative font size
+        ),
+      ),
+    );
   }
 
   Widget _errorMessage() {
@@ -80,29 +74,35 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _submitButton() {
+    double buttonWidth = MediaQuery.of(context).size.width * 0.8;
+    double buttonHeight = MediaQuery.of(context).size.height * 0.07;
+
     return ElevatedButton(
       onPressed:
           isLogin ? signInWithEmailAndPassword : createUserWithEmailAndPassword,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFAD547F), // Hex code AD547F
+        backgroundColor: const Color(0xFFAD547F),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50), // Adjust the value as needed
+          borderRadius: BorderRadius.circular(buttonWidth * 0.1),
         ),
-        minimumSize: const Size(700, 50), // Set the minimum width and height
-        padding: const EdgeInsets.symmetric(
-            vertical: 20), // Adjust the padding as needed
+        minimumSize: Size(buttonWidth, buttonHeight),
+        padding: EdgeInsets.symmetric(
+          vertical: buttonHeight * 0.3,
+        ),
       ),
       child: Text(
         isLogin ? 'Login' : 'Register',
-        style: const TextStyle(
-          fontSize: 30,
-          fontFamily: 'Roboto', // Use the "Roboto" font family
+        style: TextStyle(
+          fontSize: buttonWidth * 0.04, // Use relative value here
+          fontFamily: 'Roboto',
         ),
       ),
     );
   }
 
   Widget _loginOrRegisterButton() {
+    double fontSize = MediaQuery.of(context).size.width * 0.05;
+
     return TextButton(
       onPressed: () {
         setState(() {
@@ -113,22 +113,27 @@ class _LoginPageState extends State<LoginPage> {
         isLogin
             ? 'Don\'t have an account? Create now'
             : 'Already have an account? Login instead',
-        style: const TextStyle(
-          fontSize: 30,
+        style: TextStyle(
+          fontSize: fontSize,
           color: Color.fromARGB(192, 167, 166, 166),
-          fontFamily: 'Roboto', // Use the "Roboto" font family
+          fontFamily: 'Roboto',
         ),
       ),
     );
   }
 
   Widget _titleName() {
-    return Text(isLogin ? 'Login' : 'Register',
+    return Center(
+      child: Text(
+        isLogin ? 'Login' : 'Register',
         style: const TextStyle(
-            fontSize: 50,
-            fontFamily: 'Roboto',
-            color: Color(0xFFAD547F),
-            fontWeight: FontWeight.bold));
+          fontSize: 50,
+          fontFamily: 'Roboto',
+          color: Color(0xFFAD547F),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 
   @override
@@ -136,11 +141,9 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(
-          height: MediaQuery.of(context)
-              .size
-              .height, // Set the container height to screen height
+          height: MediaQuery.of(context).size.height,
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(30), // Set a relative padding
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage("lib/images/Login.png"),
@@ -148,13 +151,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Center the children
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _titleName(),
               _entryField('Email', _controllerEmail, 200, false),
               _entryField('Password', _controllerPassword, 150, true),
-              const SizedBox(height: 30),
+              const SizedBox(height: 10), // Set a relative spacing
               _errorMessage(),
               _submitButton(),
               _loginOrRegisterButton(),
