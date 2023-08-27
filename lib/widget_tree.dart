@@ -48,7 +48,9 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Here, you just focus on creating the SplashScreen UI
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -65,21 +67,26 @@ class SplashScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 200.0),
+              padding: EdgeInsets.only(
+                  bottom: screenHeight * 0.1), // Adjust the value as needed
               child: ElevatedButton(
                 onPressed: onButtonPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF9CDDD),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50),
+                    borderRadius: BorderRadius.circular(
+                        screenWidth * 0.05), // Adjust the value as needed
                   ),
-                  minimumSize: const Size(700, 50),
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  minimumSize: Size(screenWidth * 0.8,
+                      screenHeight * 0.1), // Adjust the values as needed
+                  padding: EdgeInsets.symmetric(
+                      vertical:
+                          screenHeight * 0.02), // Adjust the value as needed
                 ),
-                child: const Text(
+                child: Text(
                   "Get Started",
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: screenWidth * 0.05, // Adjust the value as needed
                     fontFamily: 'Roboto',
                     color: Color.fromARGB(255, 12, 12, 12),
                   ),

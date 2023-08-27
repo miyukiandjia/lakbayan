@@ -127,39 +127,32 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("lib/images/Login.png"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: Column(
-          children: <Widget>[
-            const SizedBox(height: 600),
-            _titleName(),
-            const SizedBox(height: 150), // Add space above main content
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                _entryField('Email', _controllerEmail, 200, false),
-                _entryField('Password', _controllerPassword, 150, true),
-                const SizedBox(height: 30), // Add space above error message
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10), // Add space around error message
-                  child: _errorMessage(),
-                ),
-                const SizedBox(height: 150), // Add space below error message
-                _submitButton(),
-                _loginOrRegisterButton(),
-              ],
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context)
+              .size
+              .height, // Set the container height to screen height
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("lib/images/Login.png"),
+              fit: BoxFit.cover,
             ),
-          ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center, // Center the children
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _titleName(),
+              _entryField('Email', _controllerEmail, 200, false),
+              _entryField('Password', _controllerPassword, 150, true),
+              const SizedBox(height: 30),
+              _errorMessage(),
+              _submitButton(),
+              _loginOrRegisterButton(),
+            ],
+          ),
         ),
       ),
     );
