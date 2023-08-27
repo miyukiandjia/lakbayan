@@ -15,10 +15,10 @@ class HomePage extends StatelessWidget {
     await Auth().signOut();
   }
 
-  String _getGreeting() {
+  Widget _userInfo(BuildContext context) {
+    // Calculate the greeting based on the time of day
     var now = DateTime.now();
     var timeOfDay = now.hour;
-
     String greeting;
 
     if (timeOfDay >= 0 && timeOfDay < 12) {
@@ -29,11 +29,28 @@ class HomePage extends StatelessWidget {
       greeting = 'Good evening,';
     }
 
-    return greeting;
-  }
+    // Determine the user's email
+    String email = user?.email ?? 'User email';
 
-  Widget _userUid() {
-    return Text(user?.email ?? 'User email');
+    double fontSize = MediaQuery.of(context).size.width * 0.03;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: TextStyle(
+            fontSize: fontSize,
+          ),
+        ),
+        Text(
+          email,
+          style: TextStyle(
+            fontSize: fontSize,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _createItinerary(BuildContext context) {
@@ -44,17 +61,34 @@ class HomePage extends StatelessWidget {
           MaterialPageRoute(builder: (context) => const ItineraryScreen()),
         );
       },
-      child: const Text('+ Create Itinerary'),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(
+            horizontal: 30, vertical: 15), // Increase padding
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+              20), // Rounded corners for a more aesthetic look
+        ),
+      ),
+      child: const Text(
+        '+ Create Itinerary',
+        style: TextStyle(
+          fontSize: 30, // Increase font size
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
-  Widget _davaoImage() {
+  Widget _davaoImage(BuildContext context) {
+    double imageSize = MediaQuery.of(context).size.width * 0.30;
+
     return Container(
-      color: Colors.red, // for debugging visibility
-      child: Image.asset(
-        'lib/images/dvo_logo.png',
-        width: 100,
-        height: 100,
+      width: imageSize,
+      height: imageSize,
+      child: FittedBox(
+        fit: BoxFit
+            .cover, // This will ensure that the image covers the container.
+        child: Image.asset('lib/images/dvo_logo.png'),
       ),
     );
   }
@@ -157,45 +191,26 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: AppBar(
-          backgroundColor: Colors.white,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getGreeting(),
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                  _userUid(),
-                ],
-              ),
-              _createItinerary(context),
-            ],
-          ),
-          iconTheme: const IconThemeData(color: Colors.black),
-          titleTextStyle: const TextStyle(color: Colors.black),
+      appBar: AppBar(
+        toolbarHeight: 90, // Increase the height of AppBar
+        backgroundColor: Colors.white,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Use Flexible here
+            _userInfo(context),
+            _createItinerary(context),
+          ],
         ),
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black),
       ),
       body: Container(
-        height: double.infinity,
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center, // Center the content vertically
           children: <Widget>[
-            Expanded(
-              // It will fill up the remaining space and ensure the image stays visible
-              child: Align(
-                alignment: Alignment.center,
-                child: _davaoImage(),
-              ),
-            ),
+            _davaoImage(context),
           ],
         ),
       ),
