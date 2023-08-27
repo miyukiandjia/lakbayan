@@ -11,11 +11,25 @@ class WidgetTree extends StatefulWidget {
 }
 
 class _WidgetTreeState extends State<WidgetTree> {
-  bool _hasPressedButton = false;
-
   void _onSplashButtonPressed() {
     setState(() {
       _hasPressedButton = true;
+    });
+  }
+
+  bool _hasPressedButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Auth().authStateChanges.listen((user) {
+      if (user != null && mounted) {
+        // Ensure the widget is mounted before navigating
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
     });
   }
 
@@ -29,6 +43,10 @@ class _WidgetTreeState extends State<WidgetTree> {
           }
 
           if (snapshot.connectionState == ConnectionState.active) {
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            }
+
             if (snapshot.hasData) {
               return HomePage();
             } else {
