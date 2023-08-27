@@ -2,9 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
+import 'package:lakbayan/auth.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
+
+  Future<void> signOut() async {
+    await Auth().signOut();
+  }
+
+  Widget _signOutButton() {
+    return ElevatedButton(
+      onPressed: signOut,
+      child: const Text('Sign Out'),
+    );
+  }
 
   Widget _navBar(BuildContext context, int currentIndex) {
     return Align(
@@ -111,12 +123,17 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Implement your Create Itinerary screen UI here
     return Scaffold(
       body: Container(
         height: double.infinity,
         width: double.infinity,
         padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            _signOutButton(),
+          ],
+        ),
       ),
       bottomNavigationBar: _navBar(context, 3),
     );
