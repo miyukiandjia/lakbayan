@@ -192,6 +192,12 @@ class HomePage extends StatelessWidget {
   List<Map<String, dynamic>> destinations = [
     {'name': 'Destination 1', 'image': 'lib/images/1.jpg'},
     {'name': 'Destination 2', 'image': 'lib/images/2.jpg'},
+    {'name': 'Destination 3', 'image': 'lib/images/3.jpg'},
+    {'name': 'Destination 4', 'image': 'lib/images/4.jpg'},
+    {'name': 'Destination 5', 'image': 'lib/images/1.jpg'},
+    {'name': 'Destination 6', 'image': 'lib/images/2.jpg'},
+    {'name': 'Destination 7', 'image': 'lib/images/3.jpg'},
+    {'name': 'Destination 8', 'image': 'lib/images/4.jpg'},
     // ... Add more destinations
   ];
 
@@ -248,15 +254,16 @@ class HomePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8.0),
                             child: Image.asset(
                               destination['image'],
-                              width: 100,
-                              height: 100,
+                              width: 350,
+                              height: 350,
                               fit: BoxFit.cover,
                             ),
                           ),
                           const SizedBox(height: 10),
                           Text(
                             destination['name'],
-                            style: const TextStyle(fontFamily: 'Nunito'),
+                            style: const TextStyle(
+                                fontFamily: 'Nunito', fontSize: 30),
                           )
                         ],
                       ),
@@ -265,10 +272,33 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-            // Add more widgets as needed
+            const SizedBox(height: 5),
+            // Remove the Align widget for the 'Features' text here
+            // and place it inside an Expanded widget below
+            const Expanded(
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Features',
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontSize: 50,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  // Add more widgets related to 'Features' here
+                ],
+              ),
+            ),
           ],
         ),
       ),
+
+      bottomNavigationBar: _navBar(context, 0),
     );
   }
 }
