@@ -191,11 +191,11 @@ class HomePage extends StatelessWidget {
   }
 
   List<Map<String, dynamic>> destinations = [
-    {'name': 'Destination 1', 'image': 'lib/images/1.jpg'},
+    {'name': 'Destination 1', 'image': 'lib/images/2.jpg'},
     {'name': 'Destination 2', 'image': 'lib/images/2.jpg'},
     {'name': 'Destination 3', 'image': 'lib/images/3.jpg'},
     {'name': 'Destination 4', 'image': 'lib/images/4.jpg'},
-    {'name': 'Destination 5', 'image': 'lib/images/1.jpg'},
+    {'name': 'Destination 5', 'image': 'lib/images/2.jpg'},
     {'name': 'Destination 6', 'image': 'lib/images/2.jpg'},
     {'name': 'Destination 7', 'image': 'lib/images/3.jpg'},
     {'name': 'Destination 8', 'image': 'lib/images/4.jpg'},
