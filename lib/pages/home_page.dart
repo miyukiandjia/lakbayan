@@ -274,8 +274,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 5),
-            // Remove the Align widget for the 'Features' text here
-            // and place it inside an Expanded widget below
             const Expanded(
               child: Column(
                 children: [
