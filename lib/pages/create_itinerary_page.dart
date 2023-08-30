@@ -21,8 +21,8 @@ class ItineraryScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30), // Rounded edges
           ),
-          primary: const Color(0xFFF9CDDD), // Button color
-          onPrimary: const Color(0xFFAD547F), // Font color
+          primary: const Color(0xFFAD547F), // Button color
+          onPrimary: Colors.white, // Font color
           padding: const EdgeInsets.symmetric(vertical: 15),
         ),
         child: const Text('Save',
@@ -41,17 +41,17 @@ class ItineraryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Create Itinerary',
-          style: TextStyle(fontSize: 50),
+          style: TextStyle(fontSize: 30),
         ),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'This is the Create Itinerary screen',
-              style: TextStyle(fontSize: 100),
-            ),
+            // const Text(
+            //   'This is the Create Itinerary screen',
+            //   style: TextStyle(fontSize: 100),
+            // ),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.all(20.0),
