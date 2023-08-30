@@ -1,7 +1,7 @@
 name: lakbayan
-description: A new Flutter project.
+description: TARA LAAG
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+1
 
 environment:  
   sdk: '>=3.1.0 <4.0.0'
@@ -12,6 +12,12 @@ dependencies:
   firebase_core: ^2.15.1
   firebase_auth: ^4.7.3
   intl: ^0.17.0
+  cupertino_icons: ^1.0.2
+  flutter_polyline_points: ^1.0.0
+  google_maps_flutter: ^2.1.7
+  location: ^4.4.0
+  flutter_svg: ^1.1.0
+  geocoding: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -23,6 +29,8 @@ flutter:
   assets:
     - lib/images/
     - lib/fonts/
+    - assets/
+    - assets/icons/
   fonts:
     - family: Nunito
       fonts:
