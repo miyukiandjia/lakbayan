@@ -5,6 +5,7 @@ import 'package:lakbayan/pages/itinerary_screen.dart';
 import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/pages/navigation_page.dart';
 
 // ignore: must_be_immutable
 class HomePage extends StatelessWidget {
@@ -129,7 +130,7 @@ class HomePage extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const SearchPage()),
+                          builder: (context) => const NavigationPage()),
                     );
                   } else if (index == 2) {
                     Navigator.pushReplacement(
