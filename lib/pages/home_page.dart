@@ -5,7 +5,9 @@ import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/pages/navigation_page.dart';
 
+// ignore: must_be_immutable
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
 
@@ -122,7 +124,7 @@ class HomePage extends StatelessWidget {
 
   Widget _itineraryCard(Map<String, dynamic> itinerary) {
     return Card(
-      margin: EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         children: [
           Image.asset(itinerary['image'],
@@ -170,7 +172,7 @@ class HomePage extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const SearchPage()),
+                          builder: (context) => const NavigationPage()),
                     );
                   } else if (index == 2) {
                     Navigator.pushReplacement(
@@ -234,7 +236,7 @@ class HomePage extends StatelessWidget {
   Widget _davaoImage(BuildContext context) {
     double imageSize = MediaQuery.of(context).size.width * 0.30;
 
-    return Container(
+    return SizedBox(
       width: imageSize,
       height: imageSize,
       child: FittedBox(
@@ -276,74 +278,72 @@ class HomePage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.black),
         titleTextStyle: const TextStyle(color: Colors.black),
       ),
-      body: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: <Widget>[
-            Center(child: _davaoImage(context)),
-            const SizedBox(height: 20),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Popular Destinations',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 50,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+      body: Stack(
+        children: <Widget>[
+          // This is your main content
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: ListView(
+              children: <Widget>[
+                Center(child: _davaoImage(context)),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Popular Destinations',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 400, // Set a height for the horizontal scroll
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: destinations.map((destination) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Column(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Image.asset(
-                              destination['image'],
-                              width: 250,
-                              height: 250,
-                              fit: BoxFit.cover,
+                const SizedBox(height: 20),
+                Container(
+                  height: 400,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: destinations.map((destination) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.asset(
+                                destination['image'],
+                                width: 300,
+                                height: 300,
+                                fit: BoxFit.cover,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            destination['name'],
-                            style: const TextStyle(
-                                fontFamily: 'Nunito', fontSize: 30),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                            const SizedBox(height: 10),
+                            Text(
+                              destination['name'],
+                              style: const TextStyle(
+                                  fontFamily: 'Nunito', fontSize: 30),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                for (var itinerary in itineraries) _itineraryCard(itinerary)
+              ],
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: itineraries
-                    .length, // You might want to replace this with the number of user itineraries
-                itemBuilder: (BuildContext context, int index) {
-                  // Sample code for user itinerary list items.
-                  return _itineraryCard(itineraries[index]);
-                  // Add more details for each itinerary here
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+          // This will place your navBar at the bottom of the screen
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _navBar(context, 0),
+          ),
+        ],
       ),
-      bottomNavigationBar: _navBar(context, 0),
     );
   }
 }
