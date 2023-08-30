@@ -6,18 +6,61 @@ import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 
-// ignore: must_be_immutable
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
 
   final User? user = Auth().currentUser;
+
+  // Sample itinerary data structure
+  List<Map<String, dynamic>> itineraries = [
+    {
+      'user': 'John Doe',
+      'location': 'Beach Resort',
+      'image': 'lib/images/2.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    {
+      'user': 'Jane Smith',
+      'location': 'Mountain Trek',
+      'image': 'lib/images/3.jpg'
+    },
+    // ... Add more sample itineraries
+  ];
 
   Future<void> signOut() async {
     await Auth().signOut();
   }
 
   Widget _userInfo(BuildContext context) {
-    // Calculate the greeting based on the time of day
     var now = DateTime.now();
     var timeOfDay = now.hour;
     String greeting;
@@ -30,9 +73,7 @@ class HomePage extends StatelessWidget {
       greeting = 'Good evening,';
     }
 
-    // Determine the user's email
     String email = user?.email ?? 'User email';
-
     double fontSize = MediaQuery.of(context).size.width * 0.03;
 
     return Column(
@@ -64,33 +105,33 @@ class HomePage extends StatelessWidget {
         );
       },
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 30, vertical: 15), // Increase padding
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-              20), // Rounded corners for a more aesthetic look
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
       child: const Text(
         '+ Create Itinerary',
         style: TextStyle(
-          fontSize: 30, // Increase font size
+          fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _davaoImage(BuildContext context) {
-    double imageSize = MediaQuery.of(context).size.width * 0.30;
-
-    return Container(
-      width: imageSize,
-      height: imageSize,
-      child: FittedBox(
-        fit: BoxFit
-            .cover, // This will ensure that the image covers the container.
-        child: Image.asset('lib/images/dvo_logo.png'),
+  Widget _itineraryCard(Map<String, dynamic> itinerary) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 20),
+      child: Column(
+        children: [
+          Image.asset(itinerary['image'],
+              width: double.infinity, height: 200, fit: BoxFit.cover),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(itinerary['user'] + ' at ' + itinerary['location']),
+          ),
+        ],
       ),
     );
   }
@@ -190,6 +231,20 @@ class HomePage extends StatelessWidget {
             )));
   }
 
+  Widget _davaoImage(BuildContext context) {
+    double imageSize = MediaQuery.of(context).size.width * 0.30;
+
+    return Container(
+      width: imageSize,
+      height: imageSize,
+      child: FittedBox(
+        fit: BoxFit
+            .cover, // This will ensure that the image covers the container.
+        child: Image.asset('lib/images/dvo_logo.png'),
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> destinations = [
     {'name': 'Destination 1', 'image': 'lib/images/2.jpg'},
     {'name': 'Destination 2', 'image': 'lib/images/2.jpg'},
@@ -205,16 +260,15 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Set the background color to white
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        elevation: 0.0, // Removes the shadow
-        bottomOpacity: 0.0, // Removes the bottom line on Android
-        toolbarHeight: 90, // Increase the height of AppBar
+        elevation: 0.0,
+        bottomOpacity: 0.0,
+        toolbarHeight: 90,
         backgroundColor: Colors.white,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Use Flexible here
             _userInfo(context),
             _createItinerary(context),
           ],
@@ -242,7 +296,8 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Expanded(
+            SizedBox(
+              height: 400, // Set a height for the horizontal scroll
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -255,8 +310,8 @@ class HomePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8.0),
                             child: Image.asset(
                               destination['image'],
-                              width: 350,
-                              height: 350,
+                              width: 250,
+                              height: 250,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -265,7 +320,7 @@ class HomePage extends StatelessWidget {
                             destination['name'],
                             style: const TextStyle(
                                 fontFamily: 'Nunito', fontSize: 30),
-                          )
+                          ),
                         ],
                       ),
                     );
@@ -273,30 +328,21 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 5),
-            const Expanded(
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Features',
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  // Add more widgets related to 'Features' here
-                ],
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: itineraries
+                    .length, // You might want to replace this with the number of user itineraries
+                itemBuilder: (BuildContext context, int index) {
+                  // Sample code for user itinerary list items.
+                  return _itineraryCard(itineraries[index]);
+                  // Add more details for each itinerary here
+                },
               ),
             ),
           ],
         ),
       ),
-
       bottomNavigationBar: _navBar(context, 0),
     );
   }
