@@ -8,10 +8,13 @@ class OverviewItinerary extends StatelessWidget {
     // Implement your Create Itinerary screen UI here
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Itinerary'),
+        title: const Text('Itinerary Overview'),
       ),
       body: const Center(
-        child: Text('This is the Create Itinerary screen'),
+        child: Text(
+          'This is the Itinerary Overview screen',
+          style: TextStyle(fontSize: 30),
+        ),
       ),
     );
   }
