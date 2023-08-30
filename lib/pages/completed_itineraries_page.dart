@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/pages/search_page.dart';
+import 'package:lakbayan/search_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 
 class CompletedItineraries extends StatelessWidget {
