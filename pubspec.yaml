@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   firebase_core: ^2.15.1
   firebase_auth: ^4.7.3
+  firebase_database: ^10.2.5
+  excel: ^2.1.0
   intl: ^0.17.0
   cupertino_icons: ^1.0.2
   flutter_polyline_points: ^1.0.0
@@ -29,6 +31,7 @@ flutter:
   assets:
     - lib/images/
     - lib/fonts/
+    - lib
     - assets/
     - assets/icons/
   fonts:
