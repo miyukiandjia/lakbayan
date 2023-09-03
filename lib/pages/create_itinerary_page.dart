@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/overview_itinerary_page.dart';
 import 'package:excel/excel.dart';
-import 'dart:io';
+import 'package:flutter/services.dart';
 
 class Location {
   final String name;
@@ -24,26 +24,38 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   @override
   void initState() {
     super.initState();
-    locations = readExcelData();
-    if (locations.isNotEmpty) {
-      selectedLocation = locations[0];
-    }
+    readExcelData().then((loadedLocations) {
+      setState(() {
+        locations = loadedLocations;
+        if (locations.isNotEmpty) {
+          selectedLocation = locations[0];
+        }
+      });
+    });
   }
 
-  List<Location> readExcelData() {
-    var file = 'lib/fonts/Davao.xlsx';
-    var bytes = File(file).readAsBytesSync();
-    var excel = Excel.decodeBytes(bytes);
-    List<Location> locations = [];
+  Future<List<Location>> readExcelData() async {
+    try {
+      var assetPath = 'fonts/Davao.xlsx';
+      var bytes = await rootBundle
+          .load(assetPath)
+          .then((data) => data.buffer.asUint8List());
 
-    for (var table in excel.tables.keys) {
-      for (var row in excel.tables[table]!.rows) {
-        // Assuming name is in the first column and category is in the second column
-        locations.add(
-            Location(name: row[0].toString(), category: row[1].toString()));
+      var excel = Excel.decodeBytes(bytes);
+      List<Location> locations = [];
+
+      for (var table in excel.tables.keys) {
+        for (var row in excel.tables[table]!.rows) {
+          locations.add(
+              Location(name: row[0].toString(), category: row[1].toString()));
+        }
       }
+      return locations;
+    } catch (e) {
+      // Handle any error that occurs during the operation
+      print(e);
+      return []; // Return an empty list in case of an error
     }
-    return locations;
   }
 
   Widget _saveButton(BuildContext context) {
