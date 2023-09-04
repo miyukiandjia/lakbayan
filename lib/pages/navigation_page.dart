@@ -79,10 +79,10 @@ class NavigationPageState extends State<NavigationPage> {
             )
           : GoogleMap(
               initialCameraPosition:
-                  CameraPosition(target: sourceLocation, zoom: 13.5),
+                  const CameraPosition(target: sourceLocation, zoom: 13.5),
               polylines: {
                 Polyline(
-                  polylineId: PolylineId("route"),
+                  polylineId: const PolylineId("route"),
                   points: polylineCoordinates,
                   color: primaryColor,
                   width: 6,
