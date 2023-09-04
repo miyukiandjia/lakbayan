@@ -330,11 +330,100 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                for (var itinerary in itineraries) _itineraryCard(itinerary)
+                for (var itinerary in itineraries) _itineraryCard(itinerary),
+                Column(
+                  children: <Widget>[
+                    Card(
+                      child: Container(
+                        height: 350.0,
+                        color: Colors.white,
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              'News Feed',
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 50,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const ListTile(
+                              leading: CircleAvatar(),
+                              title: Text(
+                                "Patricia Anne Marie Go",
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 22,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              subtitle: Text(
+                                "Tue Oct 01 2019 12:50:14",
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                color: Colors.blue,
+                                width: 650.0,
+                                child: Column(
+                                  children: <Widget>[
+                                    Text("Itinerary goes here."),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 14.0,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: <Widget>[
+                                Row(
+                                  children: <Widget>[
+                                    Icon(Icons.thumb_up),
+                                    SizedBox(
+                                      width: 8.0,
+                                    ),
+                                    Text("Like"),
+                                  ],
+                                ),
+                                Row(
+                                  children: <Widget>[
+                                    Icon(Icons.comment),
+                                    SizedBox(
+                                      width: 8.0,
+                                    ),
+                                    Text("Comments"),
+                                  ],
+                                ),
+                                Row(
+                                  children: <Widget>[
+                                    Icon(Icons.share),
+                                    SizedBox(
+                                      width: 8.0,
+                                    ),
+                                    Text("Share"),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
               ],
             ),
           ),
           // This will place your navBar at the bottom of the screen
+
           Positioned(
             left: 0,
             right: 0,
