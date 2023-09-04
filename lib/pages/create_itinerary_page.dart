@@ -14,6 +14,7 @@ class CreateItineraryPage extends StatefulWidget {
   const CreateItineraryPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CreateItineraryPageState createState() => _CreateItineraryPageState();
 }
 
@@ -72,11 +73,11 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
           );
         },
         style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFFAD547F),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          primary: const Color(0xFFAD547F),
-          onPrimary: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 15),
         ),
         child: const Text('Save',
@@ -174,7 +175,7 @@ class LocationDropdown extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
+          child: SizedBox(
             width: 800,
             height: 60,
             child: DropdownButton<Location>(
@@ -184,9 +185,9 @@ class LocationDropdown extends StatelessWidget {
                   style: TextStyle(fontSize: 30)),
               onChanged: onChanged,
               items: [
-                DropdownMenuItem<Location>(
+                const DropdownMenuItem<Location>(
                   value: null,
-                  child: const Text('Choose Destination/Location',
+                  child: Text('Choose Destination/Location',
                       style: TextStyle(fontSize: 30)),
                 ),
                 ...locations
