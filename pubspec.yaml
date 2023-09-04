@@ -32,6 +32,7 @@ flutter:
     - lib/images/
     - lib/fonts/
     - assets/
+    - assets/locs.xlsx
     - assets/icons/
   fonts:
     - family: Nunito

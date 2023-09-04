@@ -19,7 +19,7 @@ class CreateItineraryPage extends StatefulWidget {
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<Location> locations = [];
-  Location? selectedLocation;
+  List<Location?> selectedLocations = [null];
 
   @override
   void initState() {
@@ -27,34 +27,34 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     readExcelData().then((loadedLocations) {
       setState(() {
         locations = loadedLocations;
-        if (locations.isNotEmpty) {
-          selectedLocation = locations[0];
-        }
       });
     });
   }
 
   Future<List<Location>> readExcelData() async {
     try {
-      var assetPath = 'fonts/Davao.xlsx';
-      var bytes = await rootBundle
-          .load(assetPath)
-          .then((data) => data.buffer.asUint8List());
-
+      ByteData data = await rootBundle.load("assets/locs.xlsx");
+      var bytes =
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       var excel = Excel.decodeBytes(bytes);
       List<Location> locations = [];
 
       for (var table in excel.tables.keys) {
+        bool isFirstRow = true;
         for (var row in excel.tables[table]!.rows) {
-          locations.add(
-              Location(name: row[0].toString(), category: row[1].toString()));
+          if (isFirstRow) {
+            isFirstRow = false;
+            continue;
+          }
+          String name = row[0]?.value?.toString() ?? "Unknown Name";
+          String category = row[1]?.value?.toString() ?? "Unknown Category";
+          locations.add(Location(name: name, category: category));
         }
       }
       return locations;
     } catch (e) {
-      // Handle any error that occurs during the operation
       print(e);
-      return []; // Return an empty list in case of an error
+      return [];
     }
   }
 
@@ -82,54 +82,131 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
         child: const Text('Save',
             style: TextStyle(
                 fontSize: 50,
-                color: Color(0xFFAD547F),
+                color: Color.fromARGB(255, 235, 231, 233),
                 fontWeight: FontWeight.bold)),
       ),
     );
+  }
+
+  void _removeLocation(int index) {
+    setState(() {
+      selectedLocations.removeAt(index);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Create Itinerary',
-          style: TextStyle(fontSize: 30),
-        ),
+        title: const Text('Create Itinerary', style: TextStyle(fontSize: 30)),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: ListView(
           children: [
-            if (selectedLocation != null) ...[
-              DropdownButton<Location>(
-                value: selectedLocation,
-                onChanged: (Location? newValue) {
-                  setState(() {
-                    selectedLocation = newValue!;
-                  });
-                },
-                items: locations
-                    .map<DropdownMenuItem<Location>>((Location location) {
-                  return DropdownMenuItem<Location>(
-                    value: location,
-                    child: Text('${location.name} - ${location.category}'),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 20),
-            ],
+            Column(
+              children: selectedLocations.asMap().entries.map((entry) {
+                int idx = entry.key;
+                Location? location = entry.value;
+
+                List<Location> availableLocations = locations
+                    .where((loc) =>
+                        !selectedLocations.contains(loc) || loc == location)
+                    .toList();
+
+                return Column(
+                  children: [
+                    LocationDropdown(
+                      key: UniqueKey(),
+                      locations: availableLocations,
+                      selectedLocation: location,
+                      onChanged: (Location? newValue) {
+                        setState(() {
+                          selectedLocations[idx] = newValue;
+                        });
+                      },
+                      showRemoveButton: selectedLocations.length > 1,
+                      onRemove: () =>
+                          _removeLocation(idx), // Passing the removal method
+                    ),
+                    const SizedBox(height: 15), // Spacer between dropdowns
+                  ],
+                );
+              }).toList(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                setState(() {
+                  selectedLocations.add(null);
+                });
+              },
+            ),
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  _saveButton(context),
-                ],
-              ),
+              child: _saveButton(context),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class LocationDropdown extends StatelessWidget {
+  final List<Location> locations;
+  final Location? selectedLocation;
+  final ValueChanged<Location?>? onChanged;
+  final bool showRemoveButton;
+  final VoidCallback? onRemove;
+
+  const LocationDropdown({
+    Key? key,
+    required this.locations,
+    this.selectedLocation,
+    this.onChanged,
+    this.showRemoveButton = false,
+    this.onRemove,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            width: 800,
+            height: 60,
+            child: DropdownButton<Location>(
+              isExpanded: true,
+              value: selectedLocation,
+              hint: const Text('Choose Destination/Location',
+                  style: TextStyle(fontSize: 30)),
+              onChanged: onChanged,
+              items: [
+                DropdownMenuItem<Location>(
+                  value: null,
+                  child: const Text('Choose Destination/Location',
+                      style: TextStyle(fontSize: 30)),
+                ),
+                ...locations
+                    .map<DropdownMenuItem<Location>>((Location location) {
+                  return DropdownMenuItem<Location>(
+                    value: location,
+                    child: Text('${location.name} - ${location.category}',
+                        style: const TextStyle(fontSize: 30)),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ),
+        if (showRemoveButton)
+          IconButton(
+            icon: const Icon(Icons.remove),
+            onPressed: onRemove,
+          ),
+      ],
     );
   }
 }
