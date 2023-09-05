@@ -10,6 +10,15 @@ class Location {
   Location({required this.name, required this.category});
 }
 
+class ItineraryDay {
+  String name;
+  DateTime date;
+  List<Location?> locations;
+
+  ItineraryDay(
+      {required this.name, required this.date, required this.locations});
+}
+
 class CreateItineraryPage extends StatefulWidget {
   const CreateItineraryPage({super.key});
 
@@ -19,15 +28,31 @@ class CreateItineraryPage extends StatefulWidget {
 }
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
-  List<Location> locations = [];
-  List<Location?> selectedLocations = [null];
+  List<Location> allLocations = [];
+  List<ItineraryDay> days = [
+    ItineraryDay(name: "", date: DateTime.now(), locations: [null])
+  ];
+  Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: day.date,
+      firstDate: DateTime(2000, 1),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != day.date) {
+      setState(() {
+        day.date = pickedDate;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     readExcelData().then((loadedLocations) {
       setState(() {
-        locations = loadedLocations;
+        allLocations = loadedLocations;
       });
     });
   }
@@ -59,42 +84,6 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     }
   }
 
-  Widget _saveButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(20),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const OverviewItinerary(),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: const Color(0xFFAD547F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text('Save',
-            style: TextStyle(
-                fontSize: 50,
-                color: Color.fromARGB(255, 235, 231, 233),
-                fontWeight: FontWeight.bold)),
-      ),
-    );
-  }
-
-  void _removeLocation(int index) {
-    setState(() {
-      selectedLocations.removeAt(index);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,49 +92,105 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: ListView(
+        child: ListView.builder(
+          itemCount: days.length + 1, // +1 to accommodate the final '+' button
+          itemBuilder: (context, index) {
+            if (index == days.length) {
+              return IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  setState(() {
+                    days.add(ItineraryDay(
+                        name: "", date: DateTime.now(), locations: [null]));
+                  });
+                },
+              );
+            }
+
+            return _buildDayCard(days[index], index);
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.check),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OverviewItinerary(days: days),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayCard(ItineraryDay day, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
           children: [
-            Column(
-              children: selectedLocations.asMap().entries.map((entry) {
-                int idx = entry.key;
-                Location? location = entry.value;
-
-                List<Location> availableLocations = locations
-                    .where((loc) =>
-                        !selectedLocations.contains(loc) || loc == location)
-                    .toList();
-
-                return Column(
-                  children: [
-                    LocationDropdown(
-                      key: UniqueKey(),
-                      locations: availableLocations,
-                      selectedLocation: location,
-                      onChanged: (Location? newValue) {
-                        setState(() {
-                          selectedLocations[idx] = newValue;
-                        });
-                      },
-                      showRemoveButton: selectedLocations.length > 1,
-                      onRemove: () =>
-                          _removeLocation(idx), // Passing the removal method
-                    ),
-                    const SizedBox(height: 15), // Spacer between dropdowns
-                  ],
-                );
-              }).toList(),
-            ),
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                setState(() {
-                  selectedLocations.add(null);
-                });
+            if (index > 0)
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () {
+                    setState(() {
+                      days.removeAt(index);
+                    });
+                  },
+                ),
+              ),
+            Text('Day ${index + 1}',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            TextField(
+              decoration: const InputDecoration(labelText: "Itinerary Name"),
+              onChanged: (value) {
+                day.name = value;
               },
             ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: _saveButton(context),
+            ElevatedButton(
+              onPressed: () => _selectDate(context, day),
+              child: Text(
+                "${day.date.toLocal()}"
+                    .split(' ')[0], // This displays the chosen date
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+            ...day.locations.asMap().entries.map((entry) {
+              int idx = entry.key;
+              Location? location = entry.value;
+
+              List<Location> availableLocations = allLocations
+                  .where(
+                      (loc) => !day.locations.contains(loc) || loc == location)
+                  .toList();
+
+              return LocationDropdown(
+                locations: availableLocations,
+                selectedLocation: location,
+                onChanged: (Location? newValue) {
+                  setState(() {
+                    day.locations[idx] = newValue;
+                  });
+                },
+                showRemoveButton: day.locations.length > 1,
+                onRemove: () {
+                  setState(() {
+                    day.locations.removeAt(idx);
+                  });
+                },
+              );
+            }).toList(),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: () {
+                setState(() {
+                  day.locations.add(null);
+                });
+              },
             ),
           ],
         ),
@@ -157,54 +202,49 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
 class LocationDropdown extends StatelessWidget {
   final List<Location> locations;
   final Location? selectedLocation;
-  final ValueChanged<Location?>? onChanged;
+  final ValueChanged<Location?> onChanged;
   final bool showRemoveButton;
-  final VoidCallback? onRemove;
+  final VoidCallback onRemove;
 
   const LocationDropdown({
-    Key? key,
+    super.key,
     required this.locations,
-    this.selectedLocation,
-    this.onChanged,
-    this.showRemoveButton = false,
-    this.onRemove,
-  }) : super(key: key);
+    required this.selectedLocation,
+    required this.onChanged,
+    required this.showRemoveButton,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: SizedBox(
-            width: 800,
-            height: 60,
-            child: DropdownButton<Location>(
-              isExpanded: true,
-              value: selectedLocation,
-              hint: const Text('Choose Destination/Location',
-                  style: TextStyle(fontSize: 30)),
-              onChanged: onChanged,
-              items: [
-                const DropdownMenuItem<Location>(
-                  value: null,
-                  child: Text('Choose Destination/Location',
-                      style: TextStyle(fontSize: 30)),
-                ),
-                ...locations
-                    .map<DropdownMenuItem<Location>>((Location location) {
-                  return DropdownMenuItem<Location>(
-                    value: location,
-                    child: Text('${location.name} - ${location.category}',
-                        style: const TextStyle(fontSize: 30)),
-                  );
-                }).toList(),
-              ],
-            ),
+          child: DropdownButton<Location>(
+            isExpanded: true,
+            value: selectedLocation,
+            hint: const Text('Choose Destination/Location',
+                style: TextStyle(fontSize: 30)),
+            onChanged: onChanged,
+            items: [
+              const DropdownMenuItem<Location>(
+                value: null,
+                child: Text('Choose Destination/Location',
+                    style: TextStyle(fontSize: 30)),
+              ),
+              ...locations.map<DropdownMenuItem<Location>>((Location location) {
+                return DropdownMenuItem<Location>(
+                  value: location,
+                  child: Text('${location.name} - ${location.category}',
+                      style: const TextStyle(fontSize: 30)),
+                );
+              }).toList(),
+            ],
           ),
         ),
         if (showRemoveButton)
           IconButton(
-            icon: const Icon(Icons.remove),
+            icon: const Icon(Icons.remove_circle_outline),
             onPressed: onRemove,
           ),
       ],
