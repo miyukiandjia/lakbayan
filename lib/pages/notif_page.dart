@@ -1,3 +1,5 @@
+import 'dart:js';
+
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/search_page.dart';
@@ -5,6 +7,93 @@ import 'package:lakbayan/pages/profile_page.dart';
 
 class NotifPage extends StatelessWidget {
   const NotifPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: appBar(),
+      body: listView(),
+      bottomNavigationBar: _navBar(context, 2),
+    );
+  }
+
+  PreferredSizeWidget appBar() {
+    return AppBar(
+      title: Text("Notifications Page"),
+    );
+  }
+
+  Widget listView() {
+    return ListView.separated(
+        itemBuilder: (context, index) {
+          return listViewItem(index);
+        },
+        separatorBuilder: (context, index) {
+          return Divider(height: 0);
+        },
+        itemCount: 15);
+  }
+
+  Widget listViewItem(int index) {
+    return Container(
+      margin: EdgeInsets.only(left: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          message(index),
+          timeAndDate(index),
+        ],
+      ),
+    );
+  }
+
+  Widget message(int index) {
+    double textSize = 14;
+    return Container(
+      child: RichText(
+        maxLines: 3,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          text: 'Message',
+          style: TextStyle(
+            fontSize: textSize,
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+          children: [
+            TextSpan(
+                text: 'Message Description',
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                ))
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget timeAndDate(int index) {
+    return Container(
+      margin: EdgeInsets.only(top: 5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            '06-09-2023',
+            style: TextStyle(
+              fontSize: 10,
+            ),
+          ),
+          Text(
+            '8:50PM',
+            style: TextStyle(
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _navBar(BuildContext context, int currentIndex) {
     return Container(
@@ -99,18 +188,5 @@ class NotifPage extends StatelessWidget {
                     const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
               ),
             )));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Implement your Create Itinerary screen UI here
-    return Scaffold(
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-      ),
-      bottomNavigationBar: _navBar(context, 2),
-    );
   }
 }
