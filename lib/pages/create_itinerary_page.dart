@@ -10,126 +10,244 @@ class Location {
   Location({required this.name, required this.category});
 }
 
+class ItineraryDay {
+  String name;
+  DateTime date;
+  List<Location?> locations;
+
+  ItineraryDay(
+      {required this.name, required this.date, required this.locations});
+}
+
 class CreateItineraryPage extends StatefulWidget {
   const CreateItineraryPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _CreateItineraryPageState createState() => _CreateItineraryPageState();
 }
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
-  List<Location> locations = [];
-  Location? selectedLocation;
+  List<Location> allLocations = [];
+  List<ItineraryDay> days = [
+    ItineraryDay(name: "", date: DateTime.now(), locations: [null])
+  ];
+  Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: day.date,
+      firstDate: DateTime(2000, 1),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != day.date) {
+      setState(() {
+        day.date = pickedDate;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     readExcelData().then((loadedLocations) {
       setState(() {
-        locations = loadedLocations;
-        if (locations.isNotEmpty) {
-          selectedLocation = locations[0];
-        }
+        allLocations = loadedLocations;
       });
     });
   }
 
   Future<List<Location>> readExcelData() async {
     try {
-      var assetPath = 'fonts/Davao.xlsx';
-      var bytes = await rootBundle
-          .load(assetPath)
-          .then((data) => data.buffer.asUint8List());
-
+      ByteData data = await rootBundle.load("assets/locs.xlsx");
+      var bytes =
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       var excel = Excel.decodeBytes(bytes);
       List<Location> locations = [];
 
       for (var table in excel.tables.keys) {
+        bool isFirstRow = true;
         for (var row in excel.tables[table]!.rows) {
-          locations.add(
-              Location(name: row[0].toString(), category: row[1].toString()));
+          if (isFirstRow) {
+            isFirstRow = false;
+            continue;
+          }
+          String name = row[0]?.value?.toString() ?? "Unknown Name";
+          String category = row[1]?.value?.toString() ?? "Unknown Category";
+          locations.add(Location(name: name, category: category));
         }
       }
       return locations;
     } catch (e) {
-      // Handle any error that occurs during the operation
       print(e);
-      return []; // Return an empty list in case of an error
+      return [];
     }
-  }
-
-  Widget _saveButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(20),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const OverviewItinerary(),
-            ),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          primary: const Color(0xFFAD547F),
-          onPrimary: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text('Save',
-            style: TextStyle(
-                fontSize: 50,
-                color: Color(0xFFAD547F),
-                fontWeight: FontWeight.bold)),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Create Itinerary',
-          style: TextStyle(fontSize: 30),
-        ),
+        title: const Text('Create Itinerary', style: TextStyle(fontSize: 30)),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (selectedLocation != null) ...[
-              DropdownButton<Location>(
-                value: selectedLocation,
-                onChanged: (Location? newValue) {
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: ListView.builder(
+          itemCount: days.length + 1, // +1 to accommodate the final '+' button
+          itemBuilder: (context, index) {
+            if (index == days.length) {
+              return IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
                   setState(() {
-                    selectedLocation = newValue!;
+                    days.add(ItineraryDay(
+                        name: "", date: DateTime.now(), locations: [null]));
                   });
                 },
-                items: locations
-                    .map<DropdownMenuItem<Location>>((Location location) {
-                  return DropdownMenuItem<Location>(
-                    value: location,
-                    child: Text('${location.name} - ${location.category}'),
-                  );
-                }).toList(),
+              );
+            }
+
+            return _buildDayCard(days[index], index);
+          },
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.check),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OverviewItinerary(days: days),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDayCard(ItineraryDay day, int index) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            if (index > 0)
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: () {
+                    setState(() {
+                      days.removeAt(index);
+                    });
+                  },
+                ),
               ),
-              const SizedBox(height: 20),
-            ],
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  _saveButton(context),
-                ],
+            Text('Day ${index + 1}',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            TextField(
+              decoration: const InputDecoration(labelText: "Itinerary Name"),
+              onChanged: (value) {
+                day.name = value;
+              },
+            ),
+            ElevatedButton(
+              onPressed: () => _selectDate(context, day),
+              child: Text(
+                "${day.date.toLocal()}"
+                    .split(' ')[0], // This displays the chosen date
+                style: const TextStyle(fontSize: 18),
               ),
+            ),
+            ...day.locations.asMap().entries.map((entry) {
+              int idx = entry.key;
+              Location? location = entry.value;
+
+              List<Location> availableLocations = allLocations
+                  .where(
+                      (loc) => !day.locations.contains(loc) || loc == location)
+                  .toList();
+
+              return LocationDropdown(
+                locations: availableLocations,
+                selectedLocation: location,
+                onChanged: (Location? newValue) {
+                  setState(() {
+                    day.locations[idx] = newValue;
+                  });
+                },
+                showRemoveButton: day.locations.length > 1,
+                onRemove: () {
+                  setState(() {
+                    day.locations.removeAt(idx);
+                  });
+                },
+              );
+            }).toList(),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: () {
+                setState(() {
+                  day.locations.add(null);
+                });
+              },
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class LocationDropdown extends StatelessWidget {
+  final List<Location> locations;
+  final Location? selectedLocation;
+  final ValueChanged<Location?> onChanged;
+  final bool showRemoveButton;
+  final VoidCallback onRemove;
+
+  const LocationDropdown({
+    super.key,
+    required this.locations,
+    required this.selectedLocation,
+    required this.onChanged,
+    required this.showRemoveButton,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButton<Location>(
+            isExpanded: true,
+            value: selectedLocation,
+            hint: const Text('Choose Destination/Location',
+                style: TextStyle(fontSize: 30)),
+            onChanged: onChanged,
+            items: [
+              const DropdownMenuItem<Location>(
+                value: null,
+                child: Text('Choose Destination/Location',
+                    style: TextStyle(fontSize: 30)),
+              ),
+              ...locations.map<DropdownMenuItem<Location>>((Location location) {
+                return DropdownMenuItem<Location>(
+                  value: location,
+                  child: Text('${location.name} - ${location.category}',
+                      style: const TextStyle(fontSize: 30)),
+                );
+              }).toList(),
+            ],
+          ),
+        ),
+        if (showRemoveButton)
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            onPressed: onRemove,
+          ),
+      ],
     );
   }
 }
