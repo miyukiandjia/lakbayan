@@ -6,9 +6,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/pages/completed_itineraries_page.dart';
 import 'package:lakbayan/pages/gallery_page.dart';
 import 'package:lakbayan/pages/biodata_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  File? _imageFile;
 
   Future<void> signOut(BuildContext context) async {
     await Auth().signOut();
@@ -18,15 +27,54 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  Future<void> _uploadImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
   Widget _buildUserEmail(String? userEmail) {
     return Text(
-      userEmail ?? 'user@example.com', // Display the user's email
+      userEmail ?? 'user@example.com',
       style: const TextStyle(
         fontSize: 60,
         color: Colors.white,
         fontWeight: FontWeight.bold,
       ),
     );
+  }
+
+  Widget _buildImageSection() {
+    if (_imageFile != null) {
+      return Column(
+        children: [
+          Image.file(
+            _imageFile!,
+            width: 100,
+            height: 100,
+          ),
+          const SizedBox(height: 10),
+        ],
+      );
+    } else {
+      return GestureDetector(
+        onTap: _uploadImage,
+        child: const CircleAvatar(
+          radius: 50,
+          backgroundColor: Colors.white,
+          child: Icon(
+            Icons.camera_alt,
+            size: 40,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildSectionIcons(context) {
@@ -99,10 +147,10 @@ class ProfilePage extends StatelessWidget {
         onPressed: () => signOut(context),
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30), // Rounded edges
+            borderRadius: BorderRadius.circular(30),
           ),
-          primary: const Color(0xFFF9CDDD), // Button color
-          onPrimary: const Color(0xFFAD547F), // Font color
+          primary: const Color(0xFFF9CDDD),
+          onPrimary: const Color(0xFFAD547F),
           padding: const EdgeInsets.symmetric(vertical: 15),
         ),
         child: const Text('Sign Out',
@@ -116,9 +164,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the current user's email from FirebaseAuth
     final currentUser = FirebaseAuth.instance.currentUser;
-    //final userEmail = currentUser?.email ?? 'user@example.com';
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0,
@@ -162,23 +208,11 @@ class ProfilePage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    // ... Other profile content ...
+                    _buildImageSection(), // Image upload section
 
-                    //TEMPORARY RA SA NI BOSSING
-                    const CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.camera_alt,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     _buildUserEmail(currentUser?.email),
-                    const SizedBox(height: 20), // Add spacing
+                    const SizedBox(height: 20),
 
-                    // Call the separate function to build section icons
                     _buildSectionIcons(context),
                   ],
                 ),
