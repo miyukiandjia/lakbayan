@@ -17,12 +17,12 @@ class HomePage extends StatelessWidget {
     {
       'user': 'John Doe',
       'location': 'Beach Resort',
-      'image': 'lib/images/2.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
@@ -258,7 +258,7 @@ class HomePage extends StatelessWidget {
       'image': 'lib/images/dLeonor.jpg'
     },
     {'name': 'Forever', 'image': 'lib/images/4.jpg'},
-    // {'name': 'Destination 5', 'image': 'lib/images/3.jpg'}, //wait hanap muna me pic natin tatlo! <33
+    {'name': 'Owangwutan', 'image': 'lib/images/triooo.jpg'},
     {'name': 'Abreeza Ayala Mall', 'image': 'lib/images/abree.png'},
     {'name': 'People’s Park Davao', 'image': 'lib/images/pPark.png'},
     {'name': 'Roxas Night Market', 'image': 'lib/images/roxas.jpg'},
