@@ -27,32 +27,32 @@ class HomePage extends StatelessWidget {
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     // ... Add more sample itineraries
   ];
