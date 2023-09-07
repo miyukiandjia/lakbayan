@@ -10,7 +10,7 @@ class NotifPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: "ListView.builder",
-        theme: ThemeData(primarySwatch: Colors.blue),
+        theme: ThemeData(primarySwatch: Colors.pink),
         debugShowCheckedModeBanner: false,
         // home : new ListViewBuilder(),  NO Need To Use Unnecessary New Keyword
         home: const ListViewBuilder());
@@ -24,26 +24,32 @@ class ListViewBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("LAKBAYAN NOTIFICATIONS")),
-      body: ListView.builder(
-          itemCount: 5,
-          shrinkWrap: true,
-          itemBuilder: (BuildContext context, int index) {
-            return ListTile(
-              leading: SizedBox(child: Image.asset('lib/images/user.png')),
-              trailing: const Text(
-                "5 minutes ago",
-              ),
-              title: Text(
-                "Username",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text("liked a recent Itinerary."),
-            );
-          }),
+      body: Padding(
+        padding: const EdgeInsets.all(8),
+        child: ListView.builder(
+            itemCount: 10,
+            shrinkWrap: true,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                  padding: EdgeInsets.all(16),
+                  child: ListTile(
+                    leading:
+                        SizedBox(child: Image.asset('lib/images/user.png')),
+                    trailing: const Text(
+                      "5 minutes ago",
+                    ),
+                    title: Text(
+                      "Username",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("liked a recent Itinerary."),
+                  ));
+            }),
+      ),
+      bottomNavigationBar: _navBar(context, 2),
     );
   }
 
-  //bottomNavigationBar: _navBar(context, 2),
   Widget _navBar(BuildContext context, int currentIndex) {
     return Container(
         decoration: const BoxDecoration(

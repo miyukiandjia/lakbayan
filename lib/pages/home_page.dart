@@ -17,12 +17,12 @@ class HomePage extends StatelessWidget {
     {
       'user': 'John Doe',
       'location': 'Beach Resort',
-      'image': 'lib/images/2.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
       'location': 'Mountain Trek',
-      'image': 'lib/images/3.jpg'
+      'image': 'lib/images/triooo.jpg'
     },
     {
       'user': 'Jane Smith',
@@ -248,14 +248,20 @@ class HomePage extends StatelessWidget {
   }
 
   List<Map<String, dynamic>> destinations = [
-    {'name': 'Destination 1', 'image': 'lib/images/2.jpg'},
-    {'name': 'Destination 2', 'image': 'lib/images/2.jpg'},
-    {'name': 'Destination 3', 'image': 'lib/images/3.jpg'},
-    {'name': 'Destination 4', 'image': 'lib/images/4.jpg'},
-    {'name': 'Destination 5', 'image': 'lib/images/2.jpg'},
-    {'name': 'Destination 6', 'image': 'lib/images/2.jpg'},
-    {'name': 'Destination 7', 'image': 'lib/images/3.jpg'},
-    {'name': 'Destination 8', 'image': 'lib/images/4.jpg'},
+    {'name': 'Mapúa Malayan Colleges Mindanao', 'image': 'lib/images/mmcm.jpg'},
+    {
+      'name': 'Davao Riverfront Crocodile Park & Zoo',
+      'image': 'lib/images/crocPark.JPG'
+    },
+    {
+      'name': 'D\'Leonor Inland Resort & Adventure Park',
+      'image': 'lib/images/dLeonor.jpg'
+    },
+    {'name': 'Forever', 'image': 'lib/images/4.jpg'},
+    {'name': 'Owangwutan', 'image': 'lib/images/triooo.jpg'},
+    {'name': 'Abreeza Ayala Mall', 'image': 'lib/images/abree.png'},
+    {'name': 'People’s Park Davao', 'image': 'lib/images/pPark.png'},
+    {'name': 'Roxas Night Market', 'image': 'lib/images/roxas.jpg'},
     // ... Add more destinations
   ];
 
@@ -335,7 +341,7 @@ class HomePage extends StatelessWidget {
                 Column(
                   children: [
                     Text(
-                      'News Feed',
+                      'Lakbayan Feed',
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Nunito',
@@ -357,7 +363,7 @@ class HomePage extends StatelessWidget {
                                   width: 10,
                                 ),
                                 Text(
-                                  'Username',
+                                  'nexjude',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 )
                               ],
