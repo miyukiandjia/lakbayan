@@ -46,41 +46,42 @@ class OverviewItinerary extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.save),
         onPressed: () async {
-          // Get the current user's UID
           User? currentUser = FirebaseAuth.instance.currentUser;
-
-          // Check if a user is authenticated
           if (currentUser == null) {
             ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('User not authenticated!')));
             return;
           }
-
-          // Use the UID to save data
           String uid = currentUser.uid;
-
-          // Get a reference to the Firestore collection
           CollectionReference users =
               FirebaseFirestore.instance.collection('users');
 
-          for (var day in days) {
-            // Convert your day object into a map that Firestore can understand
-            var dayMap = {
-              'userId': uid,
+          // Convert all days to dayMaps
+          List<Map<String, dynamic>> daysList = days.map((day) {
+            return {
               'name': day.name,
               'date': day.date,
               'locations': day.locations
                   .where((loc) => loc != null)
-                  .map((loc) => {'name': loc!.name, 'category': loc.category})
+                  .map((loc) => {
+                        'name': loc!.name,
+                        'category': loc.category,
+                        'status': 'Ongoing',
+                      })
                   .toList(),
             };
+          }).toList();
 
-            // Add day to the Firestore collection under the specific user
-            await users.doc(uid).collection('itineraries').add(dayMap);
-          }
+          // Create a single itinerary map
+          var itineraryMap = {
+            'userId': uid,
+            'status': 'Ongoing',
+            'days': daysList
+          };
 
-          // Optionally, show a message or do other actions after saving
-          // ignore: use_build_context_synchronously
+          // Add the itineraryMap to Firestore
+          await users.doc(uid).collection('itineraries').add(itineraryMap);
+
           ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Saved to Firebase!')));
         },

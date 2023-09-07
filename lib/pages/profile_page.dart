@@ -3,7 +3,7 @@ import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lakbayan/pages/completed_itineraries_page.dart';
+import 'package:lakbayan/pages/Itineraries.dart';
 import 'package:lakbayan/pages/gallery_page.dart';
 import 'package:lakbayan/pages/biodata_page.dart';
 
@@ -34,13 +34,12 @@ class ProfilePage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _buildSectionIcon(
-          Icons.check,
-          'Completed',
+          Icons.add_chart_rounded,
+          'Itineraries',
           () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const CompletedItineraries()),
+              MaterialPageRoute(builder: (context) => Itineraries()),
             );
           },
         ),
