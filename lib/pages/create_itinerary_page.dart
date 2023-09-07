@@ -88,7 +88,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Itinerary', style: TextStyle(fontSize: 30)),
+        title: const Text('Create Itinerary', style: TextStyle(fontSize: 50)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
@@ -144,7 +144,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
               ),
             Text('Day ${index + 1}',
                 style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
             TextField(
               decoration: const InputDecoration(labelText: "Itinerary Name"),
               onChanged: (value) {
@@ -224,19 +224,19 @@ class LocationDropdown extends StatelessWidget {
             isExpanded: true,
             value: selectedLocation,
             hint: const Text('Choose Destination/Location',
-                style: TextStyle(fontSize: 30)),
+                style: TextStyle(fontSize: 50)),
             onChanged: onChanged,
             items: [
               const DropdownMenuItem<Location>(
                 value: null,
                 child: Text('Choose Destination/Location',
-                    style: TextStyle(fontSize: 30)),
+                    style: TextStyle(fontSize: 50)),
               ),
               ...locations.map<DropdownMenuItem<Location>>((Location location) {
                 return DropdownMenuItem<Location>(
                   value: location,
                   child: Text('${location.name} - ${location.category}',
-                      style: const TextStyle(fontSize: 30)),
+                      style: const TextStyle(fontSize: 50)),
                 );
               }).toList(),
             ],
