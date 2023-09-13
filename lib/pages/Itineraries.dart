@@ -1,345 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/search_page.dart';
-import 'package:lakbayan/pages/profile_page.dart';
 
-class Itineraries extends StatefulWidget {
+class ItinerariesPage extends StatefulWidget {
   @override
-  _ItinerariesState createState() => _ItinerariesState();
+  _ItinerariesPageState createState() => _ItinerariesPageState();
 }
 
-class _ItinerariesState extends State<Itineraries> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  late User loggedInUser;
-  int? selectedCardIndex;
+class _ItinerariesPageState extends State<ItinerariesPage> {
+  List<Map<String, dynamic>> _localItineraries = [];
+
+  Stream<QuerySnapshot> _getItinerariesByStatus(String status) {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      String uid = currentUser.uid;
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('itineraries')
+          .where('status', isEqualTo: status)
+          .snapshots();
+    } else {
+      // Return an empty stream if no user is logged in
+      return Stream<QuerySnapshot>.empty();
+    }
+  }
 
   @override
-  void initState() {
-    super.initState();
-    getCurrentUser();
-  }
-
-  void getCurrentUser() async {
-    try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        loggedInUser = user;
-        print('Logged In User UID: ${loggedInUser.uid}');
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  Future<List<DocumentSnapshot>> getUserItineraries() async {
-    try {
-      CollectionReference itinerariesCollection = _firestore
-          .collection('users')
-          .doc(loggedInUser.uid)
-          .collection('itineraries');
-      QuerySnapshot querySnapshot = await itinerariesCollection.get();
-
-      print('Number of itineraries fetched: ${querySnapshot.docs.length}');
-      for (DocumentSnapshot doc in querySnapshot.docs) {
-        print('Itinerary ID: ${doc.id}, Data: ${doc.data()}');
-      }
-
-      return querySnapshot.docs;
-    } catch (e) {
-      print("Error in getUserItineraries: $e");
-      return []; // Return an empty list in case of error
-    }
-  }
-
-  Widget _navBar(BuildContext context, int currentIndex) {
-    return Container(
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Your Itineraries"),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: "Current"),
+              Tab(text: "Done"),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
+        ),
+        body: TabBarView(
+          children: [
+            _buildItineraryListView("Ongoing"),
+            _buildItineraryListView("Done"),
           ],
         ),
-        child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(40),
-                topRight: Radius.circular(40),
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40)),
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                canvasColor: const Color(0xFFAD547F), // Setting the color here
-              ),
-              child: BottomNavigationBar(
-                currentIndex: currentIndex,
-                iconSize: 90,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-                  } else if (index == 1) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SearchPage()),
-                    );
-                  } else if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => Itineraries()),
-                    );
-                  } else if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ProfilePage()),
-                    );
-                  }
-                },
-                items: <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 0
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.home, size: 50))
-                        : const Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 1
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.search, size: 50))
-                        : const Icon(Icons.search),
-                    label: 'Search',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 2
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.notifications, size: 50))
-                        : const Icon(Icons.notifications),
-                    label: 'Notifications',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 3
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.person, size: 50))
-                        : const Icon(Icons.person),
-                    label: 'Profile',
-                  ),
-                ],
-                selectedLabelStyle: const TextStyle(color: Color(0xFFAD547F)),
-                unselectedLabelStyle:
-                    const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
-              ),
-            )));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedCardIndex = null;
-          });
-        },
-        child: FutureBuilder(
-          future: getUserItineraries(),
-          builder: (context, AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                final itinerary = snapshot.data![index];
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedCardIndex =
-                          selectedCardIndex == index ? null : index;
-                    });
-                  },
-                  child: ItineraryCard(
-                    itinerary: itinerary,
-                    showButtons: selectedCardIndex == index,
-                    firestore: _firestore,
-                    loggedInUser: loggedInUser, // Pass the loggedInUser here
-                  ),
-                );
-              },
-            );
-          },
-        ),
       ),
-      bottomNavigationBar: _navBar(context, 2),
     );
   }
+
+List<Map<String, dynamic>> deepCopy(List<dynamic> original) {
+    return original.map((map) => Map<String, dynamic>.from(map as Map)).toList();
 }
 
-class ItineraryCard extends StatefulWidget {
-  final DocumentSnapshot itinerary;
-  final bool showButtons;
-  final FirebaseFirestore firestore;
-  final User loggedInUser; // Add this
 
-  ItineraryCard({
-    required this.itinerary,
-    required this.showButtons,
-    required this.firestore,
-    required this.loggedInUser, // And this
-  });
+  bool _isItineraryDone(List<Map<String, dynamic>> days) {
+    return days.every((day) {
+      final locations = (day['locations'] as List).cast<Map<String, dynamic>>();
 
-  @override
-  _ItineraryCardState createState() => _ItineraryCardState();
-}
-
-class _ItineraryCardState extends State<ItineraryCard> {
-  List<bool>? checkboxes;
-
-  @override
-  void initState() {
-    super.initState();
-    int locationsCount = 0;
-    List days = widget.itinerary['days'] ?? [];
-    days.forEach((day) {
-      locationsCount += (day['locations'] as List).length;
+      return locations.every((location) => location['status'] == 'Done');
     });
-    checkboxes = List<bool>.generate(locationsCount, (index) => false);
   }
 
-  void saveStatuses() async {
-    try {
-      List<dynamic> days = widget.itinerary['days'] ?? [];
-      int currentCheckboxIndex = 0;
-
-      for (var day in days) {
-        for (var location in day['locations']) {
-          if (checkboxes![currentCheckboxIndex]) {
-            location['status'] = 'Done';
-          }
-          currentCheckboxIndex++;
+  Widget _buildItineraryListView(String status) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _getItinerariesByStatus(status),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text("No itineraries available."));
         }
-      }
 
-      // Update Firestore with the modified itinerary
-      await widget.itinerary.reference.update({'days': days});
-    } catch (e) {
-      print("Error in ItineraryCard's saveStatuses: $e");
-    }
-  }
+        if (_localItineraries.isEmpty) {
+          _localItineraries = snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final dayList = (data['days'] as List).cast<Map<String, dynamic>>();
 
-  void saveChangesToFirestore() {
-    var days = widget.itinerary['days'] ?? [];
-    int currentCheckboxIndex = 0;
-
-    for (var day in days) {
-      for (var location in day['locations']) {
-        if (checkboxes![currentCheckboxIndex]) {
-          location['status'] = 'Done';
+            if (dayList.every((element) => element is Map<String, dynamic>)) {
+              return {
+                'docRef': doc.reference,  // Saving reference for updates
+                ...data,
+                'days': deepCopy(dayList.map((item) => item as Map<String, dynamic>).toList())
+              };
+            }
+            return null;
+          }).where((element) => element != null).toList().cast<Map<String, dynamic>>();
         }
-        currentCheckboxIndex++;
-      }
-    }
 
-    // Now, push these updated days to Firestore
-    // Depending on your Firestore structure, you might push the whole itinerary or just updated days.
-    final docRef = widget.firestore
-        .collection('users')
-        .doc(widget.loggedInUser.uid) // Use widget.loggedInUser here
-        .collection('itineraries')
-        .doc(widget.itinerary.id);
-
-    docRef.update({'days': days});
+        return ListView.builder(
+          itemCount: _localItineraries.length,
+          itemBuilder: (context, index) {
+            return _buildItineraryCard(_localItineraries[index], status);
+          },
+        );
+      },
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final days = widget.itinerary['days'] ?? [];
-    int currentCheckboxIndex = 0;
-
+  Widget _buildItineraryCard(Map<String, dynamic> itinerary, String status) {
+    final days = itinerary['days'];
     return Card(
-      margin: EdgeInsets.all(10.0),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Status: ${widget.itinerary['status']}',
-              style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 12.0),
-            ...days.map((day) {
-              return Column(
-                children: [
-                  Text(
-                    'Day Name: ${day['name']}',
-                    style:
-                        TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
+            Text('Itinerary Name: ${itinerary['itineraryName']}', style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
+            for (int i = 0; i < days.length; i++) ...[
+              Text('Day ${i + 1}: ${days[i]['name']}', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              Text('Date: ${DateTime.fromMillisecondsSinceEpoch((days[i]['date'] as Timestamp).seconds * 1000).toLocal().toString().split(' ')[0]}',
+                  style: TextStyle(fontSize: 25)),
+              if (status == "Ongoing")
+                for (var location in days[i]['locations']) ...[
+                  CheckboxListTile(
+                    title: Text(location['name']),
+                    value: location['status'] == 'Done',
+                    onChanged: (newValue) {
+                      setState(() {
+                        location['status'] = newValue! ? 'Done' : 'Ongoing';
+                      });
+                    },
                   ),
-                  SizedBox(height: 10.0),
-                  Text(
-                    'Date: ${day['date'].toDate()}',
-                    style: TextStyle(fontSize: 30.0),
-                  ),
-                  SizedBox(height: 12.0),
-                  ...day['locations'].map<Widget>((location) {
-                    Widget locationTile = ListTile(
-                      leading: widget.showButtons
-                          ? Checkbox(
-                              value: checkboxes![currentCheckboxIndex],
-                              onChanged: (value) {
-                                print(
-                                    'Current Checkbox Index: $currentCheckboxIndex');
-                                if (value != null) {
-                                  setState(() {
-                                    checkboxes![currentCheckboxIndex] = value;
-                                  });
-                                }
-                              },
-                            )
-                          : null,
-                      title: Text(
-                        'Location Name: ${location['name']} - Status: ${location['status']}',
-                        style: TextStyle(fontSize: 30.0),
-                      ),
-                      subtitle: Text(
-                        'Category: ${location['category']}',
-                        style: TextStyle(fontSize: 25.0),
-                      ),
-                    );
-
-                    currentCheckboxIndex++; // Increment the index after processing each location.
-                    return locationTile;
-                  }).toList(),
-                  SizedBox(height: 20.0),
-                ],
-              );
-            }).toList(),
-            if (widget.showButtons)
-              Row(
-                children: [
-                  ElevatedButton(
-                      onPressed: () {
-                        saveChangesToFirestore();
-                      },
-                      child: Text("Save")),
-                  SizedBox(width: 10),
-                  ElevatedButton(onPressed: () {}, child: Text("Edit")),
-                ],
-              )
+                ], 
+              SizedBox(height: 10),
+            ],
+            if (status == "Ongoing")
+              ElevatedButton(
+                onPressed: () async {
+                  final isDone = _isItineraryDone(days);
+                  await itinerary['docRef'].update({
+                    'days': days,
+                    'status': isDone ? 'Done' : 'Ongoing'
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Itinerary updated!')));
+                },
+                child: Text('Save'),
+              ),
           ],
         ),
       ),

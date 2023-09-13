@@ -32,6 +32,8 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<ItineraryDay> days = [
     ItineraryDay(name: "", date: DateTime.now(), locations: [null])
   ];
+  final TextEditingController _itineraryNameController = TextEditingController();
+
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -91,9 +93,20 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
         title: const Text('Create Itinerary', style: TextStyle(fontSize: 50)),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+  padding: const EdgeInsets.all(10.0),
+  child: Column(
+    children: [
+      // This is the global Itinerary Name field.
+      Padding(
+        padding: const EdgeInsets.only(bottom: 20.0),
+        child: TextField(
+          controller: _itineraryNameController,
+          decoration: const InputDecoration(labelText: "Itinerary Name"),
+        ),
+      ),
+      Expanded(
         child: ListView.builder(
-          itemCount: days.length + 1, // +1 to accommodate the final '+' button
+          itemCount: days.length + 1,
           itemBuilder: (context, index) {
             if (index == days.length) {
               return IconButton(
@@ -106,20 +119,26 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                 },
               );
             }
-
             return _buildDayCard(days[index], index);
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+    ],
+  ),
+),
+     floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.check),
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OverviewItinerary(days: days),
+            builder: (context) => OverviewItinerary(
+              days: days,
+              itineraryName: _itineraryNameController.text,  // Pass the itinerary name to the next page
+            ),
           ),
         ),
       ),
+
     );
   }
 
@@ -146,7 +165,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                 style:
                     const TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
             TextField(
-              decoration: const InputDecoration(labelText: "Itinerary Name"),
+              decoration: const InputDecoration(labelText: "Day Name"),
               onChanged: (value) {
                 day.name = value;
               },

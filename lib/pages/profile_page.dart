@@ -23,7 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await Auth().signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
+      MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
 
@@ -87,7 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
           () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Itineraries()),
+              MaterialPageRoute(builder: (context) => ItinerariesPage()),
             );
           },
         ),
