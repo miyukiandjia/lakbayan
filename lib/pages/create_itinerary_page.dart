@@ -92,7 +92,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       appBar: AppBar(
         title: const Text('Create Itinerary', style: TextStyle(fontSize: 50)),
       ),
-      body: Padding(
+     body: Padding(
   padding: const EdgeInsets.all(10.0),
   child: Column(
     children: [
@@ -126,6 +126,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     ],
   ),
 ),
+
      floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.check),
         onPressed: () => Navigator.push(
