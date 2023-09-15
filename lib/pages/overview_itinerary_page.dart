@@ -87,7 +87,7 @@ class OverviewItinerary extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to Firebase!')));
 
           // Navigate to the ItinerariesPage
-          Navigator.of(context).push(MaterialPageRoute(
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => ItinerariesPage()
           ));
         },

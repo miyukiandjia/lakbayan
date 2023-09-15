@@ -50,15 +50,13 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     );
   }
 
-List<Map<String, dynamic>> deepCopy(List<dynamic> original) {
+  List<Map<String, dynamic>> deepCopy(List<dynamic> original) {
     return original.map((map) => Map<String, dynamic>.from(map as Map)).toList();
-}
-
+  }
 
   bool _isItineraryDone(List<Map<String, dynamic>> days) {
     return days.every((day) {
       final locations = (day['locations'] as List).cast<Map<String, dynamic>>();
-
       return locations.every((location) => location['status'] == 'Done');
     });
   }
@@ -73,7 +71,7 @@ List<Map<String, dynamic>> deepCopy(List<dynamic> original) {
           return Center(child: Text("No itineraries available."));
         }
 
-        if (_localItineraries.isEmpty) {
+        if (status == "Ongoing" && _localItineraries.isEmpty) {
           _localItineraries = snapshot.data!.docs.map((doc) {
             final data = doc.data() as Map<String, dynamic>;
             final dayList = (data['days'] as List).cast<Map<String, dynamic>>();
@@ -89,10 +87,18 @@ List<Map<String, dynamic>> deepCopy(List<dynamic> original) {
           }).where((element) => element != null).toList().cast<Map<String, dynamic>>();
         }
 
+        List<Map<String, dynamic>> itinerariesToDisplay = (status == "Ongoing") ? _localItineraries : snapshot.data!.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return {
+              'docRef': doc.reference,  // Saving reference for updates
+              ...data
+            };
+        }).toList();
+
         return ListView.builder(
-          itemCount: _localItineraries.length,
+          itemCount: itinerariesToDisplay.length,
           itemBuilder: (context, index) {
-            return _buildItineraryCard(_localItineraries[index], status);
+            return _buildItineraryCard(itinerariesToDisplay[index], status);
           },
         );
       },
