@@ -76,88 +76,88 @@ class HomePage extends StatelessWidget {
     );
   }
 
-Widget _itineraryCard(Map<String, dynamic> itinerary) {
-  return Card(
-    margin: const EdgeInsets.only(bottom: 20),
-    child: Container(
-      padding: const EdgeInsets.all(20), // Add padding for content
-      decoration: BoxDecoration(
-        color: Colors.pink, // Set container color
-        borderRadius: BorderRadius.circular(15), // Add rounded corners
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 200,
-            height: 200,
-            child: Image.network(
-              itinerary['image'],
-              fit: BoxFit.cover,
-              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                } else {
+  Widget _itineraryCard(Map<String, dynamic> itinerary) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20), // Add padding for content
+        decoration: BoxDecoration(
+          color: Colors.pink, // Set container color
+          borderRadius: BorderRadius.circular(15), // Add rounded corners
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              child: Image.network(
+                itinerary['image'],
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  } else {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                            : null,
+                      ),
+                    );
+                  }
+                },
+                errorBuilder: (BuildContext context, Object error,
+                    StackTrace? stackTrace) {
                   return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
+                    child: Text('Error loading image'),
                   );
-                }
-              },
-              errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                return Center(
-                  child: Text('Error loading image'),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 10), // Add some space
-          Text(
-            itinerary['name'],
-            style: TextStyle(
-              fontSize: 35,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // Set text color
-            ),
-          ),
-          const SizedBox(height: 10), // Add some space
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.star,
-                color: Colors.yellow, // Set star color
-                size: 30,
+                },
               ),
-              Text(
-                '${itinerary['gReviews']}',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, // Set text color
+            ),
+            const SizedBox(height: 10), // Add some space
+            Text(
+              itinerary['name'],
+              style: TextStyle(
+                fontSize: 35,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Set text color
+              ),
+            ),
+            const SizedBox(height: 10), // Add some space
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.star,
+                  color: Colors.yellow, // Set star color
+                  size: 30,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10), // Add some space
-          Text(
-            '${itinerary['distance']} km', // Assuming distance is in kilometers
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // Set text color
+                Text(
+                  '${itinerary['gReviews']}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Set text color
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 10), // Add some space
+            Text(
+              '${itinerary['distance']} km', // Assuming distance is in kilometers
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Set text color
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-
-
+    );
+  }
 
   Widget _navBar(BuildContext context, int currentIndex) {
     return Container(
@@ -203,8 +203,7 @@ Widget _itineraryCard(Map<String, dynamic> itinerary) {
               } else if (index == 3) {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const ProfilePage()),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               }
             },
@@ -279,8 +278,11 @@ Widget _itineraryCard(Map<String, dynamic> itinerary) {
       var data = doc.data();
       var name = data['place'] ?? 'Unknown Place';
       var category = data['category'] ?? 'Unknown Category';
-      var gReviews = (data['gReviews'] != null) ? num.parse(data['gReviews'].toString()) : 0.0;
-      var image = data['imgSrc'] ?? 'https://marketplace.canva.com/EAFWiQLDfT8/1/0/900w/canva-galaxy-phone-wallpaper--M6gJBJenQM.jpg';
+      var gReviews = (data['gReviews'] != null)
+          ? num.parse(data['gReviews'].toString())
+          : 0.0;
+      var image = data['imgSrc'] ??
+          'https://marketplace.canva.com/EAFWiQLDfT8/1/0/900w/canva-galaxy-phone-wallpaper--M6gJBJenQM.jpg';
 
       destinations.add({
         'name': name,
@@ -290,11 +292,11 @@ Widget _itineraryCard(Map<String, dynamic> itinerary) {
       });
     }
 
-    destinations.sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews'] as num));
+    destinations
+        .sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews'] as num));
 
     return destinations;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -337,30 +339,33 @@ Widget _itineraryCard(Map<String, dynamic> itinerary) {
                 ),
                 const SizedBox(height: 20),
                 FutureBuilder<List<Map<String, dynamic>>>(
-                future: fetchFirestoreData(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}', style: TextStyle(fontSize: 50),);
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('No popular destinations available.');
-                  } else {
-                    final destinations = snapshot.data!;
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: destinations.map((destination) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: _itineraryCard(destination),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  }
-                },
-              ),
+                  future: fetchFirestoreData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text(
+                        'Error: ${snapshot.error}',
+                        style: TextStyle(fontSize: 50),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('No popular destinations available.');
+                    } else {
+                      final destinations = snapshot.data!;
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: destinations.map((destination) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: _itineraryCard(destination),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }
+                  },
+                ),
               ],
             ),
           ),

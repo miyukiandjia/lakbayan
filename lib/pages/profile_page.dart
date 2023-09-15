@@ -1,11 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/pages/login_register_page.dart';
+import 'package:lakbayan/firebase_func.dart';
 import 'package:lakbayan/pages/home_page.dart';
+import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/pages/Itineraries.dart';
 import 'package:lakbayan/pages/gallery_page.dart';
-import 'package:lakbayan/pages/biodata_page.dart';
+import 'package:lakbayan/pages/saved_itineraries_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -18,6 +20,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   File? _imageFile;
+  TextEditingController _bioController = TextEditingController();
+  bool _isEditingBio = false;
 
   Future<void> signOut(BuildContext context) async {
     await Auth().signOut();
@@ -47,6 +51,105 @@ class _ProfilePageState extends State<ProfilePage> {
         fontWeight: FontWeight.bold,
       ),
     );
+  }
+
+  void _uploadBio(String bio) {
+    setState(() {
+      _bioController.text = bio;
+    });
+
+    // Save the bio to Firestore
+    saveBioToFirestore(bio);
+  }
+
+  Future<String?> getBioFromFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    return doc.get('bio');
+  }
+
+  void saveBioToFirestore(String bio) {
+    final user = FirebaseAuth.instance.currentUser;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .set({'bio': bio});
+  }
+
+  Widget _buildBioSection() {
+    if (_isEditingBio) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextFormField(
+            controller: _bioController,
+            style: const TextStyle(fontSize: 45),
+            decoration: const InputDecoration(
+              labelText: "Edit Bio",
+              hintText: "User's bio comes here...",
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: () {
+                  String newBio = _bioController.text;
+                  _uploadBio(newBio);
+                  setState(() {
+                    _isEditingBio = false;
+                  });
+                },
+                icon: const Icon(
+                  Icons.save,
+                  size: 35,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _bioController.text.isEmpty
+                ? "User's bio comes here..."
+                : _bioController.text,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 45,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isEditingBio = true;
+                  });
+                },
+                icon: const Icon(
+                  Icons.edit,
+                  size: 35,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildImageSection() {
@@ -83,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         _buildSectionIcon(
           Icons.add_chart_rounded,
-          'Itineraries',
+          'My Itineraries',
           () {
             Navigator.push(
               context,
@@ -102,12 +205,12 @@ class _ProfilePageState extends State<ProfilePage> {
           },
         ),
         _buildSectionIcon(
-          Icons.person,
-          'Biodata',
+          Icons.star,
+          'Saved Itineraries',
           () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const Biodata()),
+              MaterialPageRoute(builder: (context) => const savedItineraries()),
             );
           },
         ),
@@ -162,6 +265,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Load bio from Firestore when the profile page initializes
+    getBioFromFirestore().then((bio) {
+      setState(() {
+        _bioController.text = bio ?? '';
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
     return Scaffold(
@@ -211,6 +325,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     _buildUserEmail(currentUser?.email),
                     const SizedBox(height: 20),
+
+                    _buildBioSection(), // Bio section
 
                     _buildSectionIcons(context),
                   ],

@@ -3,8 +3,8 @@ import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/search_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 
-class Biodata extends StatelessWidget {
-  const Biodata({super.key});
+class savedItineraries extends StatelessWidget {
+  const savedItineraries({super.key});
 
   Widget _navBar(BuildContext context, int currentIndex) {
     return Container(
@@ -45,7 +45,8 @@ class Biodata extends StatelessWidget {
                   } else if (index == 2) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const Biodata()),
+                      MaterialPageRoute(
+                          builder: (context) => const savedItineraries()),
                     );
                   } else if (index == 3) {
                     Navigator.pushReplacement(
