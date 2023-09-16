@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geocoding/geocoding.dart' as geo;
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 import 'package:lakbayan/pages/navigation_page.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
@@ -16,7 +19,97 @@ class HomePage extends StatelessWidget {
     await Auth().signOut();
   }
 
-  Widget _userInfo(BuildContext context) {
+  Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
+    const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0'; 
+    Position? position = await getCurrentLocation();
+    if (position == null) {
+        position = Position(
+        latitude: 7.1907, 
+        longitude: 125.4553, 
+        timestamp: DateTime.now(),
+        accuracy: 0.0,
+        altitude: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0
+      );  // Default to Davao coordinates if location fetch fails.
+
+    }
+
+  List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(position.latitude, position.longitude);
+    if (placemarks.isEmpty) {
+        return [];
+    }
+
+    String? cityName = placemarks[0].locality;
+
+    if (cityName == null) {
+        return [];
+    }
+
+  List<geo.Location> locations = await geo.locationFromAddress(cityName);
+    if (locations.isEmpty) {
+        return [];
+    }
+
+    double lat = locations[0].latitude;
+    double lng = locations[0].longitude;
+
+    final url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=10000&type=tourist_attraction&key=$API_KEY";
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      var jsonResponse = json.decode(response.body);
+      List<Map<String, dynamic>> destinations = [];
+
+      for (var result in jsonResponse['results']) {
+        double distance = Geolocator.distanceBetween(lat, lng, result['geometry']['location']['lat'], result['geometry']['location']['lng']);
+        distance = distance / 1000;
+
+        destinations.add({
+          'name': result['name'] ?? 'Unknown Place',
+          'category': result['types'][0] ?? 'Unknown Category',
+          'gReviews': result['user_ratings_total'] ?? 0.0,
+          'image': "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result['photos']?[0]['photo_reference']}&key=$API_KEY",
+          'distance': distance.toStringAsFixed(2),
+        });
+      }
+
+      destinations.sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
+      return destinations;
+    } else {
+      throw Exception("Failed to load destinations");
+    }
+  }
+
+  Future<Position?> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      print('Location services are disabled.');
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.deniedForever) {
+      print('Location permissions are permanently denied, we cannot request permissions.');
+      return null;
+    }
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+        print('Location permissions are denied (actual value: $permission).');
+        return null;
+      }
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+       Widget _userInfo(BuildContext context) {
     var now = DateTime.now();
     var timeOfDay = now.hour;
     String greeting;
@@ -268,37 +361,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchFirestoreData() async {
-    List<Map<String, dynamic>> destinations = [];
-
-    QuerySnapshot<Map<String, dynamic>> querySnapshot =
-        await FirebaseFirestore.instance.collection('datasets').get();
-
-    for (var doc in querySnapshot.docs) {
-      var data = doc.data();
-      var name = data['place'] ?? 'Unknown Place';
-      var category = data['category'] ?? 'Unknown Category';
-      var gReviews = (data['gReviews'] != null)
-          ? num.parse(data['gReviews'].toString())
-          : 0.0;
-      var image = data['imgSrc'] ??
-          'https://marketplace.canva.com/EAFWiQLDfT8/1/0/900w/canva-galaxy-phone-wallpaper--M6gJBJenQM.jpg';
-
-      destinations.add({
-        'name': name,
-        'category': category,
-        'gReviews': gReviews,
-        'image': image,
-      });
-    }
-
-    destinations
-        .sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews'] as num));
-
-    return destinations;
-  }
-
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -339,7 +402,7 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 FutureBuilder<List<Map<String, dynamic>>>(
-                  future: fetchFirestoreData(),
+                  future: fetchNearbyDestinations(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const CircularProgressIndicator();
@@ -380,3 +443,4 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
