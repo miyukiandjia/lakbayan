@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // <- Import Firestore
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
@@ -20,6 +21,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final User? user = Auth().currentUser;
+  String? username;  // <- Add the username field
 
   @override
   void initState() {
@@ -31,10 +33,16 @@ class _HomePageState extends State<HomePage> {
     final user = Auth().currentUser;
 
     if (user == null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+    } else {
+        // Fetch the username from Firestore
+        final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        setState(() {
+            username = docSnapshot.data()?['username'];
+        });
     }
   }
 
@@ -128,39 +136,40 @@ class _HomePageState extends State<HomePage> {
     return await Geolocator.getCurrentPosition();
   }
 
-       Widget _userInfo(BuildContext context) {
+  Widget _userInfo(BuildContext context) {
     var now = DateTime.now();
     var timeOfDay = now.hour;
     String greeting;
 
     if (timeOfDay >= 0 && timeOfDay < 12) {
-      greeting = 'Good morning,';
+        greeting = 'Good morning,';
     } else if (timeOfDay >= 12 && timeOfDay < 17) {
-      greeting = 'Good afternoon,';
+        greeting = 'Good afternoon,';
     } else {
-      greeting = 'Good evening,';
+        greeting = 'Good evening,';
     }
 
-    String email = user?.email ?? 'User email';
+    String nameToShow = username ?? 'User';  // Show 'User' as default if username is not available
+
     double fontSize = MediaQuery.of(context).size.width * 0.03;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          greeting,
-          style: TextStyle(
-            fontSize: fontSize,
-          ),
-        ),
-        Text(
-          email,
-          style: const TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+            Text(
+                greeting,
+                style: TextStyle(
+                    fontSize: fontSize,
+                ),
+            ),
+            Text(
+                nameToShow,
+                style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                ),
+            ),
+        ],
     );
   }
 
@@ -462,4 +471,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-

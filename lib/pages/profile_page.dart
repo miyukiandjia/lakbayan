@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lakbayan/auth.dart';
+import 'package:lakbayan/pages/Itineraries.dart';
+import 'package:lakbayan/pages/gallery_page.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lakbayan/pages/Itineraries.dart';
-import 'package:lakbayan/pages/gallery_page.dart';
-import 'package:lakbayan/pages/saved_itineraries_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:lakbayan/pages/saved_itineraries_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -21,6 +21,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   TextEditingController _bioController = TextEditingController();
   bool _isEditingBio = false;
+  String? username;  // To hold the username
 
   Future<void> signOut(BuildContext context) async {
     await Auth().signOut();
@@ -35,26 +36,23 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final user = FirebaseAuth.instance.currentUser;
     final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user!.uid}.jpg');
-    
+
     final uploadTask = storageRef.putFile(imageFile);
     final taskSnapshot = await uploadTask.whenComplete(() => {});
-    
+
     final imageUrl = await taskSnapshot.ref.getDownloadURL();
 
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
     userDoc.get().then((docSnapshot) {
       if (docSnapshot.exists) {
-        // Document exists, just update the profile picture
         userDoc.update({'profile_pic_url': imageUrl}).then((_) {
-          setState(() {}); // This will trigger a rebuild of the widget.
+          setState(() {});
         });
       } else {
-        // Document doesn't exist, create a new one for the user
         userDoc.set({
           'profile_pic_url': imageUrl,
-          // Add other fields as necessary
         }).then((_) {
-          setState(() {}); // This will trigger a rebuild of the widget.
+          setState(() {});
         });
       }
     });
@@ -62,123 +60,118 @@ class _ProfilePageState extends State<ProfilePage> {
     return imageUrl;
   }
 
-   Future<void> _uploadImage() async {
+  Future<void> _uploadImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
-      setState(() {
-      });
+      setState(() {});
       await uploadImageToFirebase(imageFile);
     }
   }
 
- Widget _buildImageSection() {
-  final currentUser = FirebaseAuth.instance.currentUser;
-  return StreamBuilder<DocumentSnapshot>(
-    stream: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).snapshots(),
-    builder: (context, snapshot) {
-      String? profilePicUrl;
-      if (snapshot.hasData) {
-        var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
-        if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
-          profilePicUrl = dataMap?['profile_pic_url'] as String?;
+  Widget _buildImageSection() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).snapshots(),
+      builder: (context, snapshot) {
+        String? profilePicUrl;
+        if (snapshot.hasData) {
+          var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
+          if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
+            profilePicUrl = dataMap?['profile_pic_url'] as String?;
+          }
         }
-      }
-      
-      return GestureDetector(
-        onTap: () async {
-          await showModalBottomSheet(
-            context: context,
-            builder: (context) => _buildImageOptions(context, profilePicUrl),
-            backgroundColor: Colors.transparent,
-          );
-          setState(() {});
-        },
-        child: profilePicUrl != null
-            ? Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  boxShadow: [BoxShadow(blurRadius: 15, color: Colors.black.withOpacity(0.3))],
-                  shape: BoxShape.circle,
-                  image: DecorationImage(image: NetworkImage(profilePicUrl), fit: BoxFit.cover),
-                ),
-              )
-            : const CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.camera_alt, size: 40, color: Colors.grey),
-              ),
-      );
-    },
-  );
-}
 
-Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
-  bool hasProfilePicture = profilePicUrl != null && profilePicUrl.isNotEmpty;
+        return GestureDetector(
+          onTap: () async {
+            await showModalBottomSheet(
+              context: context,
+              builder: (context) => _buildImageOptions(context, profilePicUrl),
+              backgroundColor: Colors.transparent,
+            );
+            setState(() {});
+          },
+          child: profilePicUrl != null
+              ? Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              boxShadow: [BoxShadow(blurRadius: 15, color: Colors.black.withOpacity(0.3))],
+              shape: BoxShape.circle,
+              image: DecorationImage(image: NetworkImage(profilePicUrl), fit: BoxFit.cover),
+            ),
+          )
+              : const CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.white,
+            child: Icon(Icons.camera_alt, size: 40, color: Colors.grey),
+          ),
+        );
+      },
+    );
+  }
 
-  return Container(
-    decoration: BoxDecoration(
-      color: const Color(0xFFF9CDDD),
-      borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        if (hasProfilePicture) ...[
-          ListTile(
-            leading: Icon(Icons.remove_red_eye),
-            title: Text('View'),
-            onTap: () {
-              Navigator.pop(context);
-              showDialog(
-                context: context,
-                builder: (context) => Dialog(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(profilePicUrl!),
-                        fit: BoxFit.cover,
+  Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
+    bool hasProfilePicture = profilePicUrl != null && profilePicUrl.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9CDDD),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (hasProfilePicture) ...[
+            ListTile(
+              leading: Icon(Icons.remove_red_eye),
+              title: Text('View'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (context) => Dialog(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: NetworkImage(profilePicUrl!),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete),
+              title: Text('Delete'),
+              onTap: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user!.uid}.jpg');
+                await storageRef.delete();
+                FirebaseFirestore.instance.collection('users').doc(user.uid).update({'profile_pic_url': FieldValue.delete()});
+                Navigator.pop(context);
+              },
+            ),
+          ],
           ListTile(
-            leading: Icon(Icons.delete),
-            title: Text('Delete'),
-            onTap: () async {
-              final user = FirebaseAuth.instance.currentUser;
-              final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user!.uid}.jpg');
-              await storageRef.delete();
-              FirebaseFirestore.instance.collection('users').doc(user.uid).update({'profile_pic_url': FieldValue.delete()});
+            leading: Icon(Icons.upload_file),
+            title: Text('Upload'),
+            onTap: () {
               Navigator.pop(context);
+              _uploadImage();
             },
           ),
         ],
-        ListTile(
-          leading: Icon(Icons.upload_file),
-          title: Text('Upload'),
-          onTap: () {
-            Navigator.pop(context);
-            _uploadImage();
-          },
-        ),
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 
-
-
-
-
-  Widget _buildUserEmail(String? userEmail) {
+  Widget _buildUserEmail(String? email) {
     return Text(
-      userEmail ?? 'user@example.com',
+      username ?? 'Loading...', // Default text while loading username
       style: const TextStyle(
         fontSize: 60,
         color: Colors.white,
@@ -187,7 +180,7 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
     );
   }
 
-   Future<String?> getBioFromFirestore() async {
+  Future<String?> getBioFromFirestore() async {
     final user = FirebaseAuth.instance.currentUser;
     final doc = await FirebaseFirestore.instance
         .collection('users')
@@ -200,25 +193,23 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
     return null;
   }
 
-
   void saveBioToFirestore(String bio) {
     final user = FirebaseAuth.instance.currentUser;
     FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
         .update({'bio': bio});
-}
+  }
 
-   void _uploadBio(String bio) {
+  void _uploadBio(String bio) {
     setState(() {
       _bioController.text = bio;
     });
 
-    // Save the bio to Firestore
     saveBioToFirestore(bio);
   }
 
-    Widget _buildBioSection() {
+  Widget _buildBioSection() {
     if (_isEditingBio) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -290,7 +281,7 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
     }
   }
 
-    Widget _buildSectionIcons(context) {
+   Widget _buildSectionIcons(context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -385,6 +376,32 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
     });
   }
 
+
+Future<String?> fetchUsernameFromFirestore() async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    if (doc.exists && doc.data()!.containsKey('username')) {
+      String retrievedUsername = (doc.data()?['username'] as String?) ?? '';
+      setState(() {
+        username = retrievedUsername;
+      });
+      return retrievedUsername;
+    } else {
+      print('No username field found in the document or document does not exist');
+      return null;
+    }
+  } catch (error) {
+    print('Error fetching username from Firestore: $error');
+    return null;
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -453,4 +470,3 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
     );
   }
 }
-
