@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> {
       List<Map<String, dynamic>> destinations = [];
 
       for (var result in jsonResponse['results']) {
-        double distance = Geolocator.distanceBetween(lat, lng, result['geometry']['location']['lat'], result['geometry']['location']['lng']);
+      double distance = Geolocator.distanceBetween(position.latitude, position.longitude, result['geometry']['location']['lat'], result['geometry']['location']['lng']);
         distance = distance / 1000;
 
         destinations.add({
