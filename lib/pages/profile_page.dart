@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/firebase_func.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +19,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  File? _imageFile;
   TextEditingController _bioController = TextEditingController();
   bool _isEditingBio = false;
 
@@ -33,14 +30,61 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<String?> uploadImageToFirebase(File? imageFile) async {
+    if (imageFile == null) return null;
+
+    final user = FirebaseAuth.instance.currentUser;
+    final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user!.uid}.jpg');
+    
+    final uploadTask = storageRef.putFile(imageFile);
+    final taskSnapshot = await uploadTask.whenComplete(() => {});
+    
+    final imageUrl = await taskSnapshot.ref.getDownloadURL();
+
+    // Now, save the image URL in Firestore
+    FirebaseFirestore.instance.collection('users').doc(user.uid).update({'profile_pic_url': imageUrl});
+
+    return imageUrl;
+  }
+
   Future<void> _uploadImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
       setState(() {
-        _imageFile = File(pickedFile.path);
       });
+      await uploadImageToFirebase(imageFile);
     }
+  }
+
+  Widget _buildImageSection() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        } else if (snapshot.hasData) {
+          String? profilePicUrl = snapshot.data?.get('profile_pic_url') as String?;
+          if (profilePicUrl != null) {
+            return Image.network(profilePicUrl, width: 100, height: 100);
+          }
+        }
+        return GestureDetector(
+          onTap: _uploadImage,
+          child: const CircleAvatar(
+            radius: 50,
+            backgroundColor: Colors.white,
+            child: Icon(
+              Icons.camera_alt,
+              size: 40,
+              color: Colors.grey,
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildUserEmail(String? userEmail) {
@@ -54,29 +98,15 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _uploadBio(String bio) {
-    setState(() {
-      _bioController.text = bio;
-    });
-
-    // Save the bio to Firestore
-    saveBioToFirestore(bio);
-  }
-
-  Future<String?> getBioFromFirestore() async {
+   Future<String?> getBioFromFirestore() async {
     final user = FirebaseAuth.instance.currentUser;
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
         .get();
 
-    if (doc.exists && doc.data()!.containsKey('bio')) {
-      return doc.data()?['bio'] as String?;
-    }
-    return null;
+    return doc.get('bio');
   }
-
-
 
    void saveBioToFirestore(String bio) {
     final user = FirebaseAuth.instance.currentUser;
@@ -163,34 +193,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ],
-      );
-    }
-  }
-
-  Widget _buildImageSection() {
-    if (_imageFile != null) {
-      return Column(
-        children: [
-          Image.file(
-            _imageFile!,
-            width: 100,
-            height: 100,
-          ),
-          const SizedBox(height: 10),
-        ],
-      );
-    } else {
-      return GestureDetector(
-        onTap: _uploadImage,
-        child: const CircleAvatar(
-          radius: 50,
-          backgroundColor: Colors.white,
-          child: Icon(
-            Icons.camera_alt,
-            size: 40,
-            color: Colors.grey,
-          ),
-        ),
       );
     }
   }
@@ -282,19 +284,11 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Load bio and image URL from Firestore when the profile page initializes
+    // Load bio from Firestore when the profile page initializes
     getBioFromFirestore().then((bio) {
       setState(() {
         _bioController.text = bio ?? '';
       });
-    });
-
-    getImageDownloadUrlFromFirestore().then((url) {
-      if (url != null && url.isNotEmpty) {
-        setState(() {
-          _imageUrl = url; // Set the URL as a string
-        });
-      }
     });
   }
 
@@ -366,5 +360,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
-
