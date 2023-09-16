@@ -16,13 +16,15 @@ dependencies:
   excel: ^2.1.0
   intl: ^0.17.0
   cupertino_icons: ^1.0.6
-  flutter_polyline_points: ^1.0.0
+  flutter_polyline_points: ^2.0.0
   google_maps_flutter: ^2.1.7
   location: ^4.4.0
   flutter_svg: ^1.1.0
   geocoding: ^2.1.0
   cloud_firestore: ^4.9.1
   image_picker: ^0.8.4+2
+  http: ^1.1.0
+  geolocator: ^10.0.1
 
 dev_dependencies:
   flutter_test:
