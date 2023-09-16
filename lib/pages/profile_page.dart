@@ -73,39 +73,107 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Widget _buildImageSection() {
+ Widget _buildImageSection() {
   final currentUser = FirebaseAuth.instance.currentUser;
   return StreamBuilder<DocumentSnapshot>(
     stream: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).snapshots(),
     builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return CircularProgressIndicator();
-      } else if (snapshot.hasData) {
-        String? profilePicUrl;
+      String? profilePicUrl;
+      if (snapshot.hasData) {
         var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
         if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
           profilePicUrl = dataMap?['profile_pic_url'] as String?;
         }
-        if (profilePicUrl != null) {
-          return Image.network(profilePicUrl, width: 100, height: 100);
-        }
       }
-      // Default return in case the conditions above aren't met
+      
       return GestureDetector(
-        onTap: _uploadImage,
-        child: const CircleAvatar(
-          radius: 50,
-          backgroundColor: Colors.white,
-          child: Icon(
-            Icons.camera_alt,
-            size: 40,
-            color: Colors.grey,
-          ),
-        ),
+        onTap: () async {
+          await showModalBottomSheet(
+            context: context,
+            builder: (context) => _buildImageOptions(context, profilePicUrl),
+            backgroundColor: Colors.transparent,
+          );
+          setState(() {});
+        },
+        child: profilePicUrl != null
+            ? Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  boxShadow: [BoxShadow(blurRadius: 15, color: Colors.black.withOpacity(0.3))],
+                  shape: BoxShape.circle,
+                  image: DecorationImage(image: NetworkImage(profilePicUrl), fit: BoxFit.cover),
+                ),
+              )
+            : const CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.white,
+                child: Icon(Icons.camera_alt, size: 40, color: Colors.grey),
+              ),
       );
     },
   );
 }
+
+Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
+  bool hasProfilePicture = profilePicUrl != null && profilePicUrl.isNotEmpty;
+
+  return Container(
+    decoration: BoxDecoration(
+      color: const Color(0xFFF9CDDD),
+      borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        if (hasProfilePicture) ...[
+          ListTile(
+            leading: Icon(Icons.remove_red_eye),
+            title: Text('View'),
+            onTap: () {
+              Navigator.pop(context);
+              showDialog(
+                context: context,
+                builder: (context) => Dialog(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(profilePicUrl!),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.delete),
+            title: Text('Delete'),
+            onTap: () async {
+              final user = FirebaseAuth.instance.currentUser;
+              final storageRef = FirebaseStorage.instance.ref().child('profile_pics/${user!.uid}.jpg');
+              await storageRef.delete();
+              FirebaseFirestore.instance.collection('users').doc(user.uid).update({'profile_pic_url': FieldValue.delete()});
+              Navigator.pop(context);
+            },
+          ),
+        ],
+        ListTile(
+          leading: Icon(Icons.upload_file),
+          title: Text('Upload'),
+          onTap: () {
+            Navigator.pop(context);
+            _uploadImage();
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+
+
 
 
   Widget _buildUserEmail(String? userEmail) {
