@@ -66,7 +66,11 @@ class _ProfilePageState extends State<ProfilePage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return CircularProgressIndicator();
         } else if (snapshot.hasData) {
-          String? profilePicUrl = snapshot.data?.get('profile_pic_url') as String?;
+          String? profilePicUrl;
+          var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
+          if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
+            profilePicUrl = dataMap?['profile_pic_url'] as String?;
+          }
           if (profilePicUrl != null) {
             return Image.network(profilePicUrl, width: 100, height: 100);
           }
@@ -105,8 +109,12 @@ class _ProfilePageState extends State<ProfilePage> {
         .doc(user!.uid)
         .get();
 
-    return doc.get('bio');
+    if (doc.exists && doc.data()!.containsKey('bio')) {
+      return doc.data()?['bio'] as String?;
+    }
+    return null;
   }
+
 
    void saveBioToFirestore(String bio) {
     final user = FirebaseAuth.instance.currentUser;
