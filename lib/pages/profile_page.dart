@@ -201,13 +201,13 @@ Widget _buildImageOptions(BuildContext context, String? profilePicUrl) {
   }
 
 
-   void saveBioToFirestore(String bio) {
+  void saveBioToFirestore(String bio) {
     final user = FirebaseAuth.instance.currentUser;
     FirebaseFirestore.instance
         .collection('users')
         .doc(user!.uid)
-        .set({'bio': bio});
-  }
+        .update({'bio': bio});
+}
 
    void _uploadBio(String bio) {
     setState(() {
