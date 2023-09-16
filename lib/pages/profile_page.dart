@@ -41,13 +41,28 @@ class _ProfilePageState extends State<ProfilePage> {
     
     final imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-    // Now, save the image URL in Firestore
-    FirebaseFirestore.instance.collection('users').doc(user.uid).update({'profile_pic_url': imageUrl});
+    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    userDoc.get().then((docSnapshot) {
+      if (docSnapshot.exists) {
+        // Document exists, just update the profile picture
+        userDoc.update({'profile_pic_url': imageUrl}).then((_) {
+          setState(() {}); // This will trigger a rebuild of the widget.
+        });
+      } else {
+        // Document doesn't exist, create a new one for the user
+        userDoc.set({
+          'profile_pic_url': imageUrl,
+          // Add other fields as necessary
+        }).then((_) {
+          setState(() {}); // This will trigger a rebuild of the widget.
+        });
+      }
+    });
 
     return imageUrl;
   }
 
-  Future<void> _uploadImage() async {
+   Future<void> _uploadImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
@@ -59,37 +74,39 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildImageSection() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        } else if (snapshot.hasData) {
-          String? profilePicUrl;
-          var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
-          if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
-            profilePicUrl = dataMap?['profile_pic_url'] as String?;
-          }
-          if (profilePicUrl != null) {
-            return Image.network(profilePicUrl, width: 100, height: 100);
-          }
+  final currentUser = FirebaseAuth.instance.currentUser;
+  return StreamBuilder<DocumentSnapshot>(
+    stream: FirebaseFirestore.instance.collection('users').doc(currentUser?.uid).snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return CircularProgressIndicator();
+      } else if (snapshot.hasData) {
+        String? profilePicUrl;
+        var dataMap = snapshot.data!.data() as Map<String, dynamic>?;
+        if (snapshot.data!.exists && dataMap?.containsKey('profile_pic_url') == true) {
+          profilePicUrl = dataMap?['profile_pic_url'] as String?;
         }
-        return GestureDetector(
-          onTap: _uploadImage,
-          child: const CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.camera_alt,
-              size: 40,
-              color: Colors.grey,
-            ),
+        if (profilePicUrl != null) {
+          return Image.network(profilePicUrl, width: 100, height: 100);
+        }
+      }
+      // Default return in case the conditions above aren't met
+      return GestureDetector(
+        onTap: _uploadImage,
+        child: const CircleAvatar(
+          radius: 50,
+          backgroundColor: Colors.white,
+          child: Icon(
+            Icons.camera_alt,
+            size: 40,
+            color: Colors.grey,
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Widget _buildUserEmail(String? userEmail) {
     return Text(
@@ -368,3 +385,4 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
+

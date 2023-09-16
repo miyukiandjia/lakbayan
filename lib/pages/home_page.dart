@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
+import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 import 'package:lakbayan/pages/navigation_page.dart';
@@ -10,16 +11,34 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
 
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final User? user = Auth().currentUser;
 
-  Future<void> signOut() async {
-    await Auth().signOut();
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
   }
 
-  Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
+  _checkAuthentication() async {
+    final user = Auth().currentUser;
+
+    if (user == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+  }
+
+   Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
     const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0'; 
     Position? position = await getCurrentLocation();
     if (position == null) {
