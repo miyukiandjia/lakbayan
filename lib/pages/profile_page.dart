@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/firebase_func.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,6 +20,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   File? _imageFile;
+  String? _imageUrl;
   TextEditingController _bioController = TextEditingController();
   bool _isEditingBio = false;
 
@@ -31,14 +32,56 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void saveImageDownloadUrl(String url) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // User is not authenticated, handle accordingly (e.g., show a login screen).
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                const LoginPage()), // Replace with your login screen widget
+      );
+      return;
+    }
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .set({'image_url': url});
+  }
+
+  Future<String?> getImageDownloadUrlFromFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .get();
+
+    return doc.get('image_url');
+  }
+
   Future<void> _uploadImage() async {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
+      final File imageFile = File(pickedFile.path);
+
+      // Upload the image to Firebase Storage
+      final storageReference = FirebaseStorage.instance.ref().child(
+          'profile_images/${FirebaseAuth.instance.currentUser!.uid}/image.jpg');
+
+      UploadTask uploadTask = storageReference.putFile(imageFile);
+
+      TaskSnapshot taskSnapshot = await uploadTask;
+      String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFile = imageFile;
       });
+
+      // Save the download URL to Firestore
+      saveImageDownloadUrl(downloadUrl);
     }
   }
 
@@ -54,12 +97,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _uploadBio(String bio) {
+    // Save the bio to Firestore
+    saveBioToFirestore(bio);
+
     setState(() {
       _bioController.text = bio;
     });
-
-    // Save the bio to Firestore
-    saveBioToFirestore(bio);
   }
 
   Future<String?> getBioFromFirestore() async {
@@ -153,11 +196,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildImageSection() {
-    if (_imageFile != null) {
+    if (_imageUrl != null) {
       return Column(
         children: [
-          Image.file(
-            _imageFile!,
+          Image.network(
+            _imageUrl!,
             width: 100,
             height: 100,
           ),
@@ -267,11 +310,19 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Load bio from Firestore when the profile page initializes
+    // Load bio and image URL from Firestore when the profile page initializes
     getBioFromFirestore().then((bio) {
       setState(() {
         _bioController.text = bio ?? '';
       });
+    });
+
+    getImageDownloadUrlFromFirestore().then((url) {
+      if (url != null && url.isNotEmpty) {
+        setState(() {
+          _imageUrl = url; // Set the URL as a string
+        });
+      }
     });
   }
 
