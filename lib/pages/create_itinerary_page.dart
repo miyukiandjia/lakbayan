@@ -50,7 +50,7 @@ class CreateItineraryPage extends StatefulWidget {
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<Location> allLocations = [];
-  List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now(), locations: [null])];
+List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now(), locations: [])];
   final TextEditingController _itineraryNameController = TextEditingController();
 
   String? selectedCategory;
@@ -80,6 +80,15 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     } else {
       throw Exception("Failed to load nearby places");
     }
+  }
+  List<Location> getAvailableLocations(String category, List<Location?> selectedLocations, ItineraryDay day) {
+    if (category == 'restaurant') {
+      return day.fetchedLocationsRestaurants.where((location) => !selectedLocations.contains(location)).toList();
+    } else if (category == 'park') {
+      return day.fetchedLocationsParks.where((location) => !selectedLocations.contains(location)).toList();
+    }
+    //... add logic for other categories
+    return [];
   }
 
   @override
@@ -135,6 +144,8 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     );
   }
 
+  
+
   Widget _buildDayCard(ItineraryDay day, int index) {
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
@@ -158,6 +169,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
             TextField(
               decoration: const InputDecoration(labelText: "Day Name"),
               onChanged: (value) {
+                 print("Dropdown onChanged triggered with value: $value");
                 day.name = value;
               },
             ),
@@ -210,29 +222,33 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
 }
 
               },
-              child: Text(
-                selectedCategory ?? "Good Day, What are your plans?",
-                style: const TextStyle(fontSize: 18),
-              ),
+               child: Text(
+              selectedCategory ?? "Good Day, What are your plans?",
+              style: const TextStyle(fontSize: 18),
             ),
-            for (var i = 0; i < day.locations.length; i++)
-             LocationDropdown(
-    locations: day.locations[i] != null && day.locations[i]!.category == 'restaurant' 
-               ? day.fetchedLocationsRestaurants 
-               : day.fetchedLocationsParks, // Change this logic based on your categories
-    selectedLocation: day.locations[i], 
-    onChanged: (Location? newValue) {
-        setState(() {
-            day.locations[i] = newValue;
-        });
-    },
-    showRemoveButton: i > 0, 
-    onRemove: () {
-        setState(() {
-            day.locations.removeAt(i);
-        });
-    },
-),
+          ),
+          for (var i = 0; i < day.locations.length; i++)
+           LocationDropdown(
+             key: ValueKey(i), // This is new!
+              locations: getAvailableLocations(
+                day.locations[i] != null ? day.locations[i]!.category : selectedCategory!,
+                day.locations,
+                day
+              ),
+              selectedLocation: day.locations[i], 
+              onChanged: (Location? newValue) {
+                print("Setting state with value: $newValue");
+                  setState(() {
+                      day.locations[i] = newValue;
+                  });
+              },
+              showRemoveButton: i > 0, 
+              onRemove: () {
+                  setState(() {
+                      day.locations.removeAt(i);
+                  });
+              },
+          ),
 
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
@@ -288,7 +304,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
 
     }
 }
-
+ day.locations.add(null);
               },
             ),
           ],
@@ -306,13 +322,13 @@ class LocationDropdown extends StatelessWidget {
   final VoidCallback onRemove;
 
   const LocationDropdown({
-    super.key,
+    Key? key,
     required this.locations,
     required this.selectedLocation,
     required this.onChanged,
     required this.showRemoveButton,
     required this.onRemove,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -320,8 +336,9 @@ class LocationDropdown extends StatelessWidget {
       children: [
         Expanded(
           child: DropdownButton<Location>(
+             key: ValueKey(selectedLocation),
             isExpanded: true,
-            value: selectedLocation,
+            value: locations.contains(selectedLocation) ? selectedLocation : null,
             onChanged: onChanged,
             items: [
               const DropdownMenuItem<Location>(

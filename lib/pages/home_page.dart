@@ -267,7 +267,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 10), // Add some space
             Text(
-              '${itinerary['distance']} km', // Assuming distance is in kilometers
+              '${itinerary['distance']} km away', // Assuming distance is in kilometers
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
