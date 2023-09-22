@@ -28,13 +28,11 @@ class Location {
 class ItineraryDay {
   String name;
   DateTime date;
-  List<Location?> locations;
+  List<Location?> locations = [];
   List<Location> fetchedLocationsRestaurants = [];
   List<Location> fetchedLocationsParks = [];
-  //... you can add more for other categories
 
-  ItineraryDay(
-      {required this.name, required this.date, required this.locations});
+  ItineraryDay({required this.name, required this.date});
 }
 
 class CreateItineraryPage extends StatefulWidget {
@@ -46,12 +44,8 @@ class CreateItineraryPage extends StatefulWidget {
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<Location> allLocations = [];
-  List<ItineraryDay> days = [
-    ItineraryDay(name: "", date: DateTime.now(), locations: [null])
-  ];
-  final TextEditingController _itineraryNameController =
-      TextEditingController();
-
+  List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now())];
+  final TextEditingController _itineraryNameController = TextEditingController();
   String? selectedCategory;
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
@@ -67,6 +61,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       });
     }
   }
+  
 
   Future<List<Location>> fetchNearbyPlaces(
       double lat, double lng, String category) async {
@@ -82,337 +77,239 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       throw Exception("Failed to load nearby places");
     }
   }
+  Future<void> addLocation(ItineraryDay day) async {
+  selectedCategory = await showDialog<String>(
+    context: context,
+    builder: (BuildContext context) => SimpleDialog(
+      title: const Text('Select Category'),
+      children: <Widget>[
+        SimpleDialogOption(
+          onPressed: () {
+            Navigator.pop(context, 'restaurant');
+          },
+          child: const Text('Restaurants'),
+        ),
+        SimpleDialogOption(
+          onPressed: () {
+            Navigator.pop(context, 'park');
+          },
+          child: const Text('Parks'),
+        ),
+      ],
+    ),
+  );
+
+  if (selectedCategory != null) {
+    Position? position = await getCurrentLocation();
+    if (position != null) {
+      double lat = position.latitude;
+      double lng = position.longitude;
+      List<Location> newFetchedLocations =
+          await fetchNearbyPlaces(lat, lng, selectedCategory!);
+
+      newFetchedLocations.removeWhere((location) => day.locations.contains(location));
+
+      if (newFetchedLocations.isNotEmpty) {
+        // Show a dropdown dialog for the user to select a location
+        Location? selectedLocation = await showDialog<Location>(
+          context: context,
+          builder: (BuildContext context) => SimpleDialog(
+            title: const Text('Select Location'),
+            children: newFetchedLocations.map((Location location) {
+              return SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, location);
+                },
+                child: Text(location.name),
+              );
+            }).toList(),
+          ),
+        );
+
+        if (selectedLocation != null) {
+          setState(() {
+            day.locations.add(selectedLocation);
+          });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No more locations available in this category')),
+        );
+      }
+    }
+  }
+}
+
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Create Itinerary'),
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: TextField(
+              controller: _itineraryNameController,
+              decoration: const InputDecoration(labelText: "Itinerary Name"),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: days.length + 1,
+              itemBuilder: (context, index) {
+                if (index == days.length) {
+                  return IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        days.add(ItineraryDay(name: "", date: DateTime.now()));
+                      });
+                    },
+                  );
+                } else {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: const EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ItineraryDayWidget(
+                      day: days[index],
+                      addLocation: () => addLocation(days[index]),
+                      selectDate: () => _selectDate(context, days[index]),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+    floatingActionButton: FloatingActionButton(
+      child: const Icon(Icons.forward),
+      onPressed: () {
+        if (_itineraryNameController.text.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please enter itinerary name!')));
+          return;
+        }
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => OverviewItinerary(
+            days: days,
+            itineraryName: _itineraryNameController.text,
+          ),
+        ));
+      },
+    ),
+  );
+}
+
+
+Future<Position?> getCurrentLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.deniedForever) {
+    return Future.error(
+      'Location permissions are permanently denied, we cannot request permissions.',
+    );
+  }
+
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission != LocationPermission.whileInUse &&
+        permission != LocationPermission.always) {
+      return Future.error('Location permissions are denied');
+    }
+  }
+
+  return await Geolocator.getCurrentPosition();
+}
+
+}
+
+class ItineraryDayWidget extends StatelessWidget {
+  final ItineraryDay day;
+  final VoidCallback addLocation;
+  final VoidCallback selectDate;
+
+  ItineraryDayWidget(
+      {required this.day, required this.addLocation, required this.selectDate});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Itinerary', style: TextStyle(fontSize: 50)),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
+    return Column(
+      children: [
+        Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: TextField(
-                controller: _itineraryNameController,
-                decoration: const InputDecoration(labelText: "Itinerary Name"),
-              ),
-            ),
             Expanded(
-              child: ListView.builder(
-                itemCount: days.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == days.length) {
-                    return IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        setState(() {
-                          days.add(ItineraryDay(
-                              name: "",
-                              date: DateTime.now(),
-                              locations: [null]));
-                        });
-                      },
-                    );
-                  }
-                  return _buildDayCard(days[index], index);
+              child: TextField(
+                controller: TextEditingController()..text = day.name,
+                decoration: const InputDecoration(labelText: "Day Name"),
+                onChanged: (value) {
+                  day.name = value;
                 },
               ),
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.check),
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OverviewItinerary(
-              days: days,
-              itineraryName: _itineraryNameController.text,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDayCard(ItineraryDay day, int index) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            if (index > 0)
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
-                  onPressed: () {
-                    setState(() {
-                      days.removeAt(index);
-                    });
-                  },
-                ),
-              ),
-            Text('Day ${index + 1}',
-                style:
-                    const TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
-            TextField(
-              decoration: const InputDecoration(labelText: "Day Name"),
-              onChanged: (value) {
-                day.name = value;
-              },
-            ),
-            ElevatedButton(
-              onPressed: () => _selectDate(context, day),
-              child: Text("${day.date.toLocal()}".split(' ')[0],
-                  style: const TextStyle(fontSize: 18)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                selectedCategory = await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => SimpleDialog(
-                    title: const Text('Good Day, What are your plans?'),
-                    children: <Widget>[
-                      SimpleDialogOption(
-                        onPressed: () {
-                          Navigator.pop(context, 'restaurant');
-                        },
-                        child: const Text('Restaurants'),
-                      ),
-                      SimpleDialogOption(
-                        onPressed: () {
-                          Navigator.pop(context, 'park');
-                        },
-                        child: const Text('Parks'),
-                      ),
-                    ],
-                  ),
-                );
-                if (selectedCategory != null) {
-                  Position? position = await getCurrentLocation();
-                  if (position != null) {
-                    double lat = position.latitude;
-                    double lng = position.longitude;
-                    List<Location> newFetchedLocations =
-                        await fetchNearbyPlaces(lat, lng, selectedCategory!);
-
-                    setState(() {
-                      if (selectedCategory == 'restaurant') {
-                        day.fetchedLocationsRestaurants = newFetchedLocations;
-                      } else if (selectedCategory == 'park') {
-                        day.fetchedLocationsParks = newFetchedLocations;
-                      }
-                      // ... add more conditions for other categories
-
-                      if (newFetchedLocations.isNotEmpty) {
-                        day.locations.add(newFetchedLocations[0]);
-                      }
-                    });
-                  }
-                }
-              },
-              child: Text(
-                selectedCategory ?? "Good Day, What are your plans?",
-                style: const TextStyle(fontSize: 18),
-              ),
-            ),
-            for (var i = 0; i < day.locations.length; i++)
-              LocationDropdown(
-                locations: day.locations[i] != null &&
-                        day.locations[i]!.category == 'restaurant'
-                    ? day.fetchedLocationsRestaurants
-                    : day
-                        .fetchedLocationsParks, // Change this logic based on your categories
-                selectedLocation: day.locations[i],
-                onChanged: (Location? newValue) {
-                  setState(() {
-                    day.locations[i] = newValue;
-                  });
-                },
-                showRemoveButton: i > 0,
-                onRemove: () {
-                  setState(() {
-                    day.locations.removeAt(i);
-                  });
-                },
-              ),
             IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () async {
-                selectedCategory = await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) => SimpleDialog(
-                    title: const Text('Not tired yet? Tara Lakbay!'),
-                    children: <Widget>[
-                      SimpleDialogOption(
-                        onPressed: () {
-                          Navigator.pop(context, 'restaurant');
-                        },
-                        child: const Text('Restaurants'),
-                      ),
-                      SimpleDialogOption(
-                        onPressed: () {
-                          Navigator.pop(context, 'park');
-                        },
-                        child: const Text('Parks'),
-                      ),
-                    ],
-                  ),
-                );
-                if (selectedCategory != null) {
-<<<<<<< HEAD
-    Position? position = await getCurrentLocation();
-    if (position != null) {
-        double lat = position.latitude;
-        double lng = position.longitude;
-        List<Location> newFetchedLocations = await fetchNearbyPlaces(lat, lng, selectedCategory!);
-        
-        // Remove duplicates
-        newFetchedLocations = newFetchedLocations.toSet().toList();
-        
-        setState(() {
-    if (selectedCategory == 'restaurant') {
-        day.fetchedLocationsRestaurants = newFetchedLocations;
-        
-        // Check if the location is not already in the day.locations before adding
-        if (newFetchedLocations.isNotEmpty) {
-    // Remove the first location from the fetched list if it's already in day.locations
-    if (day.locations.contains(newFetchedLocations[0])) {
-        newFetchedLocations.removeAt(0);
-    }
-
-    // Then, if there's still any location left in newFetchedLocations, add it
-    if (newFetchedLocations.isNotEmpty) {
-        day.locations.add(newFetchedLocations[0]);
-    }
-}
-    } else if (selectedCategory == 'park') {
-        day.fetchedLocationsParks = newFetchedLocations;
-
-        // Check if the location is not already in the day.locations before adding
-        if (newFetchedLocations.isNotEmpty) {
-    // Remove the first location from the fetched list if it's already in day.locations
-    if (day.locations.contains(newFetchedLocations[0])) {
-        newFetchedLocations.removeAt(0);
-    }
-
-    // Then, if there's still any location left in newFetchedLocations, add it
-    if (newFetchedLocations.isNotEmpty) {
-        day.locations.add(newFetchedLocations[0]);
-    }
-}
-    }
-    // ... You can add more conditions for other categories
-});
-=======
-                  Position? position = await getCurrentLocation();
-                  if (position != null) {
-                    double lat = position.latitude;
-                    double lng = position.longitude;
-                    List<Location> newFetchedLocations =
-                        await fetchNearbyPlaces(lat, lng, selectedCategory!);
-
-                    // Remove duplicates
-                    newFetchedLocations = newFetchedLocations.toSet().toList();
->>>>>>> 0e09d8ffe5588ebf1801d2df5014886e06976d5b
-
-                    setState(() {
-                      if (selectedCategory == 'restaurant') {
-                        day.fetchedLocationsRestaurants = newFetchedLocations;
-
-                        // Check if the location is not already in the day.locations before adding
-                        if (newFetchedLocations.isNotEmpty &&
-                            !day.locations.contains(newFetchedLocations[0])) {
-                          day.locations.add(newFetchedLocations[0]);
-                        }
-                      } else if (selectedCategory == 'park') {
-                        day.fetchedLocationsParks = newFetchedLocations;
-
-                        // Check if the location is not already in the day.locations before adding
-                        if (newFetchedLocations.isNotEmpty &&
-                            !day.locations.contains(newFetchedLocations[0])) {
-                          day.locations.add(newFetchedLocations[0]);
-                        }
-                      }
-                      // ... You can add more conditions for other categories
-                    });
-                  }
-                }
-              },
+              icon: const Icon(Icons.date_range),
+              onPressed: selectDate,
             ),
           ],
         ),
-      ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: day.locations.length + 1,
+          itemBuilder: (context, index) {
+            if (index == day.locations.length) {
+              return IconButton(
+                icon: const Icon(Icons.add_location),
+                onPressed: addLocation,
+              );
+            } else {
+              return LocationWidget(
+                location: day.locations[index]!,
+                // Pass the correct functions for removing or editing locations here
+              );
+            }
+          },
+        ),
+      ],
     );
   }
 }
 
-class LocationDropdown extends StatelessWidget {
-  final List<Location> locations;
-  final Location? selectedLocation;
-  final ValueChanged<Location?> onChanged;
-  final bool showRemoveButton;
-  final VoidCallback onRemove;
+class LocationWidget extends StatelessWidget {
+  final Location location;
 
-  const LocationDropdown({
-    super.key,
-    required this.locations,
-    required this.selectedLocation,
-    required this.onChanged,
-    required this.showRemoveButton,
-    required this.onRemove,
-  });
+  LocationWidget({required this.location});
 
- @override
+  @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    return DropdownButton<Location>(
-      value: selectedLocation,
-      elevation: 16,
-      underline: Container(
-        height: 2,
-      ),
-      onChanged: onChanged,
-      items: [
-        ...locations.map<DropdownMenuItem<Location>>((Location location) {
-          return DropdownMenuItem<Location>(
-            value: location,
-            child: Text(
-              '${location.name} - ${location.category}',
-            ),
-          );
-        }).toList(),
-      ],
-=======
-    bool shouldShowDropdown = locations.isNotEmpty;
-    return Visibility(
-      visible: shouldShowDropdown,
-      child: DropdownButton<Location>(
-        value: selectedLocation,
-        elevation: 16,
-        underline: Container(
-          height: 2,
-        ),
-        onChanged: onChanged,
-        items: [
-          if (locations != null) //WALA LAGI KO KASABOT ANI NA CONDITION
-            ...locations.map<DropdownMenuItem<Location>>((Location location) {
-              return DropdownMenuItem<Location>(
-                value: location,
-                child: Text(
-                  '${location.name} - ${location.category}',
-                ),
-              );
-            }).toList(),
-        ],
-      ),
->>>>>>> 0e09d8ffe5588ebf1801d2df5014886e06976d5b
+    return ListTile(
+      title: Text(location.name),
+      // Implement other properties and functionalities for LocationWidget
     );
   }
 }
