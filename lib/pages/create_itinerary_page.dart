@@ -33,13 +33,9 @@ class ItineraryDay {
   List<Location> fetchedLocationsParks = [];
   //... you can add more for other categories
 
-  ItineraryDay({
-    required this.name, 
-    required this.date, 
-    required this.locations
-  });
+  ItineraryDay(
+      {required this.name, required this.date, required this.locations});
 }
-
 
 class CreateItineraryPage extends StatefulWidget {
   const CreateItineraryPage({super.key});
@@ -50,8 +46,11 @@ class CreateItineraryPage extends StatefulWidget {
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<Location> allLocations = [];
-  List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now(), locations: [null])];
-  final TextEditingController _itineraryNameController = TextEditingController();
+  List<ItineraryDay> days = [
+    ItineraryDay(name: "", date: DateTime.now(), locations: [null])
+  ];
+  final TextEditingController _itineraryNameController =
+      TextEditingController();
 
   String? selectedCategory;
 
@@ -69,8 +68,10 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     }
   }
 
-  Future<List<Location>> fetchNearbyPlaces(double lat, double lng, String category) async {
-    final url = "$BASE_URL?location=$lat,$lng&radius=1500&type=$category&key=AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
+  Future<List<Location>> fetchNearbyPlaces(
+      double lat, double lng, String category) async {
+    final url =
+        "$BASE_URL?location=$lat,$lng&radius=1500&type=$category&key=AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -108,7 +109,10 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                       icon: const Icon(Icons.add),
                       onPressed: () {
                         setState(() {
-                          days.add(ItineraryDay(name: "", date: DateTime.now(), locations: [null]));
+                          days.add(ItineraryDay(
+                              name: "",
+                              date: DateTime.now(),
+                              locations: [null]));
                         });
                       },
                     );
@@ -154,7 +158,9 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                   },
                 ),
               ),
-            Text('Day ${index + 1}', style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
+            Text('Day ${index + 1}',
+                style:
+                    const TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
             TextField(
               decoration: const InputDecoration(labelText: "Day Name"),
               onChanged: (value) {
@@ -163,7 +169,8 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
             ),
             ElevatedButton(
               onPressed: () => _selectDate(context, day),
-              child: Text("${day.date.toLocal()}".split(' ')[0], style: const TextStyle(fontSize: 18)),
+              child: Text("${day.date.toLocal()}".split(' ')[0],
+                  style: const TextStyle(fontSize: 18)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -188,27 +195,27 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                   ),
                 );
                 if (selectedCategory != null) {
-    Position? position = await getCurrentLocation();
-    if (position != null) {
-        double lat = position.latitude;
-        double lng = position.longitude;
-        List<Location> newFetchedLocations = await fetchNearbyPlaces(lat, lng, selectedCategory!);
+                  Position? position = await getCurrentLocation();
+                  if (position != null) {
+                    double lat = position.latitude;
+                    double lng = position.longitude;
+                    List<Location> newFetchedLocations =
+                        await fetchNearbyPlaces(lat, lng, selectedCategory!);
 
-        setState(() {
-            if (selectedCategory == 'restaurant') {
-                day.fetchedLocationsRestaurants = newFetchedLocations;
-            } else if (selectedCategory == 'park') {
-                day.fetchedLocationsParks = newFetchedLocations;
-            }
-            // ... add more conditions for other categories
+                    setState(() {
+                      if (selectedCategory == 'restaurant') {
+                        day.fetchedLocationsRestaurants = newFetchedLocations;
+                      } else if (selectedCategory == 'park') {
+                        day.fetchedLocationsParks = newFetchedLocations;
+                      }
+                      // ... add more conditions for other categories
 
-            if (newFetchedLocations.isNotEmpty) {
-                day.locations.add(newFetchedLocations[0]);
-            }
-        });
-    }
-}
-
+                      if (newFetchedLocations.isNotEmpty) {
+                        day.locations.add(newFetchedLocations[0]);
+                      }
+                    });
+                  }
+                }
               },
               child: Text(
                 selectedCategory ?? "Good Day, What are your plans?",
@@ -216,24 +223,25 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
               ),
             ),
             for (var i = 0; i < day.locations.length; i++)
-             LocationDropdown(
-    locations: day.locations[i] != null && day.locations[i]!.category == 'restaurant' 
-               ? day.fetchedLocationsRestaurants 
-               : day.fetchedLocationsParks, // Change this logic based on your categories
-    selectedLocation: day.locations[i], 
-    onChanged: (Location? newValue) {
-        setState(() {
-            day.locations[i] = newValue;
-        });
-    },
-    showRemoveButton: i > 0, 
-    onRemove: () {
-        setState(() {
-            day.locations.removeAt(i);
-        });
-    },
-),
-
+              LocationDropdown(
+                locations: day.locations[i] != null &&
+                        day.locations[i]!.category == 'restaurant'
+                    ? day.fetchedLocationsRestaurants
+                    : day
+                        .fetchedLocationsParks, // Change this logic based on your categories
+                selectedLocation: day.locations[i],
+                onChanged: (Location? newValue) {
+                  setState(() {
+                    day.locations[i] = newValue;
+                  });
+                },
+                showRemoveButton: i > 0,
+                onRemove: () {
+                  setState(() {
+                    day.locations.removeAt(i);
+                  });
+                },
+              ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
               onPressed: () async {
@@ -258,6 +266,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                   ),
                 );
                 if (selectedCategory != null) {
+<<<<<<< HEAD
     Position? position = await getCurrentLocation();
     if (position != null) {
         double lat = position.latitude;
@@ -301,10 +310,40 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     }
     // ... You can add more conditions for other categories
 });
+=======
+                  Position? position = await getCurrentLocation();
+                  if (position != null) {
+                    double lat = position.latitude;
+                    double lng = position.longitude;
+                    List<Location> newFetchedLocations =
+                        await fetchNearbyPlaces(lat, lng, selectedCategory!);
 
-    }
-}
+                    // Remove duplicates
+                    newFetchedLocations = newFetchedLocations.toSet().toList();
+>>>>>>> 0e09d8ffe5588ebf1801d2df5014886e06976d5b
 
+                    setState(() {
+                      if (selectedCategory == 'restaurant') {
+                        day.fetchedLocationsRestaurants = newFetchedLocations;
+
+                        // Check if the location is not already in the day.locations before adding
+                        if (newFetchedLocations.isNotEmpty &&
+                            !day.locations.contains(newFetchedLocations[0])) {
+                          day.locations.add(newFetchedLocations[0]);
+                        }
+                      } else if (selectedCategory == 'park') {
+                        day.fetchedLocationsParks = newFetchedLocations;
+
+                        // Check if the location is not already in the day.locations before adding
+                        if (newFetchedLocations.isNotEmpty &&
+                            !day.locations.contains(newFetchedLocations[0])) {
+                          day.locations.add(newFetchedLocations[0]);
+                        }
+                      }
+                      // ... You can add more conditions for other categories
+                    });
+                  }
+                }
               },
             ),
           ],
@@ -332,6 +371,7 @@ class LocationDropdown extends StatelessWidget {
 
  @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return DropdownButton<Location>(
       value: selectedLocation,
       elevation: 16,
@@ -349,6 +389,30 @@ class LocationDropdown extends StatelessWidget {
           );
         }).toList(),
       ],
+=======
+    bool shouldShowDropdown = locations.isNotEmpty;
+    return Visibility(
+      visible: shouldShowDropdown,
+      child: DropdownButton<Location>(
+        value: selectedLocation,
+        elevation: 16,
+        underline: Container(
+          height: 2,
+        ),
+        onChanged: onChanged,
+        items: [
+          if (locations != null) //WALA LAGI KO KASABOT ANI NA CONDITION
+            ...locations.map<DropdownMenuItem<Location>>((Location location) {
+              return DropdownMenuItem<Location>(
+                value: location,
+                child: Text(
+                  '${location.name} - ${location.category}',
+                ),
+              );
+            }).toList(),
+        ],
+      ),
+>>>>>>> 0e09d8ffe5588ebf1801d2df5014886e06976d5b
     );
   }
 }
