@@ -272,16 +272,32 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
         day.fetchedLocationsRestaurants = newFetchedLocations;
         
         // Check if the location is not already in the day.locations before adding
-        if (newFetchedLocations.isNotEmpty && !day.locations.contains(newFetchedLocations[0])) {
-            day.locations.add(newFetchedLocations[0]);
-        }
+        if (newFetchedLocations.isNotEmpty) {
+    // Remove the first location from the fetched list if it's already in day.locations
+    if (day.locations.contains(newFetchedLocations[0])) {
+        newFetchedLocations.removeAt(0);
+    }
+
+    // Then, if there's still any location left in newFetchedLocations, add it
+    if (newFetchedLocations.isNotEmpty) {
+        day.locations.add(newFetchedLocations[0]);
+    }
+}
     } else if (selectedCategory == 'park') {
         day.fetchedLocationsParks = newFetchedLocations;
 
         // Check if the location is not already in the day.locations before adding
-        if (newFetchedLocations.isNotEmpty && !day.locations.contains(newFetchedLocations[0])) {
-            day.locations.add(newFetchedLocations[0]);
-        }
+        if (newFetchedLocations.isNotEmpty) {
+    // Remove the first location from the fetched list if it's already in day.locations
+    if (day.locations.contains(newFetchedLocations[0])) {
+        newFetchedLocations.removeAt(0);
+    }
+
+    // Then, if there's still any location left in newFetchedLocations, add it
+    if (newFetchedLocations.isNotEmpty) {
+        day.locations.add(newFetchedLocations[0]);
+    }
+}
     }
     // ... You can add more conditions for other categories
 });
@@ -314,34 +330,24 @@ class LocationDropdown extends StatelessWidget {
     required this.onRemove,
   });
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButton<Location>(
-            isExpanded: true,
-            value: selectedLocation,
-            onChanged: onChanged,
-            items: [
-              const DropdownMenuItem<Location>(
-                value: null,
-                child: Text('Choose Destination/Location', style: TextStyle(fontSize: 50)),
-              ),
-              ...locations.map<DropdownMenuItem<Location>>((Location location) {
-                return DropdownMenuItem<Location>(
-                  value: location,
-                  child: Text('${location.name} - ${location.category}', style: const TextStyle(fontSize: 50)),
-                );
-              }).toList(),
-            ],
-          ),
-        ),
-        if (showRemoveButton)
-          IconButton(
-            icon: const Icon(Icons.remove_circle_outline),
-            onPressed: onRemove,
-          ),
+    return DropdownButton<Location>(
+      value: selectedLocation,
+      elevation: 16,
+      underline: Container(
+        height: 2,
+      ),
+      onChanged: onChanged,
+      items: [
+        ...locations.map<DropdownMenuItem<Location>>((Location location) {
+          return DropdownMenuItem<Location>(
+            value: location,
+            child: Text(
+              '${location.name} - ${location.category}',
+            ),
+          );
+        }).toList(),
       ],
     );
   }
