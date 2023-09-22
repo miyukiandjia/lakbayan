@@ -1,6 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+
+const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
 
 class Location {
   final String name;
@@ -73,15 +79,25 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                       ),
                     ]
                   : [
-                      ElevatedButton(
-                        onPressed: () async {
+                       ElevatedButton(
+                      onPressed: () async {
+                        final selectedData = await _selectDayAndLocation(itinerary);
+                        if (selectedData != null) {
                           final selectedLocation = await _changeLocation();
                           if (selectedLocation != null) {
-                            // Logic to update location
+                            // Logic to update selected day and location
+                            setState(() {
+                              itinerary['days'][selectedData['dayIndex']]['locations'][selectedData['locationIndex']] = {
+                                'name': selectedLocation.name,
+                                'category': selectedLocation.category,
+                                'status': 'Ongoing',
+                              };
+                            });
                           }
-                        },
-                        child: Text('Change Location'),
-                      ),
+                        }
+                      },
+                      child: Text('Change Location'),
+                    ),
                       ElevatedButton(
                         onPressed: () async {
                           final selectedDate = await _changeDate();
@@ -125,7 +141,77 @@ Future<void> _reloadLocalItineraries() async {
     _localItineraries.clear();
   }
 }
+Future<Map<String, dynamic>?> _selectDayAndLocation(Map<String, dynamic> itinerary) async {
+  Map<String, dynamic>? selectedData;
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+  title: Text('Select Day and Location'),
+  content: Container(
+    // Constrain the height of the AlertDialog
+    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+    child: SingleChildScrollView(
+      child: ListView.builder(
+        // Setting shrinkWrap to true as the ListView is inside a SingleChildScrollView
+        shrinkWrap: true,
+        itemCount: itinerary['days'].length,
+        itemBuilder: (context, index) {
+          final day = itinerary['days'][index];
+          return ExpansionTile(
+            title: Text('Day ${index + 1}'),
+            children: List<Widget>.generate(day['locations'].length, (locationIndex) {
+              final location = day['locations'][locationIndex];
+              return ListTile(
+                title: Text(location['name']),
+                onTap: () {
+                  Navigator.of(context).pop({
+                    'dayIndex': index,
+                    'locationIndex': locationIndex,
+                  });
+                },
+              );
+            }),
+          );
+        },
+      ),
+    ),
+  ),
+);
 
+    },
+  ).then((value) {
+    selectedData = value;
+  });
+  return selectedData;
+}
+
+ Future<List<Location>> fetchNearbyLocations() async {
+    List<Location> locations = [];
+    
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    
+    final response = await http.get(Uri.parse(
+      '$BASE_URL?location=${position.latitude},${position.longitude}&radius=5000&key=$API_KEY',
+    ));
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final results = data['results'] as List<dynamic>;
+      for (var result in results) {
+        final name = result['name'];
+        final category = result['types'][0];
+        locations.add(Location(name: name, category: category));
+      }
+    } else {
+      print('Failed to load locations');
+    }
+    
+    return locations;
+  }
+  
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -316,31 +402,46 @@ Future<void> _deleteItinerary(Map<String, dynamic> itinerary) async {
 }
 
 
-  Future<Location?> _changeLocation() async {
-    final locations = await fetchFirestoreData();
-    Location? selectedLocation;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Select a location'),
-          content: DropdownButton<Location>(
-            items: locations.map((Location location) {
-              return DropdownMenuItem<Location>(
-                value: location,
-                child: Text('${location.name} - ${location.category}'),
-              );
-            }).toList(),
-            onChanged: (Location? newValue) {
+ Future<Location?> _changeLocation() async {
+  final locations = await fetchNearbyLocations(); // Fetch locations using Google Places API
+  Location? selectedLocation;
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text('Select a location'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return DropdownButton<Location>(
+              value: selectedLocation, // Set the value to the currently selected location
+              items: locations.map((Location location) {
+                return DropdownMenuItem<Location>(
+                  value: location,
+                  child: Text('${location.name} - ${location.category}'),
+                );
+              }).toList(),
+              onChanged: (Location? newValue) {
+                setState(() {
+                  selectedLocation = newValue; // Update the selected location within the dialog
+                });
+              },
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
               Navigator.of(context).pop();
-              selectedLocation = newValue;
             },
+            child: Text('OK'),
           ),
-        );
-      }
-    );
-    return selectedLocation;
-  }
+        ],
+      );
+    },
+  );
+  return selectedLocation;
+}
+
 
   Future<DateTime?> _changeDate() async {
     DateTime? pickedDate = await showDatePicker(

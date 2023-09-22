@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/overview_itinerary_page.dart';
 import 'package:http/http.dart' as http;
-import 'package:lakbayan/current_Loc.dart';
 import 'package:geolocator/geolocator.dart';
 
 const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
