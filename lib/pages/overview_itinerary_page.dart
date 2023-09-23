@@ -70,7 +70,7 @@ class OverviewItinerary extends StatelessWidget {
                   .map((loc) => {
                     'name': loc!.name,
                     'category': loc.category,
-                    'status': 'Ongoing',
+                    'status': 'Upcoming',
                   })
                   .toList(),
             };
@@ -78,7 +78,7 @@ class OverviewItinerary extends StatelessWidget {
 
           var itineraryMap = {
             'userId': uid,
-            'status': 'Ongoing',
+            'status': 'Upcoming',
             'itineraryName': itineraryName,  // Save the itinerary name
             'days': daysList
           };

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';  // <- Import Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
@@ -21,7 +21,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final User? user = Auth().currentUser;
-  String? username;  // <- Add the username field
+  String? username;
+  final TextEditingController _postController = TextEditingController();
 
   @override
   void initState() {
@@ -29,7 +30,7 @@ class _HomePageState extends State<HomePage> {
     _checkAuthentication();
   }
 
-  _checkAuthentication() async {
+    _checkAuthentication() async {
     final user = Auth().currentUser;
 
     if (user == null) {
@@ -389,85 +390,290 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-    @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0.0,
-        bottomOpacity: 0.0,
-        toolbarHeight: 90,
-        backgroundColor: Colors.white,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _userInfo(context),
-            _createItinerary(context),
-          ],
+  Future<void> _createPost() async {
+    final text = _postController.text;
+    if (text.isEmpty) return;
+
+    // Placeholder for imageURL and itinerary
+    String? imageURL; // replace with actual implementation to get image URL
+    Map<String, dynamic>? itinerary; // replace with actual implementation to get itinerary
+    
+    // Validate or fetch imageURL and itinerary if necessary
+    // For example, if the user can upload images, you might need to implement image uploading logic here and get the imageURL.
+    // Similarly, if the user can select an itinerary, you might need to fetch the selected itinerary.
+
+    // Add the post to Firestore
+    await FirebaseFirestore.instance.collection('posts').add({
+      'userId': user?.uid,
+      'username': username,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+      if (imageURL != null) 'imageURL': imageURL, // Add imageURL field if available
+      if (itinerary != null) 'itinerary': itinerary, // Add itinerary field if available
+    });
+
+    // Clear the text field
+    _postController.clear();
+}
+
+
+  Widget _createPostSection() {
+    return Column(
+      children: [
+        TextField(
+          controller: _postController,
+          decoration: InputDecoration(
+            labelText: 'Create Post',
+            // Customize the decoration as needed
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black),
-        titleTextStyle: const TextStyle(color: Colors.black),
-      ),
-      body: Stack(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: ListView(
-              children: <Widget>[
-                Center(child: _davaoImage(context)),
-                const SizedBox(height: 20),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Popular Destinations',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 50,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: fetchNearbyDestinations(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text(
-                        'Error: ${snapshot.error}',
-                        style: TextStyle(fontSize: 50),
-                      );
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No popular destinations available.');
-                    } else {
-                      final destinations = snapshot.data!;
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: destinations.map((destination) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 20),
-                              child: _itineraryCard(destination),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _navBar(context, 0),
-          ),
-        ],
-      ),
+        ElevatedButton(
+          onPressed: _createPost,
+          child: Text('Post'),
+        ),
+      ],
     );
   }
+
+Widget _lakbayanFeed() {
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('posts')
+        .orderBy('timestamp', descending: true)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return CircularProgressIndicator();
+      } else if (snapshot.hasError) {
+        return Text('Error: ${snapshot.error}');
+      } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return Text('No posts available.');
+      } else {
+        final posts = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: posts.length,
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            final postId = post.id;
+            final userId = post['userId'];
+            final _commentController = TextEditingController();
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (userSnapshot.hasError) {
+                  return Text('Error: ${userSnapshot.error}');
+                } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  return Text('User does not exist.');
+                } else {
+                  final userProfilePic = userSnapshot.data!['profile_pic_url'];
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: NetworkImage(userProfilePic),
+                              ),
+                              SizedBox(width: 8.0),
+                              Text(
+                                post['username'],
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Text(post['text']),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.favorite_border),
+                                onPressed: () {
+                                  // Increment the number of likes
+                                  FirebaseFirestore.instance.collection('posts').doc(postId).update({
+                                    'likes': FieldValue.increment(1),
+                                  });
+                                },
+                              ),
+                              Text(post['likes'].toString()), // Display the number of likes
+                              IconButton(
+                                icon: Icon(Icons.star_border),
+                                onPressed: () {
+                                  // Increment the number of saves
+                                  FirebaseFirestore.instance.collection('posts').doc(postId).update({
+                                    'saves': FieldValue.increment(1),
+                                  });
+                                },
+                              ),
+                              Text(post['saves'].toString()), // Display the number of saves
+                              IconButton(
+                                icon: Icon(Icons.comment),
+                                onPressed: () {
+                                  // TODO: Implement comment functionality
+                                },
+                              ),
+                            ],
+                          ),
+                          // Comment Input
+                          TextField(
+                            controller: _commentController,
+                            decoration: InputDecoration(
+                              labelText: 'Write a comment...',
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              // Add a comment to the post
+                              final commentText = _commentController.text;
+                              if (commentText.isNotEmpty) {
+                                await FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').add({
+                                  'userId': userId,
+                                  'username': post['username'],
+                                  'text': commentText,
+                                  'timestamp': FieldValue.serverTimestamp(),
+                                });
+                                _commentController.clear();
+                              }
+                            },
+                            child: Text('Post Comment'),
+                          ),
+                          // Display Comments
+                          StreamBuilder<QuerySnapshot>(
+                            stream: FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').orderBy('timestamp', descending: true).snapshots(),
+                            builder: (context, commentSnapshot) {
+                              if (commentSnapshot.connectionState == ConnectionState.waiting) {
+                                return CircularProgressIndicator();
+                              } else if (commentSnapshot.hasError) {
+                                return Text('Error: ${commentSnapshot.error}');
+                              } else if (!commentSnapshot.hasData || commentSnapshot.data!.docs.isEmpty) {
+                                return Text('No comments available.');
+                              } else {
+                                final comments = commentSnapshot.data!.docs;
+                                return ListView.builder(
+                                  itemCount: comments.length,
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  itemBuilder: (context, commentIndex) {
+                                    final comment = comments[commentIndex];
+                                    return ListTile(
+                                      title: Text(comment['text']),
+                                      subtitle: Text(comment['username']),
+                                    );
+                                  },
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+              },
+            );
+          },
+        );
+      }
+    },
+  );
+}
+
+
+
+
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    appBar: AppBar(
+      elevation: 0.0,
+      bottomOpacity: 0.0,
+      toolbarHeight: 90,
+      backgroundColor: Colors.white,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _userInfo(context),
+          _createItinerary(context),
+        ],
+      ),
+      iconTheme: const IconThemeData(color: Colors.black),
+      titleTextStyle: const TextStyle(color: Colors.black),
+    ),
+    body: Stack(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: ListView(
+            children: <Widget>[
+              Center(child: _davaoImage(context)),
+              const SizedBox(height: 20),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Popular Destinations',
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 50,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchNearbyDestinations(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text(
+                      'Error: ${snapshot.error}',
+                      style: TextStyle(fontSize: 50),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No popular destinations available.');
+                  } else {
+                    final destinations = snapshot.data!;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: destinations.map((destination) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 20),
+                            child: _itineraryCard(destination),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  }
+                },
+              ),
+              // Add the "Create Post" section
+              _createPostSection(),
+              
+              // Add a separator
+              const SizedBox(height: 20),
+              
+              // Add the "LAKBAYAN FEED" section
+              _lakbayanFeed(),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: _navBar(context, 0),
+        ),
+      ],
+    ),
+  );
+}
 }
