@@ -34,60 +34,64 @@ class _HomePageState extends State<HomePage> {
     _checkAuthentication();
   }
 
-    _checkAuthentication() async {
+  _checkAuthentication() async {
     final user = Auth().currentUser;
 
     if (user == null) {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-        );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
     } else {
-        // Fetch the username from Firestore
-        final docSnapshot = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        setState(() {
-            username = docSnapshot.data()?['username'];
-        });
+      // Fetch the username from Firestore
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      setState(() {
+        username = docSnapshot.data()?['username'];
+      });
     }
   }
 
-   Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
-    const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0'; 
+  Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
+    const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0';
     Position? position = await getCurrentLocation();
     if (position == null) {
-        position = Position(
-        latitude: 7.1907, 
-        longitude: 125.4553, 
-        timestamp: DateTime.now(),
-        accuracy: 0.0,
-        altitude: 0.0,
-        heading: 0.0,
-        speed: 0.0,
-        speedAccuracy: 0.0
-      );  // Default to Davao coordinates if location fetch fails.
-
+      position = Position(
+          latitude: 7.1907,
+          longitude: 125.4553,
+          timestamp: DateTime.now(),
+          accuracy: 0.0,
+          altitude: 0.0,
+          heading: 0.0,
+          speed: 0.0,
+          speedAccuracy:
+              0.0); // Default to Davao coordinates if location fetch fails.
     }
 
-  List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(position.latitude, position.longitude);
+    List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(
+        position.latitude, position.longitude);
     if (placemarks.isEmpty) {
-        return [];
+      return [];
     }
 
     String? cityName = placemarks[0].locality;
 
     if (cityName == null) {
-        return [];
+      return [];
     }
 
-  List<geo.Location> locations = await geo.locationFromAddress(cityName);
+    List<geo.Location> locations = await geo.locationFromAddress(cityName);
     if (locations.isEmpty) {
-        return [];
+      return [];
     }
 
     double lat = locations[0].latitude;
     double lng = locations[0].longitude;
 
-    final url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=10000&type=tourist_attraction&key=$API_KEY";
+    final url =
+        "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=10000&type=tourist_attraction&key=$API_KEY";
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -95,19 +99,25 @@ class _HomePageState extends State<HomePage> {
       List<Map<String, dynamic>> destinations = [];
 
       for (var result in jsonResponse['results']) {
-      double distance = Geolocator.distanceBetween(position.latitude, position.longitude, result['geometry']['location']['lat'], result['geometry']['location']['lng']);
+        double distance = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            result['geometry']['location']['lat'],
+            result['geometry']['location']['lng']);
         distance = distance / 1000;
 
         destinations.add({
           'name': result['name'] ?? 'Unknown Place',
           'category': result['types'][0] ?? 'Unknown Category',
           'gReviews': result['user_ratings_total'] ?? 0.0,
-          'image': "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result['photos']?[0]['photo_reference']}&key=$API_KEY",
+          'image':
+              "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result['photos']?[0]['photo_reference']}&key=$API_KEY",
           'distance': distance.toStringAsFixed(2),
         });
       }
 
-      destinations.sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
+      destinations
+          .sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
       return destinations;
     } else {
       throw Exception("Failed to load destinations");
@@ -126,13 +136,15 @@ class _HomePageState extends State<HomePage> {
 
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.deniedForever) {
-      print('Location permissions are permanently denied, we cannot request permissions.');
+      print(
+          'Location permissions are permanently denied, we cannot request permissions.');
       return null;
     }
 
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse && permission != LocationPermission.always) {
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
         print('Location permissions are denied (actual value: $permission).');
         return null;
       }
@@ -147,34 +159,35 @@ class _HomePageState extends State<HomePage> {
     String greeting;
 
     if (timeOfDay >= 0 && timeOfDay < 12) {
-        greeting = 'Good morning,';
+      greeting = 'Good morning,';
     } else if (timeOfDay >= 12 && timeOfDay < 17) {
-        greeting = 'Good afternoon,';
+      greeting = 'Good afternoon,';
     } else {
-        greeting = 'Good evening,';
+      greeting = 'Good evening,';
     }
 
-    String nameToShow = username ?? 'User';  // Show 'User' as default if username is not available
+    String nameToShow = username ??
+        'User'; // Show 'User' as default if username is not available
 
     double fontSize = MediaQuery.of(context).size.width * 0.03;
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-            Text(
-                greeting,
-                style: TextStyle(
-                    fontSize: fontSize,
-                ),
-            ),
-            Text(
-                nameToShow,
-                style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                ),
-            ),
-        ],
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: TextStyle(
+            fontSize: fontSize,
+          ),
+        ),
+        Text(
+          nameToShow,
+          style: const TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -237,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                 errorBuilder: (BuildContext context, Object error,
                     StackTrace? stackTrace) {
                   return Center(
-                    child: Text('Error loading image'),
+                    child: Image.asset('lib/images/placeholder.png'),
                   );
                 },
               ),
@@ -395,6 +408,7 @@ class _HomePageState extends State<HomePage> {
   }
 
 
+<<<<<<< HEAD
 File? _selectedImage;
 final ImagePicker _picker = ImagePicker();
 
@@ -623,8 +637,78 @@ Widget _lakbayanFeed() {
     ),
   );
 }
+=======
+    // Placeholder for imageURL and itinerary
+    String? imageURL; // replace with actual implementation to get image URL
+    Map<String, dynamic>?
+        itinerary; // replace with actual implementation to get itinerary
 
+    // Validate or fetch imageURL and itinerary if necessary
+    // For example, if the user can upload images, you might need to implement image uploading logic here and get the imageURL.
+    // Similarly, if the user can select an itinerary, you might need to fetch the selected itinerary.
 
+    // Add the post to Firestore
+    await FirebaseFirestore.instance.collection('posts').add({
+      'userId': user?.uid,
+      'username': username,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+      if (imageURL != null)
+        'imageURL': imageURL, // Add imageURL field if available
+      if (itinerary != null)
+        'itinerary': itinerary, // Add itinerary field if available
+    });
+
+    // Clear the text field
+    _postController.clear();
+  }
+
+  Widget _createPostSection() {
+    return Column(
+      children: [
+        TextField(
+          controller: _postController,
+          decoration: InputDecoration(
+            labelText: 'Create Post',
+            // Customize the decoration as needed
+          ),
+        ),
+        ElevatedButton(
+          onPressed: _createPost,
+          child: Text('Post'),
+        ),
+      ],
+    );
+  }
+
+  Widget _lakbayanFeed() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('posts')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Text('No posts available.');
+        } else {
+          final posts = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: posts.length,
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              final postId = post.id;
+>>>>>>> 2424684bcfad8ce6c9d83f3b664d2b61ac9dbbd7
+
+              // Check if the 'userId', 'username', 'text', 'likes', and 'saves' fields exist in the document
+              final userId = post['userId'];
+
+<<<<<<< HEAD
 @override
 Widget build(BuildContext context) {
   return Scaffold(
@@ -677,21 +761,152 @@ Widget build(BuildContext context) {
                     );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Text('No popular destinations available.');
+=======
+              final _commentController = TextEditingController();
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userId)
+                    .get(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (userSnapshot.hasError) {
+                    return Text('Error: ${userSnapshot.error}');
+                  } else if (!userSnapshot.hasData ||
+                      !userSnapshot.data!.exists) {
+                    return Text('User does not exist.');
+>>>>>>> 2424684bcfad8ce6c9d83f3b664d2b61ac9dbbd7
                   } else {
-                    final destinations = snapshot.data!;
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: destinations.map((destination) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: _itineraryCard(destination),
-                          );
-                        }).toList(),
+                    final userProfilePic =
+                        userSnapshot.data!['profile_pic_url'];
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: NetworkImage(userProfilePic),
+                                ),
+                                SizedBox(width: 8.0),
+                                Text(
+                                  post['username'],
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.0),
+                            Text(post['text']),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.favorite_border),
+                                  onPressed: () {
+                                    // Increment the number of likes
+                                    FirebaseFirestore.instance
+                                        .collection('posts')
+                                        .doc(postId)
+                                        .update({
+                                      'likes': FieldValue.increment(1),
+                                    });
+                                  },
+                                ),
+                                Text(post['likes']
+                                    .toString()), // Display the number of likes
+                                IconButton(
+                                  icon: Icon(Icons.star_border),
+                                  onPressed: () {
+                                    // Increment the number of saves
+                                    FirebaseFirestore.instance
+                                        .collection('posts')
+                                        .doc(postId)
+                                        .update({
+                                      'saves': FieldValue.increment(1),
+                                    });
+                                  },
+                                ),
+                                Text(post['saves']
+                                    .toString()), // Display the number of saves
+                                IconButton(
+                                  icon: Icon(Icons.comment),
+                                  onPressed: () {
+                                    // TODO: Implement comment functionality
+                                  },
+                                ),
+                              ],
+                            ),
+                            // Comment Input
+                            TextField(
+                              controller: _commentController,
+                              decoration: InputDecoration(
+                                labelText: 'Write a comment...',
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                // Add a comment to the post
+                                final commentText = _commentController.text;
+                                if (commentText.isNotEmpty) {
+                                  await FirebaseFirestore.instance
+                                      .collection('posts')
+                                      .doc(postId)
+                                      .collection('comments')
+                                      .add({
+                                    'userId': userId,
+                                    'username': post['username'],
+                                    'text': commentText,
+                                    'timestamp': FieldValue.serverTimestamp(),
+                                  });
+                                  _commentController.clear();
+                                }
+                              },
+                              child: Text('Post Comment'),
+                            ),
+                            // Display Comments
+                            StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance
+                                  .collection('posts')
+                                  .doc(postId)
+                                  .collection('comments')
+                                  .orderBy('timestamp', descending: true)
+                                  .snapshots(),
+                              builder: (context, commentSnapshot) {
+                                if (commentSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return CircularProgressIndicator();
+                                } else if (commentSnapshot.hasError) {
+                                  return Text(
+                                      'Error: ${commentSnapshot.error}');
+                                } else if (!commentSnapshot.hasData ||
+                                    commentSnapshot.data!.docs.isEmpty) {
+                                  return Text('No comments available.');
+                                } else {
+                                  final comments = commentSnapshot.data!.docs;
+                                  return ListView.builder(
+                                    itemCount: comments.length,
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemBuilder: (context, commentIndex) {
+                                      final comment = comments[commentIndex];
+                                      return ListTile(
+                                        title: Text(comment['text']),
+                                        subtitle: Text(comment['username']),
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
                 },
+<<<<<<< HEAD
               ),
               //HEADER MGA SIZT
               Column(
@@ -711,16 +926,103 @@ Widget build(BuildContext context) {
                 ],
               )
             ],
+=======
+              );
+            },
+          );
+        }
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0.0,
+        bottomOpacity: 0.0,
+        toolbarHeight: 90,
+        backgroundColor: Colors.white,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _userInfo(context),
+            _createItinerary(context),
+          ],
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+        titleTextStyle: const TextStyle(color: Colors.black),
+      ),
+      body: Stack(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: ListView(
+              children: <Widget>[
+                Center(child: _davaoImage(context)),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Popular Destinations',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchNearbyDestinations(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text(
+                        'Error: ${snapshot.error}',
+                        style: TextStyle(fontSize: 50),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('No popular destinations available.');
+                    } else {
+                      final destinations = snapshot.data!;
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: destinations.map((destination) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: _itineraryCard(destination),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                // Add the "Create Post" section
+                _createPostSection(),
+
+                // Add a separator
+                const SizedBox(height: 20),
+
+                // Add the "LAKBAYAN FEED" section
+                _lakbayanFeed(),
+              ],
+            ),
+>>>>>>> 2424684bcfad8ce6c9d83f3b664d2b61ac9dbbd7
           ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _navBar(context, 0),
-        ),
-      ],
-    ),
-  );
-}
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _navBar(context, 0),
+          ),
+        ],
+      ),
+    );
+  }
 }
