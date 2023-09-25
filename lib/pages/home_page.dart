@@ -11,6 +11,10 @@ import 'package:lakbayan/pages/navigation_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -390,137 +394,172 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _createPost() async {
-    final text = _postController.text;
-    if (text.isEmpty) return;
 
-    // Placeholder for imageURL and itinerary
-    String? imageURL; // replace with actual implementation to get image URL
-    Map<String, dynamic>? itinerary; // replace with actual implementation to get itinerary
-    
-    // Validate or fetch imageURL and itinerary if necessary
-    // For example, if the user can upload images, you might need to implement image uploading logic here and get the imageURL.
-    // Similarly, if the user can select an itinerary, you might need to fetch the selected itinerary.
+File? _selectedImage;
+final ImagePicker _picker = ImagePicker();
 
-    // Add the post to Firestore
-    await FirebaseFirestore.instance.collection('posts').add({
-      'userId': user?.uid,
-      'username': username,
-      'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
-      if (imageURL != null) 'imageURL': imageURL, // Add imageURL field if available
-      if (itinerary != null) 'itinerary': itinerary, // Add itinerary field if available
-    });
+Future<void> _createPost() async {
+  final text = _postController.text;
+  if (text.isEmpty && _selectedImage == null) return;
 
-    // Clear the text field
-    _postController.clear();
+  // Placeholder for imageURL
+  String? imageURL;
+  
+  // If an image is selected, upload it to Firebase Storage
+  if (_selectedImage != null) {
+    final ref = FirebaseStorage.instance.ref().child('post_images').child('${DateTime.now().toIso8601String()}.jpg');
+    await ref.putFile(_selectedImage!);
+    imageURL = await ref.getDownloadURL();
+  }
+  
+  // Add the post to Firestore
+  await FirebaseFirestore.instance.collection('posts').add({
+    'userId': user?.uid,
+    'username': username,
+    'text': text,
+    'timestamp': FieldValue.serverTimestamp(),
+    if (imageURL != null) 'imageURL': imageURL,
+    'likes' : 0,
+    'saves' : 0,
+  });
+
+  // Clear the text field and the selected image
+  _postController.clear();
+  _selectedImage = null;
+}
+
+Widget _createPostSection() {
+  return Column(
+    children: [
+      if (_selectedImage != null)
+        Image.file(_selectedImage!, height: 100, width: 100, fit: BoxFit.cover),
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: TextField(
+          controller: _postController,
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: 'Share Your Adventure!',
+          ),
+          maxLines: null,
+        ),
+      ),
+      SizedBox(height: 10.0),
+      Row(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              final pickedFile = await _picker.getImage(source: ImageSource.gallery);
+              if (pickedFile != null) {
+                _selectedImage = File(pickedFile.path);
+              }
+            },
+            child: Text('Upload Image'),
+          ),
+          SizedBox(width: 10.0),
+          ElevatedButton(
+            onPressed: _createPost,
+            child: Text('Post'),
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 
-  Widget _createPostSection() {
-    return Column(
-      children: [
-        TextField(
-          controller: _postController,
-          decoration: InputDecoration(
-            labelText: 'Create Post',
-            // Customize the decoration as needed
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _createPost,
-          child: Text('Post'),
-        ),
-      ],
-    );
-  }
-
 Widget _lakbayanFeed() {
-  return StreamBuilder<QuerySnapshot>(
-    stream: FirebaseFirestore.instance
-        .collection('posts')
-        .orderBy('timestamp', descending: true)
-        .snapshots(),
-    builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return CircularProgressIndicator();
-      } else if (snapshot.hasError) {
-        return Text('Error: ${snapshot.error}');
-      } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-        return Text('No posts available.');
-      } else {
-        final posts = snapshot.data!.docs;
-        return ListView.builder(
-          itemCount: posts.length,
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            final post = posts[index];
-            final postId = post.id;
-            final userId = post['userId'];
-            final _commentController = TextEditingController();
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
-              builder: (context, userSnapshot) {
-                if (userSnapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (userSnapshot.hasError) {
-                  return Text('Error: ${userSnapshot.error}');
-                } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                  return Text('User does not exist.');
-                } else {
-                  final userProfilePic = userSnapshot.data!['profile_pic_url'];
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+  return Container(
+    color: Colors.pink, // Set the container color to pink
+    child: Column(
+      children: [
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('posts')
+              .orderBy('timestamp', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Text('No posts available.');
+            } else {
+              final posts = snapshot.data!.docs;
+              return ListView.builder(
+                itemCount: posts.length,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  final post = posts[index];
+                  final postId = post.id;
+                  final userId = post['userId'];
+                  final _commentController = TextEditingController();
+                  return FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator();
+                      } else if (userSnapshot.hasError) {
+                        return Text('Error: ${userSnapshot.error}');
+                      } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                        return Text('User does not exist.');
+                      } else {
+                        final userProfilePic = userSnapshot.data!['profile_pic_url'] ?? 'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                             children: [
                               CircleAvatar(
                                 backgroundImage: NetworkImage(userProfilePic),
                               ),
                               SizedBox(width: 8.0),
                               Text(
-                                post['username'],
+                                post['username'] ?? 'Username',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                           SizedBox(height: 8.0),
-                          Text(post['text']),
+                          if (post['imageURL'] != null && Uri.parse(post['imageURL']).isAbsolute) 
+                            Image.network(post['imageURL'] ?? 'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg', height: 100, width: 100, fit: BoxFit.cover),
+                          SizedBox(height: 8.0),
+                          Text(post['text'] ?? ''),
                           Row(
                             children: [
                               IconButton(
                                 icon: Icon(Icons.favorite_border),
                                 onPressed: () {
-                                  // Increment the number of likes
                                   FirebaseFirestore.instance.collection('posts').doc(postId).update({
                                     'likes': FieldValue.increment(1),
                                   });
                                 },
                               ),
-                              Text(post['likes'].toString()), // Display the number of likes
+                              Text(post['likes']?.toString() ?? '0'),
                               IconButton(
                                 icon: Icon(Icons.star_border),
                                 onPressed: () {
-                                  // Increment the number of saves
                                   FirebaseFirestore.instance.collection('posts').doc(postId).update({
                                     'saves': FieldValue.increment(1),
                                   });
                                 },
                               ),
-                              Text(post['saves'].toString()), // Display the number of saves
+                              Text(post['saves']?.toString() ?? '0'),
                               IconButton(
                                 icon: Icon(Icons.comment),
-                                onPressed: () {
-                                  // TODO: Implement comment functionality
-                                },
+                                onPressed: () {},
                               ),
                             ],
                           ),
-                          // Comment Input
                           TextField(
                             controller: _commentController,
                             decoration: InputDecoration(
@@ -529,7 +568,6 @@ Widget _lakbayanFeed() {
                           ),
                           ElevatedButton(
                             onPressed: () async {
-                              // Add a comment to the post
                               final commentText = _commentController.text;
                               if (commentText.isNotEmpty) {
                                 await FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').add({
@@ -543,7 +581,6 @@ Widget _lakbayanFeed() {
                             },
                             child: Text('Post Comment'),
                           ),
-                          // Display Comments
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance.collection('posts').doc(postId).collection('comments').orderBy('timestamp', descending: true).snapshots(),
                             builder: (context, commentSnapshot) {
@@ -562,32 +599,33 @@ Widget _lakbayanFeed() {
                                   itemBuilder: (context, commentIndex) {
                                     final comment = comments[commentIndex];
                                     return ListTile(
-                                      title: Text(comment['text']),
-                                      subtitle: Text(comment['username']),
+                                      title: Text(comment['text'] ?? ''),
+                                      subtitle: Text(comment['username'] ?? ''),
                                     );
                                   },
                                 );
                               }
                             },
                           ),
-                        ],
-                      ),
-                    ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   );
-                }
-              },
-            );
+                },
+              );
+            }
           },
-        );
-      }
-    },
+        ),
+      ],
+    ),
   );
 }
 
 
-
-
- @override
+@override
 Widget build(BuildContext context) {
   return Scaffold(
     backgroundColor: Colors.white,
@@ -655,14 +693,23 @@ Widget build(BuildContext context) {
                   }
                 },
               ),
-              // Add the "Create Post" section
-              _createPostSection(),
-              
-              // Add a separator
-              const SizedBox(height: 20),
-              
-              // Add the "LAKBAYAN FEED" section
-              _lakbayanFeed(),
+              //HEADER MGA SIZT
+              Column(
+                children: [
+                  const Text(
+                    'LAKBAYAN FEED',
+                    style: TextStyle(
+                      fontSize: 32.0, // Adjust the font size as needed
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 20.0), // Adjust the spacing as needed
+                  _createPostSection(),
+                  const SizedBox(height: 20),
+                  _lakbayanFeed(),
+                ],
+              )
             ],
           ),
         ),
