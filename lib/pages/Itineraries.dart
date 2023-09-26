@@ -412,17 +412,16 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   }
 
   Future<void> _deleteItinerary(Map<String, dynamic> itinerary) async {
-  DocumentReference docRef = itinerary['docRef'] as DocumentReference;
-  await docRef.delete();
-  Navigator.of(context).pop(); // Close the delete confirmation dialog
-  
-  // Navigate back to the ItinerariesPage
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(builder: (context) => ItinerariesPage()),
-    (Route<dynamic> route) => false,
-  );
-}
+    DocumentReference docRef = itinerary['docRef'] as DocumentReference;
+    await docRef.delete();
+    Navigator.of(context).pop(); // Close the delete confirmation dialog
 
+    // Navigate back to the ItinerariesPage
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => ItinerariesPage()),
+      (Route<dynamic> route) => false,
+    );
+  }
 
   Future<void> _unmarkAsDone(Map<String, dynamic> itinerary) async {
     DocumentReference docRef = itinerary['docRef'] as DocumentReference;
@@ -460,18 +459,17 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: Text('Itineraries'),
-  leading: IconButton(
-    icon: Icon(Icons.arrow_back),
-    onPressed: () {
-      // Navigate back to ProfilePage
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => ProfilePage()),
-      );
-    },
-  ),
-),
-
+        title: Text('Itineraries'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Navigate back to ProfilePage
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => ProfilePage()),
+            );
+          },
+        ),
+      ),
       body: DefaultTabController(
         length: 3,
         child: Column(
@@ -563,35 +561,38 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                           docRef.update({'status': updatedStatus});
                         },
                       ),
-                       IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text('Delete Itinerary'),
-                              content: Text('Are you sure you want to delete this itinerary?'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop(); // Close the dialog
-                                  },
-                                  child: Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop(); // Close the dialog
-                                    _deleteItinerary(itinerary);
-                                  },
-                                  child: Text('Delete'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Delete Itinerary'),
+                                content: Text(
+                                    'Are you sure you want to delete this itinerary?'),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Close the dialog
+                                    },
+                                    child: Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Close the dialog
+                                      _deleteItinerary(itinerary);
+                                    },
+                                    child: Text('Delete'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                   children: <Widget>[
