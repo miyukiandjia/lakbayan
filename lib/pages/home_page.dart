@@ -30,6 +30,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final User? user = Auth().currentUser;
   String? username;
+
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+  bool _isPosting = false; 
+
   final TextEditingController _postController = TextEditingController();
 
   @override
@@ -411,8 +416,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
+ 
 
   Future<void> _createPost() async {
     final text = _postController.text;
@@ -448,7 +452,7 @@ class _HomePageState extends State<HomePage> {
       'username': username,
       'text': text,
       'timestamp': FieldValue.serverTimestamp(),
-      if (imageURL != null) 'imageURL': imageURL,
+      'imageURL': imageURL,
       'likes': 0,
       'saves': 0,
     });
@@ -457,55 +461,100 @@ class _HomePageState extends State<HomePage> {
     _postController.clear();
     setState(() {
       _selectedImage = null;
+      Navigator.pop(context); // Close the bottom sheet
     });
   }
 
-  Widget _createPostSection() {
-    return Column(
-      children: [
-        if (_selectedImage != null)
-          Image.file(_selectedImage!,
-              height: 100, width: 100, fit: BoxFit.cover),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: TextField(
-            controller: _postController,
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              hintText: 'Share Your Adventure!',
-            ),
-            maxLines: null,
-          ),
+Widget _createPostSection() {
+  return GestureDetector(
+    onTap: () {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return FractionallySizedBox(
+              heightFactor: 0.75, // posting mode container height
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8.0),
+                    topRight: Radius.circular(8.0),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () {
+                            Navigator.pop(context); // Close the bottom sheet
+                          },
+                        ),
+                        ElevatedButton(
+                          onPressed: _createPost,
+                          child: Text('Post'),
+                        ),
+                      ],
+                    ),
+                    Divider(),
+                    Expanded(
+                      child: TextField(
+                        controller: _postController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Share Your Adventure!',
+                        ),
+                        maxLines: null,
+                      ),
+                    ),
+                    if (_selectedImage != null)
+                      Image.file(
+                        _selectedImage!,
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    SizedBox(height: 10.0),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final pickedFile = await _picker.getImage(source: ImageSource.gallery);
+                        if (pickedFile != null) {
+                          setState(() {
+                            _selectedImage = File(pickedFile.path);
+                          });
+                        }
+                      },
+                      child: Text('Photo Upload'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-        SizedBox(height: 10.0),
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () async {
-                final pickedFile =
-                    await _picker.getImage(source: ImageSource.gallery);
-                if (pickedFile != null) {
-                  setState(() {
-                    _selectedImage = File(pickedFile.path);
-                  });
-                }
-              },
-              child: Text('Upload Image'),
-            ),
-            SizedBox(width: 10.0),
-            ElevatedButton(
-              onPressed: _createPost,
-              child: Text('Post'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+      );
+    },
+    child: Container(
+      padding: EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Center(
+        child: Text('Share Your Adventure!'),
+      ),
+    ),
+  );
+}
+
+
+
+
 
   Widget _lakbayanFeed() {
     return Container(
