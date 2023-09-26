@@ -44,8 +44,7 @@ class CreateItineraryPage extends StatefulWidget {
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<Location> allLocations = [];
   List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now())];
-  final TextEditingController _itineraryNameController =
-      TextEditingController();
+  final TextEditingController _itineraryNameController = TextEditingController();
   String? selectedCategory;
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
@@ -142,6 +141,17 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       }
     }
   }
+  void removeDay(int index) {
+    setState(() {
+      days.removeAt(index);
+    });
+  }
+
+  void removeLocation(ItineraryDay day, Location location) {
+    setState(() {
+      day.locations.remove(location);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,12 +176,13 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                 itemBuilder: (context, index) {
                   if (index == days.length) {
                     return IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        setState(() {
-                          days.add(
-                              ItineraryDay(name: "", date: DateTime.now()));
-                        });
+  icon: const Icon(Icons.add),
+  onPressed: () {
+    setState(() {
+      DateTime lastDate = days.last.date;
+      DateTime newDate = lastDate.add(Duration(days: 1));
+      days.add(ItineraryDay(name: "", date: newDate));
+    });
                       },
                     );
                   } else {
@@ -194,6 +205,9 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                         day: days[index],
                         addLocation: () => addLocation(days[index]),
                         selectDate: () => _selectDate(context, days[index]),
+                        removeDay: () => removeDay(index),
+                        removeLocation: removeLocation,
+                        totalDays: days.length,
                       ),
                     );
                   }
@@ -254,11 +268,20 @@ class ItineraryDayWidget extends StatelessWidget {
   final ItineraryDay day;
   final VoidCallback addLocation;
   final VoidCallback selectDate;
+  final VoidCallback removeDay;
+  final Function(ItineraryDay, Location) removeLocation;
+  final int totalDays;
 
-  ItineraryDayWidget(
-      {required this.day, required this.addLocation, required this.selectDate});
+  ItineraryDayWidget({
+    required this.day,
+    required this.addLocation,
+    required this.selectDate,
+    required this.removeDay,
+    required this.removeLocation,
+    required this.totalDays,
+  });
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -277,12 +300,11 @@ class ItineraryDayWidget extends StatelessWidget {
               icon: const Icon(Icons.date_range),
               onPressed: selectDate,
             ),
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: selectDate,
-              //PLS CHANGE ONPRESSED------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              //BTW WALA PAKO KA ADD SA CONDITION NA IF 1 PALANG MAG HIDE ANG ICON
-            ),
+            if (totalDays > 1)
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: removeDay,
+              ),
           ],
         ),
         ListView.builder(
@@ -298,7 +320,8 @@ class ItineraryDayWidget extends StatelessWidget {
             } else {
               return LocationWidget(
                 location: day.locations[index]!,
-                // Pass the correct functions for removing or editing locations here
+                removeLocation: () => removeLocation(day, day.locations[index]!),
+                showDeleteButton: day.locations.length > 1,
               );
             }
           },
@@ -310,14 +333,25 @@ class ItineraryDayWidget extends StatelessWidget {
 
 class LocationWidget extends StatelessWidget {
   final Location location;
+  final VoidCallback removeLocation;
+  final bool showDeleteButton;
 
-  LocationWidget({required this.location});
+  LocationWidget({
+    required this.location,
+    required this.removeLocation,
+    required this.showDeleteButton,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(location.name),
-      // Implement other properties and functionalities for LocationWidget
+      trailing: showDeleteButton
+          ? IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: removeLocation,
+            )
+          : null,
     );
   }
 }

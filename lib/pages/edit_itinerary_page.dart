@@ -134,8 +134,34 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
 
     Navigator.pop(context);
   }
+ void _addDay() {
+  setState(() {
+    DateTime lastDate = days.last.date;
+    DateTime newDate = lastDate.add(Duration(days: 1));
+    days.add(ItineraryDay(date: newDate, locations: [Location(name: 'Location', category: 'Category')]));
+  });
+}
 
-  @override
+
+  void _deleteDay(int index) {
+    setState(() {
+      days.removeAt(index);
+    });
+  }
+
+  void _addLocation(ItineraryDay day) {
+    setState(() {
+      day.locations.add(Location(name: 'Location', category: 'Category'));
+    });
+  }
+
+  void _deleteLocation(ItineraryDay day, int index) {
+    setState(() {
+      day.locations.removeAt(index);
+    });
+  }
+
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -157,30 +183,54 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
                 },
               ),
               ...days.asMap().entries.map((entry) {
-                final index = entry.key;
+                final dayIndex = entry.key;
                 final day = entry.value;
                 return Card(
                   child: Column(
                     children: [
                       ListTile(
-                        title: Text('Day ${index + 1}'),
+                        title: Text('Day ${dayIndex + 1}'),
                         subtitle: Text(day.date.toLocal().toString().split(' ')[0]),
-                        trailing: IconButton(
-                          icon: Icon(Icons.calendar_today),
-                          onPressed: () => _selectDate(context, day),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (days.length > 1) // Only show delete button if more than one day
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () => _deleteDay(dayIndex),
+                              ),
+                            IconButton(
+                              icon: Icon(Icons.calendar_today),
+                              onPressed: () => _selectDate(context, day),
+                            ),
+                          ],
                         ),
                       ),
                       ...day.locations.map((location) {
                         return ListTile(
                           title: Text(location.name),
                           subtitle: Text(location.category),
+                          trailing: day.locations.length > 1 // Only show delete button if more than one location
+                              ? IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () => _deleteLocation(day, day.locations.indexOf(location)),
+                                )
+                              : null,
                           onTap: () => _selectLocationAndUpdate(day, location),
                         );
                       }).toList(),
+                      TextButton(
+                        onPressed: () => _addLocation(day),
+                        child: Text('Add Location'),
+                      ),
                     ],
                   ),
                 );
               }).toList(),
+              TextButton(
+                onPressed: _addDay,
+                child: Text('Add Day'),
+              ),
             ],
           ),
         ),
