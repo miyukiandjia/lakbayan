@@ -71,6 +71,8 @@ class OverviewItinerary extends StatelessWidget {
                     'name': loc!.name,
                     'category': loc.category,
                     'status': 'Upcoming',
+                     'latitude': loc.latitude, // Save the latitude
+          'longitude': loc.longitude, // Save the longitude
                   })
                   .toList(),
             };

@@ -1,16 +1,23 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/overview_itinerary_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-
-const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+import 'package:lakbayan/pages/overview_itinerary_page.dart';
+import 'dart:async'; 
+const BASE_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
 
 class Location {
   final String name;
   final String category;
+  final double latitude;
+  final double longitude;
 
-  Location({required this.name, required this.category});
+  Location({
+    required this.name, 
+    required this.category,
+    required this.latitude, 
+    required this.longitude
+  });
 
   @override
   bool operator ==(Object other) =>
@@ -18,34 +25,33 @@ class Location {
       other is Location &&
           runtimeType == other.runtimeType &&
           name == other.name &&
-          category == other.category;
+          category == other.category &&
+          latitude == other.latitude &&
+          longitude == other.longitude;
 
   @override
-  int get hashCode => name.hashCode ^ category.hashCode;
+  int get hashCode => name.hashCode ^ category.hashCode ^ latitude.hashCode ^ longitude.hashCode;
 }
+
 
 class ItineraryDay {
   String name;
   DateTime date;
-  List<Location?> locations = [];
-  List<Location> fetchedLocationsRestaurants = [];
-  List<Location> fetchedLocationsParks = [];
+  List<Location> locations = [];
 
   ItineraryDay({required this.name, required this.date});
 }
 
 class CreateItineraryPage extends StatefulWidget {
-  const CreateItineraryPage({super.key});
+  const CreateItineraryPage({Key? key}) : super(key: key);
 
   @override
   _CreateItineraryPageState createState() => _CreateItineraryPageState();
 }
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
-  List<Location> allLocations = [];
   List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now())];
   final TextEditingController _itineraryNameController = TextEditingController();
-  String? selectedCategory;
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
     DateTime? pickedDate = await showDatePicker(
@@ -61,86 +67,54 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     }
   }
 
-  Future<List<Location>> fetchNearbyPlaces(
-      double lat, double lng, String category) async {
-    final url =
-        "$BASE_URL?location=$lat,$lng&radius=1500&type=$category&key=AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      Map<String, dynamic> jsonResponse = json.decode(response.body);
-      return (jsonResponse['results'] as List).map((result) {
-        return Location(name: result['name'], category: category);
-      }).toList();
-    } else {
-      throw Exception("Failed to load nearby places");
-    }
+ Future<List<Location>> searchLocations(double lat, double lng, String searchTerm) async {
+  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
+  final response = await http.get(Uri.parse(url));
+  if (response.statusCode == 200) {
+    Map<String, dynamic> jsonResponse = json.decode(response.body);
+    return (jsonResponse['results'] as List).map((result) {
+      final locationLat = result['geometry']['location']['lat'] as double;
+      final locationLng = result['geometry']['location']['lng'] as double;
+      return Location(
+        name: result['name'], 
+        category: '', 
+        latitude: locationLat, 
+        longitude: locationLng
+      );
+    }).toList();
+  } else {
+    throw Exception("Failed to load locations");
   }
+}
 
-  Future<void> addLocation(ItineraryDay day) async {
-    selectedCategory = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) => SimpleDialog(
-        title: const Text('Select Category'),
-        children: <Widget>[
-          SimpleDialogOption(
-            onPressed: () {
-              Navigator.pop(context, 'restaurant');
-            },
-            child: const Text('Restaurants'),
-          ),
-          SimpleDialogOption(
-            onPressed: () {
-              Navigator.pop(context, 'park');
-            },
-            child: const Text('Parks'),
-          ),
-        ],
-      ),
-    );
 
-    if (selectedCategory != null) {
-      Position? position = await getCurrentLocation();
-      if (position != null) {
-        double lat = position.latitude;
-        double lng = position.longitude;
-        List<Location> newFetchedLocations =
-            await fetchNearbyPlaces(lat, lng, selectedCategory!);
+  Future<Position?> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
-        newFetchedLocations
-            .removeWhere((location) => day.locations.contains(location));
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
 
-        if (newFetchedLocations.isNotEmpty) {
-          // Show a dropdown dialog for the user to select a location
-          Location? selectedLocation = await showDialog<Location>(
-            context: context,
-            builder: (BuildContext context) => SimpleDialog(
-              title: const Text('Select Location'),
-              children: newFetchedLocations.map((Location location) {
-                return SimpleDialogOption(
-                    onPressed: () {
-                      Navigator.pop(context, location);
-                    },
-                    child: Row(children: [
-                      Text(location.name),
-                    ]));
-              }).toList(),
-            ),
-          );
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+    }
 
-          if (selectedLocation != null) {
-            setState(() {
-              day.locations.add(selectedLocation);
-            });
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('No more locations available in this category')),
-          );
-        }
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return Future.error('Location permissions are denied');
       }
     }
+
+    return await Geolocator.getCurrentPosition();
   }
+
   void removeDay(int index) {
     setState(() {
       days.removeAt(index);
@@ -176,13 +150,13 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                 itemBuilder: (context, index) {
                   if (index == days.length) {
                     return IconButton(
-  icon: const Icon(Icons.add),
-  onPressed: () {
-    setState(() {
-      DateTime lastDate = days.last.date;
-      DateTime newDate = lastDate.add(Duration(days: 1));
-      days.add(ItineraryDay(name: "", date: newDate));
-    });
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          DateTime lastDate = days.last.date;
+                          DateTime newDate = lastDate.add(Duration(days: 1));
+                          days.add(ItineraryDay(name: "", date: newDate));
+                        });
                       },
                     );
                   } else {
@@ -202,13 +176,14 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                         ],
                       ),
                       child: ItineraryDayWidget(
-                        day: days[index],
-                        addLocation: () => addLocation(days[index]),
-                        selectDate: () => _selectDate(context, days[index]),
-                        removeDay: () => removeDay(index),
-                        removeLocation: removeLocation,
-                        totalDays: days.length,
-                      ),
+  day: days[index],
+  selectDate: () => _selectDate(context, days[index]),
+  removeDay: () => removeDay(index),
+  removeLocation: removeLocation,
+  totalDays: days.length,
+  searchLocations: searchLocations,
+),
+
                     );
                   }
                 },
@@ -235,53 +210,31 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
       ),
     );
   }
-
-  Future<Position?> getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.',
-      );
-    }
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse &&
-          permission != LocationPermission.always) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
 }
 
-class ItineraryDayWidget extends StatelessWidget {
+class ItineraryDayWidget extends StatefulWidget {
   final ItineraryDay day;
-  final VoidCallback addLocation;
   final VoidCallback selectDate;
   final VoidCallback removeDay;
   final Function(ItineraryDay, Location) removeLocation;
   final int totalDays;
+  final Future<List<Location>> Function(double, double, String) searchLocations;
 
   ItineraryDayWidget({
     required this.day,
-    required this.addLocation,
     required this.selectDate,
     required this.removeDay,
     required this.removeLocation,
     required this.totalDays,
+    required this.searchLocations,
   });
 
-   @override
+  @override
+  _ItineraryDayWidgetState createState() => _ItineraryDayWidgetState();
+}
+
+class _ItineraryDayWidgetState extends State<ItineraryDayWidget> {
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -289,69 +242,143 @@ class ItineraryDayWidget extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
-                controller: TextEditingController()..text = day.name,
+                controller: TextEditingController()..text = widget.day.name,
                 decoration: const InputDecoration(labelText: "Day Name"),
                 onChanged: (value) {
-                  day.name = value;
+                  widget.day.name = value;
                 },
               ),
             ),
             IconButton(
               icon: const Icon(Icons.date_range),
-              onPressed: selectDate,
+              onPressed: widget.selectDate,
             ),
-            if (totalDays > 1)
+            if (widget.totalDays > 1)
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline),
-                onPressed: removeDay,
+                onPressed: widget.removeDay,
               ),
           ],
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: day.locations.length + 1,
-          itemBuilder: (context, index) {
-            if (index == day.locations.length) {
-              return IconButton(
-                icon: const Icon(Icons.add_location),
-                onPressed: addLocation,
-              );
-            } else {
-              return LocationWidget(
-                location: day.locations[index]!,
-                removeLocation: () => removeLocation(day, day.locations[index]!),
-                showDeleteButton: day.locations.length > 1,
-              );
-            }
+        LocationSearchBar(
+          day: widget.day,
+          onLocationSelected: (Location location) {
+            setState(() {
+              widget.day.locations.add(location);
+            });
           },
+          searchLocations: widget.searchLocations,
         ),
+        // Display the selected locations
+        Text('Selected Locations'),
+        for (var location in widget.day.locations)
+          ListTile(
+            title: Text(location.name),
+            trailing: IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                setState(() {
+                  widget.removeLocation(widget.day, location);
+                });
+              },
+            ),
+          ),
       ],
     );
   }
 }
 
-class LocationWidget extends StatelessWidget {
-  final Location location;
-  final VoidCallback removeLocation;
-  final bool showDeleteButton;
 
-  LocationWidget({
-    required this.location,
-    required this.removeLocation,
-    required this.showDeleteButton,
+ 
+
+class LocationSearchBar extends StatefulWidget {
+  final ItineraryDay day;
+  final Function(Location) onLocationSelected;
+  final Future<List<Location>> Function(double, double, String) searchLocations;
+
+  LocationSearchBar({
+    required this.day,
+    required this.onLocationSelected,
+    required this.searchLocations,
   });
 
   @override
+  _LocationSearchBarState createState() => _LocationSearchBarState();
+}
+
+class _LocationSearchBarState extends State<LocationSearchBar> {
+  TextEditingController _controller = TextEditingController();
+  List<Location> _searchResults = [];
+  Timer? _debounce;
+
+  void _search() async {
+    if (_controller.text.isEmpty) {
+      setState(() {
+        _searchResults.clear();
+      });
+      return;
+    }
+
+    Position? position = await Geolocator.getCurrentPosition();
+    if (position != null) {
+      double lat = position.latitude;
+      double lng = position.longitude;
+      List<Location> locations = await widget.searchLocations(lat, lng, _controller.text);
+      setState(() {
+        _searchResults = locations;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(location.name),
-      trailing: showDeleteButton
-          ? IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: removeLocation,
-            )
-          : null,
+    return Column(
+      children: [
+        TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            labelText: 'Search Location',
+          ),
+          onChanged: (String text) {
+            if (_debounce?.isActive ?? false) _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 500), () {
+              _search();
+            });
+          },
+        ),
+        Container(
+          height: 200.0,
+          child: ListView.builder(
+            itemCount: _searchResults.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+  String selectedLocationName = _searchResults[index].name;
+  widget.onLocationSelected(_searchResults[index]);
+  // Clear the search results and text field
+  setState(() {
+    _searchResults.clear();
+    _controller.clear();
+  });
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text('$selectedLocationName selected'),
+  ));
+},
+
+                child: ListTile(
+                  title: Text(_searchResults[index].name),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
