@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data'; // Add this line for Uint8List
+import 'dart:typed_data'; 
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,8 +17,8 @@ import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:lakbayan/pages/navigation_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/postCard.dart';
 
-// Rest of your code
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -551,214 +551,58 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _lakbayanFeed() {
-    return Container(
-      color: Colors.pink, // Set the container color to pink
-      child: Column(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('posts')
-                .orderBy('timestamp', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Text('No posts available.');
-              } else {
-                final posts = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: posts.length,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    final post = posts[index];
-                    final postId = post.id;
-                    final userId = post['userId'];
-                    //  final String? imageURL = post['imageURL'] as String?;
-                    final _commentController = TextEditingController();
-                    return FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(userId)
-                          .get(),
-                      builder: (context, userSnapshot) {
-                        // Print the post data
-                        print("User Snapshot: $userSnapshot");
-                        print("Post Data: ${post.data()}");
-
-                        if (userSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          // Check if user data is available and print it
-                          if (userSnapshot.hasData &&
-                              userSnapshot.data != null) {
-                            print("User Data: ${userSnapshot.data!.data()}");
-                          } else {
-                            print("User Data is null");
-                          }
-                          return CircularProgressIndicator();
-                        } else if (userSnapshot.hasError) {
-                          // Print the error to the console
-                          print(
-                              'Error fetching user data: ${userSnapshot.error}');
-                          return Text('Error: ${userSnapshot.error}');
-                        } else if (!userSnapshot.hasData ||
-                            !userSnapshot.data!.exists) {
-                          return Text('User does not exist.');
-                        } else {
-                          final userProfilePic = (userSnapshot.data!.data()
-                                      as Map<String, dynamic>)
-                                  .containsKey('profile_pic_url')
-                              ? userSnapshot.data!['profile_pic_url']
-                              : 'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
-
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundImage:
-                                            NetworkImage(userProfilePic),
-                                      ),
-                                      SizedBox(width: 8.0),
-                                      Text(
-                                        post['username'] ?? 'Username',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 8.0),
-                                  if (post['imageURL'] != null &&
-                                      post['imageURL'].isNotEmpty &&
-                                      Uri.parse(post['imageURL']).isAbsolute)
-                                    Image.network(post['imageURL'],
-                                        height: 100,
-                                        width: 100,
-                                        fit: BoxFit.cover),
-                                  SizedBox(height: 8.0),
-                                  Text(post['text'] ?? ''),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(Icons.favorite_border),
-                                        onPressed: () {
-                                          FirebaseFirestore.instance
-                                              .collection('posts')
-                                              .doc(postId)
-                                              .update({
-                                            'likes': FieldValue.increment(1),
-                                          });
-                                        },
-                                      ),
-                                      Text(post['likes']?.toString() ?? '0'),
-                                      IconButton(
-                                        icon: Icon(Icons.star_border),
-                                        onPressed: () {
-                                          FirebaseFirestore.instance
-                                              .collection('posts')
-                                              .doc(postId)
-                                              .update({
-                                            'saves': FieldValue.increment(1),
-                                          });
-                                        },
-                                      ),
-                                      // Text(post['saves']?.toString() ?? '0'),
-                                      // IconButton(
-                                      //   icon: Icon(Icons.comment),
-                                      //   onPressed: () {},
-                                      // ),
-                                    ],
-                                  ),
-                                  TextField(
-                                    controller: _commentController,
-                                    decoration: InputDecoration(
-                                      labelText: 'Write a comment...',
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      final commentText =
-                                          _commentController.text;
-                                      if (commentText.isNotEmpty) {
-                                        await FirebaseFirestore.instance
-                                            .collection('posts')
-                                            .doc(postId)
-                                            .collection('comments')
-                                            .add({
-                                          'userId': userId,
-                                          'username': post['username'],
-                                          'text': commentText,
-                                          'timestamp':
-                                              FieldValue.serverTimestamp(),
-                                        });
-                                        _commentController.clear();
-                                      }
-                                    },
-                                    child: Text('Post Comment'),
-                                  ),
-                                  StreamBuilder<QuerySnapshot>(
-                                    stream: FirebaseFirestore.instance
-                                        .collection('posts')
-                                        .doc(postId)
-                                        .collection('comments')
-                                        .orderBy('timestamp', descending: true)
-                                        .snapshots(),
-                                    builder: (context, commentSnapshot) {
-                                      if (commentSnapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return CircularProgressIndicator();
-                                      } else if (commentSnapshot.hasError) {
-                                        return Text(
-                                            'Error: ${commentSnapshot.error}');
-                                      } else if (!commentSnapshot.hasData ||
-                                          commentSnapshot.data!.docs.isEmpty) {
-                                        return Text('No comments available.');
-                                      } else {
-                                        final comments =
-                                            commentSnapshot.data!.docs;
-                                        return ListView.builder(
-                                          itemCount: comments.length,
-                                          shrinkWrap: true,
-                                          physics:
-                                              NeverScrollableScrollPhysics(),
-                                          itemBuilder: (context, commentIndex) {
-                                            final comment =
-                                                comments[commentIndex];
-                                            return ListTile(
-                                              title:
-                                                  Text(comment['text'] ?? ''),
-                                              subtitle: Text(
-                                                  comment['username'] ?? ''),
-                                            );
-                                          },
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                    );
-                  },
-                );
-              }
+Widget _lakbayanFeed() {
+  return Container(
+    color: Colors.pink,
+    child: StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('posts')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Text('No posts available.');
+        } else {
+          final posts = snapshot.data!.docs;
+          return ListView.builder(
+            itemCount: posts.length,
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(post['userId'])
+                    .get(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (userSnapshot.hasError) {
+                    return Text('Error: ${userSnapshot.error}');
+                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                    return Text('User does not exist.');
+                  } else {
+                    return PostCard(
+                    post: post,
+                    userData: userSnapshot.data!,
+                    userId: FirebaseAuth.instance.currentUser?.uid ?? 'No User ID fetched.', 
+                  );
+                  }
+                },
+              );
             },
-          ),
-        ],
-      ),
-    );
-  }
+          );
+        }
+      },
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
