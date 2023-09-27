@@ -31,8 +31,9 @@ class _PostCardState extends State<PostCard> {
 
   void checkIfLiked() async {
     final postId = widget.post.id;
-    final userId = widget.userId; // Use the userId passed from the parent widget
-    
+    final userId =
+        widget.userId; // Use the userId passed from the parent widget
+
     DocumentSnapshot likeDoc = await FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
@@ -40,8 +41,7 @@ class _PostCardState extends State<PostCard> {
         .doc(userId)
         .get();
 
-        // print("Check if liked: ${likeDoc.exists}"); // Debug print
-
+    // print("Check if liked: ${likeDoc.exists}"); // Debug print
 
     setState(() {
       isLiked = likeDoc.exists;
@@ -49,45 +49,44 @@ class _PostCardState extends State<PostCard> {
   }
 
   void toggleLike() async {
-  final postId = widget.post.id;
-  final userId = widget.userId; // Ensure this is the correct user ID
-  
-  // print("Toggle like for userId $userId, current isLiked: $isLiked"); // Debug print
-  
-  if (isLiked) {
-    // If already liked, then unlike the post
-    // print("Unliking the post"); // Debug print
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('likes')
-        .doc(userId)
-        .delete();
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .update({'likes': FieldValue.increment(-1)});
-  } else {
-    // If not liked, then like the post
-    // print("Liking the post"); // Debug print
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('likes')
-        .doc(userId)
-        .set({});
-    await FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .update({'likes': FieldValue.increment(1)});
+    final postId = widget.post.id;
+    final userId = widget.userId; // Ensure this is the correct user ID
+
+    // print("Toggle like for userId $userId, current isLiked: $isLiked"); // Debug print
+
+    if (isLiked) {
+      // If already liked, then unlike the post
+      // print("Unliking the post"); // Debug print
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .delete();
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .update({'likes': FieldValue.increment(-1)});
+    } else {
+      // If not liked, then like the post
+      // print("Liking the post"); // Debug print
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .set({});
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .update({'likes': FieldValue.increment(1)});
+    }
+
+    // Update the isLiked state
+    setState(() {
+      isLiked = !isLiked;
+    });
   }
-
-  // Update the isLiked state
-  setState(() {
-    isLiked = !isLiked;
-  });
-}
-
 
   @override
   void dispose() {
@@ -95,7 +94,9 @@ class _PostCardState extends State<PostCard> {
     super.dispose();
   }
 
-    void showCommentsDialog() async {
+  void showCommentsDialog() async {
+    TextEditingController commentController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -122,7 +123,8 @@ class _PostCardState extends State<PostCard> {
                     shrinkWrap: true,
                     itemCount: comments.length,
                     itemBuilder: (context, index) {
-                      final comment = comments[index].data() as Map<String, dynamic>;
+                      final comment =
+                          comments[index].data() as Map<String, dynamic>;
                       return ListTile(
                         title: Text(comment['username']),
                         subtitle: Text(comment['text']),
@@ -133,7 +135,7 @@ class _PostCardState extends State<PostCard> {
               ),
               // TextField to add a new comment
               TextFormField(
-                controller: _commentController,
+                controller: commentController,
                 decoration: InputDecoration(
                   labelText: 'Write a comment...',
                 ),
@@ -143,8 +145,29 @@ class _PostCardState extends State<PostCard> {
         ),
         actions: [
           ElevatedButton(
-            onPressed: () {
-              // Code to add a new comment
+            onPressed: () async {
+              // Get the text from the controller
+              final commentText = commentController.text.trim();
+
+              // Check if the comment text is not empty
+              if (commentText.isNotEmpty) {
+                // Add the comment to Firestore
+                await FirebaseFirestore.instance
+                    .collection('posts')
+                    .doc(widget.post.id)
+                    .collection('comments')
+                    .add({
+                  'userId':
+                      widget.userId, // Assuming you have userId in the widget
+                  'username': (widget.userData.data()
+                      as Map<String, dynamic>)['username'],
+                  'text': commentText,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
+
+                // Clear the controller
+                commentController.clear();
+              }
             },
             child: Text('Post Comment'),
           ),
@@ -163,68 +186,65 @@ class _PostCardState extends State<PostCard> {
     final postId = post.id;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(userProfilePic),
-                  ),
-                  SizedBox(width: 8.0),
-                  Text(
-                    post['username'] ?? 'Username',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.0),
-              if (post['imageURL'] != null &&
-                  post['imageURL'].isNotEmpty &&
-                  Uri.parse(post['imageURL']).isAbsolute)
-                Image.network(
-                  post['imageURL'],
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
-                ),
-              SizedBox(height: 8.0),
-              Text(post['text'] ?? ''),
-              Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? Colors.red : null,
-                  ),
-                  onPressed: toggleLike,
-                ),
-                Text(post['likes']?.toString() ?? '0'),
-                IconButton(
-                  icon: Icon(Icons.star_border),
-                  onPressed: () {
-                    FirebaseFirestore.instance
-                        .collection('posts')
-                        .doc(postId)
-                        .update({
-                      'saves': FieldValue.increment(1),
-                    });
-                  },
-                ),
-                IconButton(
-            icon: Icon(Icons.comment),
-            onPressed: showCommentsDialog,
-          ),
-              ],
-            ),
-            ]    
-      ),
-        )
-      )
-    );
+        child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: NetworkImage(userProfilePic),
+                        ),
+                        SizedBox(width: 8.0),
+                        Text(
+                          post['username'] ?? 'Username',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.0),
+                    if (post['imageURL'] != null &&
+                        post['imageURL'].isNotEmpty &&
+                        Uri.parse(post['imageURL']).isAbsolute)
+                      Image.network(
+                        post['imageURL'],
+                        height: 100,
+                        width: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    SizedBox(height: 8.0),
+                    Text(post['text'] ?? ''),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? Colors.red : null,
+                          ),
+                          onPressed: toggleLike,
+                        ),
+                        Text(post['likes']?.toString() ?? '0'),
+                        IconButton(
+                          icon: Icon(Icons.star_border),
+                          onPressed: () {
+                            FirebaseFirestore.instance
+                                .collection('posts')
+                                .doc(postId)
+                                .update({
+                              'saves': FieldValue.increment(1),
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.comment),
+                          onPressed: showCommentsDialog,
+                        ),
+                      ],
+                    ),
+                  ]),
+            )));
   }
 }
