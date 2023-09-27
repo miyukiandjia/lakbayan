@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +10,9 @@ import 'package:lakbayan/pages/edit_itinerary_page.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lakbayan/pages/profile_page.dart';
+
+
+
 
 const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
@@ -248,10 +253,15 @@ Widget _buildItinerariesList(String status) {
                     child: GoogleMap(
                       initialCameraPosition: CameraPosition(
                         target: polylineCoordinates.first,
-                        zoom: 14.0,
+                        zoom: 18.0,
                       ),
                       polylines: {polyline},
                       myLocationEnabled: true,
+                        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+    Factory<OneSequenceGestureRecognizer>(
+      () => EagerGestureRecognizer(),
+    ),
+  ].toSet(),                   
                     ),
                   ),
                 );
