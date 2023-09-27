@@ -670,11 +670,11 @@ class _HomePageState extends State<HomePage> {
                                           });
                                         },
                                       ),
-                                      Text(post['saves']?.toString() ?? '0'),
-                                      IconButton(
-                                        icon: Icon(Icons.comment),
-                                        onPressed: () {},
-                                      ),
+                                      // Text(post['saves']?.toString() ?? '0'),
+                                      // IconButton(
+                                      //   icon: Icon(Icons.comment),
+                                      //   onPressed: () {},
+                                      // ),
                                     ],
                                   ),
                                   TextField(
