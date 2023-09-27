@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,16 +8,122 @@ import 'package:geolocator/geolocator.dart';
 const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
 const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 
+
+
 class Location {
   String name;
   String category;
-  Location({required this.name, required this.category});
+  double latitude;
+  double longitude;
+
+  Location({
+    required this.name,
+    required this.category,
+    required this.latitude,
+    required this.longitude
+  });
 }
 
 class ItineraryDay {
   DateTime date;
   List<Location> locations;
   ItineraryDay({required this.date, required this.locations});
+}
+
+class LocationSearchBar extends StatefulWidget {
+  final ItineraryDay day;
+  final Function(Location) onLocationSelected;
+
+  LocationSearchBar({
+    required this.day,
+    required this.onLocationSelected,
+  });
+
+  @override
+  _LocationSearchBarState createState() => _LocationSearchBarState();
+}
+
+class _LocationSearchBarState extends State<LocationSearchBar> {
+  TextEditingController _controller = TextEditingController();
+  List<Location> _searchResults = [];
+  Timer? _debounce;
+
+  void _search() async {
+    if (_controller.text.isEmpty) {
+      setState(() {
+        _searchResults.clear();
+      });
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    if (position != null) {
+      double lat = position.latitude;
+      double lng = position.longitude;
+      final url = "$BASE_URL?location=$lat,$lng&radius=1500&keyword=${_controller.text}&key=$API_KEY";
+      final response = await http.get(Uri.parse(url));
+      final data = jsonDecode(response.body);
+      final results = data['results'] as List<dynamic>;
+
+      setState(() {
+        _searchResults = results.map((result) {
+          return Location(
+            name: result['name'],
+            category: '', // Adjust category accordingly
+            latitude: result['geometry']['location']['lat'],
+            longitude: result['geometry']['location']['lng'],
+          );
+        }).toList();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            labelText: 'Search Location',
+          ),
+          onChanged: (String text) {
+            if (_debounce?.isActive ?? false) _debounce?.cancel();
+            _debounce = Timer(const Duration(milliseconds: 500), () {
+              _search();
+            });
+          },
+        ),
+        Container(
+          height: 200.0,
+          child: ListView.builder(
+            itemCount: _searchResults.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+                  final selectedLocation = _searchResults[index];
+                  widget.onLocationSelected(selectedLocation);
+                  setState(() {
+                    _searchResults.clear();
+                    _controller.clear();
+                  });
+                },
+                child: ListTile(
+                  title: Text(_searchResults[index].name),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class EditItineraryPage extends StatefulWidget {
@@ -44,11 +151,15 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
         return Location(
           name: location['name'],
           category: location['category'],
+          latitude: location['latitude'],
+          longitude: location['longitude']
         );
       }).toList();
+
       return ItineraryDay(date: date, locations: locations);
     }).toList();
   }
+
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
     DateTime? pickedDate = await showDatePicker(
@@ -104,12 +215,19 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
         },
       );
 
-      if (newName != null) {
-        setState(() {
-          location.name = newName;
-          location.category = newCategory;
-        });
-      }
+     if (newName != null) {
+  final selectedLocation = results.firstWhere((result) => result['name'] == newName);
+  double lat = selectedLocation['geometry']['location']['lat'];
+  double lng = selectedLocation['geometry']['location']['lng'];
+
+  setState(() {
+    location.name = newName;
+    location.category = newCategory;
+    location.latitude = lat;
+    location.longitude = lng;
+  });
+}
+
     }
   }
 
@@ -120,9 +238,12 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
         'date': Timestamp.fromDate(day.date),
         'locations': day.locations.map((location) {
           return {
-            'name': location.name,
-            'category': location.category,
-          };
+  'name': location.name,
+  'category': location.category,
+  'latitude': location.latitude,
+  'longitude': location.longitude,
+};
+
         }).toList(),
       };
     }).toList();
@@ -136,12 +257,11 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
   }
  void _addDay() {
   setState(() {
-    DateTime lastDate = days.last.date;
+    DateTime lastDate = days.isNotEmpty ? days.last.date : DateTime.now();
     DateTime newDate = lastDate.add(Duration(days: 1));
-    days.add(ItineraryDay(date: newDate, locations: [Location(name: 'Location', category: 'Category')]));
+    days.add(ItineraryDay(date: newDate, locations: [Location(name: 'Location', category: 'Category', latitude: 0.0, longitude: 0.0)]));
   });
 }
-
 
   void _deleteDay(int index) {
     setState(() {
@@ -149,11 +269,12 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     });
   }
 
-  void _addLocation(ItineraryDay day) {
-    setState(() {
-      day.locations.add(Location(name: 'Location', category: 'Category'));
-    });
-  }
+
+void _addLocation(ItineraryDay day) {
+  setState(() {
+    day.locations.add(Location(name: 'Location', category: 'Category', latitude: 0.0, longitude: 0.0));
+  });
+}
 
   void _deleteLocation(ItineraryDay day, int index) {
     setState(() {
@@ -161,7 +282,9 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     });
   }
 
- @override
+  
+
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -219,9 +342,13 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
                           onTap: () => _selectLocationAndUpdate(day, location),
                         );
                       }).toList(),
-                      TextButton(
-                        onPressed: () => _addLocation(day),
-                        child: Text('Add Location'),
+                      LocationSearchBar(
+                        day: day,
+                        onLocationSelected: (Location location) {
+                          setState(() {
+                            day.locations.add(location);
+                          });
+                        },
                       ),
                     ],
                   ),
