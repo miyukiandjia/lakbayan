@@ -95,86 +95,171 @@ class _PostCardState extends State<PostCard> {
   }
 
   void showCommentsDialog() async {
-    TextEditingController commentController = TextEditingController();
+  TextEditingController commentController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Comments'),
-        content: Container(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // StreamBuilder to display the list of comments
-              StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('posts')
-                    .doc(widget.post.id)
-                    .collection('comments')
-                    .orderBy('timestamp', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return CircularProgressIndicator();
-                  }
-                  final comments = snapshot.data!.docs;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      final comment =
-                          comments[index].data() as Map<String, dynamic>;
-                      return ListTile(
-                        title: Text(comment['username']),
-                        subtitle: Text(comment['text']),
-                      );
-                    },
-                  );
-                },
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Comments'),
+      content: Container(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // StreamBuilder to display the list of comments
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(widget.post.id)
+                  .collection('comments')
+                  .orderBy('timestamp', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return CircularProgressIndicator();
+                }
+                final comments = snapshot.data!.docs;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index].data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(comment['username']),
+                      subtitle: Text(comment['text']),
+                      onLongPress: () { //I think i might change this kay onCLick mostly sa app natin for consistency
+                        showMenu(
+                          context: context,
+                          position: RelativeRect.fill,
+                          items: [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit'),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          ],
+                        ).then((value) async {
+                          if (value != null) {
+                            final commentId = comments[index].id;
+                            if (value == 'edit') {
+                              // Show a dialog to edit the comment
+                              final TextEditingController editController =
+                                  TextEditingController(text: comment['text']);
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Edit Comment'),
+                                  content: TextField(
+                                    controller: editController,
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close the dialog
+                                      },
+                                      child: Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        // Update the comment in Firestore
+                                        await FirebaseFirestore.instance
+                                            .collection('posts')
+                                            .doc(widget.post.id)
+                                            .collection('comments')
+                                            .doc(commentId)
+                                            .update({'text': editController.text});
+                                        Navigator.of(context).pop(); // Close the dialog
+                                      },
+                                      child: Text('Save'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else if (value == 'delete') {
+                              // Confirm and delete the comment
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Confirm Delete'),
+                                    content: Text('Are you sure you want to delete this comment?'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                        child: Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          // Delete the comment from Firestore
+                                          await FirebaseFirestore.instance
+                                              .collection('posts')
+                                              .doc(widget.post.id)
+                                              .collection('comments')
+                                              .doc(commentId)
+                                              .delete();
+                                          Navigator.of(context).pop(); // Close the dialog
+                                        },
+                                        child: Text('Delete'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          }
+                        });
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+            // TextField to add a new comment
+            TextFormField(
+              controller: commentController,
+              decoration: InputDecoration(
+                labelText: 'Write a comment...',
               ),
-              // TextField to add a new comment
-              TextFormField(
-                controller: commentController,
-                decoration: InputDecoration(
-                  labelText: 'Write a comment...',
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              // Get the text from the controller
-              final commentText = commentController.text.trim();
-
-              // Check if the comment text is not empty
-              if (commentText.isNotEmpty) {
-                // Add the comment to Firestore
-                await FirebaseFirestore.instance
-                    .collection('posts')
-                    .doc(widget.post.id)
-                    .collection('comments')
-                    .add({
-                  'userId':
-                      widget.userId, // Assuming you have userId in the widget
-                  'username': (widget.userData.data()
-                      as Map<String, dynamic>)['username'],
-                  'text': commentText,
-                  'timestamp': FieldValue.serverTimestamp(),
-                });
-
-                // Clear the controller
-                commentController.clear();
-              }
-            },
-            child: Text('Post Comment'),
-          ),
-        ],
       ),
-    );
-  }
+      actions: [
+        ElevatedButton(
+  onPressed: () async {
+    // Get the text from the controller
+    final commentText = commentController.text.trim();
+
+    // Check if the comment text is not empty
+    if (commentText.isNotEmpty) {
+      // Add the comment to Firestore
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.post.id)
+          .collection('comments')
+          .add({
+        'userId': widget.userId, // Use the current user's ID
+        'username': (widget.userData.data() as Map<String, dynamic>)['username'], // Use the current user's username
+        'text': commentText,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Clear the controller
+      commentController.clear();
+    }
+  },
+  child: Text('Post Comment'),
+),
+      ],
+    ),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
