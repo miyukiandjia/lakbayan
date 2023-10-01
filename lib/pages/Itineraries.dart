@@ -161,10 +161,6 @@ Future<void> _calculateRoute(List<LatLng> polylineCoordinates) async {
   polylineCoordinates.addAll(newPoints); // Add the new calculated points
 }
 
-
-    
-  
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -421,7 +417,7 @@ Future<Position> fetchUserLocation() async {
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    
+
   } catch (e) {
     // Handle errors here
     print('Failed to get user location: $e');

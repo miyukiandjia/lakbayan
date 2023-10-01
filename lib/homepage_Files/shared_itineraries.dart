@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:google_maps_webservice/directions.dart' as gmaps;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+
+
 
 class SharedItineraryCard extends StatefulWidget {
   final Map<String, dynamic> itinerary;
@@ -12,12 +20,19 @@ class SharedItineraryCard extends StatefulWidget {
 }
 class _SharedItineraryCardState extends State<SharedItineraryCard> {
   bool isLiked = false; // Track if the current user has liked the itinerary
+  bool showMap = false;
+
 
   @override
   void initState() {
     super.initState();
     checkIfLiked(); // Check if the current user has liked the itinerary initially
   }
+
+Future<LatLng> _getUserLocation() async {
+  Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  return LatLng(position.latitude, position.longitude);
+}
 
   void checkIfLiked() async {
     final itineraryId = widget.itinerary['id']; 
@@ -251,6 +266,91 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
       ),
     );
   }
+  Future<List<LatLng>> _getDirections(LatLng start, LatLng destination) async {
+  const String apiKey = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
+  final directions = gmaps.GoogleMapsDirections(apiKey: apiKey);
+  
+  gmaps.DirectionsResponse response = await directions.directions(
+    gmaps.Location(lat: start.latitude, lng: start.longitude),
+    gmaps.Location(lat: destination.latitude, lng: destination.longitude),
+    travelMode: gmaps.TravelMode.driving,
+  );
+
+  if (response.status == 'OK') {
+    PolylinePoints polylinePoints = PolylinePoints();
+    var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
+    return points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+  }
+  
+  return [];
+}
+
+
+
+  Widget _buildMap(List<dynamic> days) {
+     if (!showMap) {
+    return Container();
+  }
+  return FutureBuilder<LatLng>(
+    future: _getUserLocation(),
+    builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
+      if (!snapshot.hasData) {
+        return CircularProgressIndicator();  // Show loading indicator until user location is fetched
+      }
+
+      LatLng userLocation = snapshot.data!;
+      List<LatLng> polylineCoordinates = [userLocation];  // Start with the user's location
+      
+      for (var day in days) {
+        if (day['locations'] != null) {
+          for (var location in day['locations']) {
+            if (location['latitude'] != null && location['longitude'] != null) {
+              LatLng latLng = LatLng(location['latitude'], location['longitude']);
+              polylineCoordinates.add(latLng);
+            }
+          }
+        }
+      }
+      
+      return FutureBuilder<List<LatLng>>(
+        future: _getDirections(userLocation, polylineCoordinates.last),
+        builder: (context, routeSnapshot) {
+          if (!routeSnapshot.hasData) {
+            return CircularProgressIndicator();  // Show loading indicator until route is fetched
+          }
+          
+          List<LatLng> routeCoordinates = routeSnapshot.data!;
+          
+          Polyline polyline = Polyline(
+            polylineId: PolylineId('route'),
+            color: Colors.blue,
+            points: routeCoordinates,
+            width: 5,
+          );
+
+          return Container(
+            height: 400,
+            width: double.infinity,
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: userLocation,
+                zoom: 12.0,
+              ),
+              polylines: {polyline},
+               gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                                  Factory<OneSequenceGestureRecognizer>(
+                                    () => EagerGestureRecognizer(),
+                                  ),
+                                ].toSet(),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+
    @override
   Widget build(BuildContext context) {
     String profileImageUrl = widget.userData['prof_pic_url'] ?? "";
@@ -299,6 +399,15 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
                 ],
               );
             }),
+            ElevatedButton(
+            onPressed: () {
+              setState(() {
+                showMap = !showMap;
+              });
+            },
+            child: Text(showMap ? "Hide Map" : "View in Maps"),
+          ),
+             if (widget.itinerary['days'] is List) _buildMap(widget.itinerary['days']),
             const SizedBox(height: 10),
             Row(
 

@@ -57,7 +57,6 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
     }
 
     Position position = await Geolocator.getCurrentPosition();
-    if (position != null) {
       double lat = position.latitude;
       double lng = position.longitude;
       final url = "$BASE_URL?location=$lat,$lng&radius=1500&keyword=${_controller.text}&key=$API_KEY";
@@ -75,7 +74,7 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
           );
         }).toList();
       });
-    }
+    
   }
 
   @override
