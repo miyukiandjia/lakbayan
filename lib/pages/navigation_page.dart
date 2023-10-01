@@ -144,24 +144,24 @@ class NavigationPageState extends State<NavigationPage> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () async {
-                  var directions = await LocationService().getDirections(
-                      _originController.text, _destinationController.text);
-                  _goToPlace(
-                    directions['start_location']['lat'],
-                    directions['start_location']['lng'],
-                    directions['bounds_ne'],
-                    directions['bounds_sw'],
-                  );
+              // IconButton(
+              //   onPressed: () async {
+              //     var directions = await LocationService().getDirections(
+              //         _originController.text, _destinationController.text);
+              //     _goToPlace(
+              //       directions['start_location']['lat'],
+              //       directions['start_location']['lng'],
+              //       directions['bounds_ne'],
+              //       directions['bounds_sw'],
+              //     );
 
-                  // var place =
-                  //     await LocationService().getPlace(_searchController.text);
-                  // _goToPlace(place);
-                  _setPolyline(directions['polyline_decoded']);
-                },
-                icon: Icon(Icons.search),
-              )
+              //     // var place =
+              //     //     await LocationService().getPlace(_searchController.text);
+              //     // _goToPlace(place);
+              //     _setPolyline(directions['polyline_decoded']);
+              //   },
+              //   icon: Icon(Icons.search),
+              // )
             ],
           ),
           // Row(
@@ -203,7 +203,7 @@ class NavigationPageState extends State<NavigationPage> {
                     },
                     markers: _markers,
                     polygons: _polygons,
-                    polyline: _polylines,
+ //                   polyline: _polylines,
                     onMapCreated: (mapController) {
                       _controller.complete(mapController);
                     },

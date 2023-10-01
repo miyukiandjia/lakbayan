@@ -8,6 +8,7 @@ Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
   const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0';
   Position? position = await getCurrentLocation();
   if (position == null) {
+    print("Location fetch fails, Davao coordinates are currently used.");
     position = Position(
         latitude: 7.1907,
         longitude: 125.4553,

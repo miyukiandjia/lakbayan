@@ -288,9 +288,6 @@ class _ItineraryDayWidgetState extends State<ItineraryDayWidget> {
   }
 }
 
-
- 
-
 class LocationSearchBar extends StatefulWidget {
   final ItineraryDay day;
   final Function(Location) onLocationSelected;
