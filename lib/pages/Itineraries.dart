@@ -10,10 +10,12 @@ import 'package:lakbayan/pages/edit_itinerary_page.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lakbayan/pages/profile_page.dart';
+import 'package:google_maps_webservice/directions.dart' as gmaps;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart'; 
 
 
 
-
+final directions = gmaps.GoogleMapsDirections(apiKey: "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0");
 const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
 const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
 
@@ -137,6 +139,31 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     Navigator.of(context).pop();
   }
 
+Future<void> _calculateRoute(List<LatLng> polylineCoordinates) async {
+  List<LatLng> newPoints = [];
+  for (int i = 0; i < polylineCoordinates.length - 1; i++) {
+    LatLng from = polylineCoordinates[i];
+    LatLng to = polylineCoordinates[i + 1];
+
+    gmaps.DirectionsResponse response = await directions.directions(
+      gmaps.Location(lat: from.latitude, lng: from.longitude),
+      gmaps.Location(lat: to.latitude, lng: to.longitude),
+      travelMode: gmaps.TravelMode.driving,
+    );
+
+    if (response.status == 'OK') {
+      PolylinePoints polylinePoints = PolylinePoints();
+      var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
+      newPoints.addAll(points.map((point) => LatLng(point.latitude, point.longitude)));
+    }
+  }
+  polylineCoordinates.clear(); // Clear the old straight polyline coordinates
+  polylineCoordinates.addAll(newPoints); // Add the new calculated points
+}
+
+
+    
+  
   
   @override
   Widget build(BuildContext context) {
@@ -239,35 +266,45 @@ Widget _buildItinerariesList(String status) {
                if (userPosition != null && polylineCoordinates.isNotEmpty) {
               LatLng userLatLng = LatLng(userPosition.latitude, userPosition.longitude);
               polylineCoordinates.insert(0, userLatLng);
-              Polyline polyline = Polyline(
-                polylineId: PolylineId('route'),
-                color: Colors.blue,
-                points: polylineCoordinates,
-                width: 5,
-              );
+              
+              maps.add(FutureBuilder(
+                        future: _calculateRoute(polylineCoordinates),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error calculating route');
+                          } else {
+                            Polyline polyline = Polyline(
+                              polylineId: PolylineId('route'),
+                              color: Colors.blue,
+                              points: polylineCoordinates,
+                              width: 5,
+                            );
+                            return Container(
+                              height: 400,
+                              width: double.infinity,
+                              child: GoogleMap(
+                                initialCameraPosition: CameraPosition(
+                                  target: polylineCoordinates.first,
+                                  zoom: 18.0,
+                                ),
+                                polylines: {polyline},
+                                myLocationEnabled: true,
+                                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                                  Factory<OneSequenceGestureRecognizer>(
+                                    () => EagerGestureRecognizer(),
+                                  ),
+                                ].toSet(),
+                              ),
+                            );
+                          }
+                        },
+                      ));
+                    }
+                  }
+                }
 
-                maps.add(
-                  Container(
-                    height: 400,
-                    width: double.infinity,
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: polylineCoordinates.first,
-                        zoom: 18.0,
-                      ),
-                      polylines: {polyline},
-                      myLocationEnabled: true,
-                        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-    Factory<OneSequenceGestureRecognizer>(
-      () => EagerGestureRecognizer(),
-    ),
-  ].toSet(),                   
-                    ),
-                  ),
-                );
-              }
-            }
-          }
 
           return Container(
             margin: EdgeInsets.all(8.0),
@@ -383,6 +420,8 @@ Future<Position> fetchUserLocation() async {
     return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
+
+    
   } catch (e) {
     // Handle errors here
     print('Failed to get user location: $e');

@@ -71,8 +71,8 @@ class OverviewItinerary extends StatelessWidget {
                     'name': loc!.name,
                     'category': loc.category,
                     'status': 'Upcoming',
-                     'latitude': loc.latitude, // Save the latitude
-          'longitude': loc.longitude, // Save the longitude
+                    'latitude': loc.latitude, // Save the latitude
+                    'longitude': loc.longitude, // Save the longitude
                   })
                   .toList(),
             };
@@ -81,6 +81,10 @@ class OverviewItinerary extends StatelessWidget {
           var itineraryMap = {
             'userId': uid,
             'status': 'Upcoming',
+            'shareStatus': false,
+            'likes': 0,
+            'saves': 0,
+            'timestamp': FieldValue.serverTimestamp(),
             'itineraryName': itineraryName,  // Save the itinerary name
             'days': daysList
           };
