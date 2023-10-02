@@ -25,24 +25,31 @@ class LocationService {
     return results;
   }
 
-  Future<Map<String, dynamic>> getDirections(
-      String origin, String destination) async {
-    final String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&key=$key';
+  // Future<Map<String, dynamic>> getDirections(
+  //     String origin, String destination) async {
+  //   final String url =
+  //       'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&key=$key';
 
-    var response = await http.get(Uri.parse(url));
-    var json = convert.jsonDecode(response.body);
-    var results = {
-      'bounds_ne': json['routes'][0]['bounds']['northeast'],
-      'bounds_sw': json['routes'][0]['bounds']['southwest'],
-      'start_location': json['routes'][0]['legs'][0]['start_location'],
-      'end_location': json['routes'][0]['legs'][0]['end_location'],
-      'polyline': json['routes'][0]['overview_polyline']['points'],
-      'polyline_decoded': PolylinePoints()
-          .decodePolyline(json['routes'][0]['overview_polyline']['points'])
-    };
+  //   var response = await http.get(Uri.parse(url));
+  //   var json = convert.jsonDecode(response.body);
+  //   var results = {
+  //     'bounds_ne': json['routes'][0]['bounds']['northeast'],
+  //     'bounds_sw': json['routes'][0]['bounds']['southwest'],
+  //     'start_location': json['routes'][0]['legs'][0]['start_location'],
+  //     'end_location': json['routes'][0]['legs'][0]['end_location'],
+  //     'polyline': json['routes'][0]['overview_polyline']['points'],
+  //     'polyline_decoded': PolylinePoints()
+  //         .decodePolyline(json['routes'][0]['overview_polyline']['points'])
+  //   };
 
+<<<<<<< HEAD
     print(results);
     return results;
   }
 }
+=======
+  //   print(results);
+  //   //return results;
+  // }
+}
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8

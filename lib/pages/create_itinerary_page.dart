@@ -288,9 +288,6 @@ class _ItineraryDayWidgetState extends State<ItineraryDayWidget> {
   }
 }
 
-
- 
-
 class LocationSearchBar extends StatefulWidget {
   final ItineraryDay day;
   final Function(Location) onLocationSelected;
@@ -320,14 +317,12 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
     }
 
     Position? position = await Geolocator.getCurrentPosition();
-    if (position != null) {
       double lat = position.latitude;
       double lng = position.longitude;
       List<Location> locations = await widget.searchLocations(lat, lng, _controller.text);
       setState(() {
         _searchResults = locations;
       });
-    }
   }
 
   @override

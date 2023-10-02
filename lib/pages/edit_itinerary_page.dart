@@ -5,38 +5,47 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
+
 const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
-const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
-
-
+const BASE_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
 
 class Location {
   String name;
-  String category;
   double latitude;
   double longitude;
 
   Location({
     required this.name,
-    required this.category,
     required this.latitude,
     required this.longitude
   });
 }
 
 class ItineraryDay {
+  String name; // Name of the day
   DateTime date;
   List<Location> locations;
-  ItineraryDay({required this.date, required this.locations});
+  TextEditingController nameController;
+
+  ItineraryDay({
+    required this.name,
+    required this.date,
+    required this.locations,
+  }) : nameController = TextEditingController(text: name);
 }
+
+
+
 
 class LocationSearchBar extends StatefulWidget {
   final ItineraryDay day;
   final Function(Location) onLocationSelected;
+  final Future<List<Location>> Function(double, double, String) searchLocations;
 
   LocationSearchBar({
     required this.day,
     required this.onLocationSelected,
+    required this.searchLocations,
   });
 
   @override
@@ -56,26 +65,13 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
       return;
     }
 
-    Position position = await Geolocator.getCurrentPosition();
-    if (position != null) {
-      double lat = position.latitude;
-      double lng = position.longitude;
-      final url = "$BASE_URL?location=$lat,$lng&radius=1500&keyword=${_controller.text}&key=$API_KEY";
-      final response = await http.get(Uri.parse(url));
-      final data = jsonDecode(response.body);
-      final results = data['results'] as List<dynamic>;
-
-      setState(() {
-        _searchResults = results.map((result) {
-          return Location(
-            name: result['name'],
-            category: '', // Adjust category accordingly
-            latitude: result['geometry']['location']['lat'],
-            longitude: result['geometry']['location']['lng'],
-          );
-        }).toList();
-      });
-    }
+    Position? position = await Geolocator.getCurrentPosition();
+    double lat = position.latitude;
+    double lng = position.longitude;
+    List<Location> locations = await widget.searchLocations(lat, lng, _controller.text);
+    setState(() {
+      _searchResults = locations;
+    });
   }
 
   @override
@@ -84,7 +80,7 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
     super.dispose();
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -107,12 +103,16 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
             itemBuilder: (context, index) {
               return GestureDetector(
                 onTap: () {
-                  final selectedLocation = _searchResults[index];
-                  widget.onLocationSelected(selectedLocation);
+                  String selectedLocationName = _searchResults[index].name;
+                  widget.onLocationSelected(_searchResults[index]);
+                  // Clear the search results and text field
                   setState(() {
                     _searchResults.clear();
                     _controller.clear();
                   });
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('$selectedLocationName selected'),
+                  ));
                 },
                 child: ListTile(
                   title: Text(_searchResults[index].name),
@@ -125,6 +125,7 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
     );
   }
 }
+
 
 class EditItineraryPage extends StatefulWidget {
   final Map<String, dynamic> itinerary;
@@ -140,26 +141,25 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
   late TextEditingController itineraryNameController;
   late List<ItineraryDay> days;
 
-  @override
+ @override
   void initState() {
     super.initState();
     itineraryName = widget.itinerary['itineraryName'] ?? 'Unknown';
     itineraryNameController = TextEditingController(text: itineraryName);
     days = (widget.itinerary['days'] as List).map((day) {
-      final date = (day['date'] as Timestamp).toDate();
-      final locations = (day['locations'] as List).map((location) {
-        return Location(
-          name: location['name'],
-          category: location['category'],
-          latitude: location['latitude'],
-          longitude: location['longitude']
-        );
-      }).toList();
+  final date = (day['date'] as Timestamp).toDate();
+  final dayName = day['name'] ?? 'Unknown'; // Default to 'Unknown' if name is null
+  final locations = (day['locations'] as List).map((location) {
+    return Location(
+      name: location['name'],
+      latitude: location['latitude'],
+      longitude: location['longitude'],
+    );
+  }).toList();
 
-      return ItineraryDay(date: date, locations: locations);
-    }).toList();
+  return ItineraryDay(name: dayName, date: date, locations: locations);
+}).toList();
   }
-
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
     DateTime? pickedDate = await showDatePicker(
@@ -175,75 +175,18 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     }
   }
 
-  Future<void> _selectLocationAndUpdate(ItineraryDay day, Location location) async {
-    final newCategory = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: Text('Select Category'),
-          children: <Widget>[
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, 'restaurant'),
-              child: Text('Restaurant'),
-            ),
-            // Add other categories as needed
-          ],
-        );
-      },
-    );
-
-    if (newCategory != null) {
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-
-      final response = await http.get(Uri.parse(
-          '$BASE_URL?location=${position.latitude},${position.longitude}&radius=1500&type=$newCategory&key=$API_KEY'));
-      final data = jsonDecode(response.body);
-      final results = data['results'] as List<dynamic>;
-
-      final newName = await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) {
-          return SimpleDialog(
-            title: Text('Select Location'),
-            children: results.map((result) {
-              return SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, result['name']),
-                child: Text(result['name']),
-              );
-            }).toList(),
-          );
-        },
-      );
-
-     if (newName != null) {
-  final selectedLocation = results.firstWhere((result) => result['name'] == newName);
-  double lat = selectedLocation['geometry']['location']['lat'];
-  double lng = selectedLocation['geometry']['location']['lng'];
-
-  setState(() {
-    location.name = newName;
-    location.category = newCategory;
-    location.latitude = lat;
-    location.longitude = lng;
-  });
-}
-
-    }
-  }
-
   Future<void> _updateItinerary() async {
     DocumentReference docRef = widget.itinerary['docRef'] as DocumentReference;
     List<Map<String, dynamic>> updatedDays = days.map((day) {
       return {
+        'name': day.name,
         'date': Timestamp.fromDate(day.date),
         'locations': day.locations.map((location) {
           return {
-  'name': location.name,
-  'category': location.category,
-  'latitude': location.latitude,
-  'longitude': location.longitude,
-};
-
+            'name': location.name,
+            'latitude': location.latitude,
+            'longitude': location.longitude,
+          };
         }).toList(),
       };
     }).toList();
@@ -255,13 +198,14 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
 
     Navigator.pop(context);
   }
- void _addDay() {
-  setState(() {
-    DateTime lastDate = days.isNotEmpty ? days.last.date : DateTime.now();
-    DateTime newDate = lastDate.add(Duration(days: 1));
-    days.add(ItineraryDay(date: newDate, locations: [Location(name: 'Location', category: 'Category', latitude: 0.0, longitude: 0.0)]));
-  });
-}
+
+  void _addDay() {
+    setState(() {
+      DateTime lastDate = days.isNotEmpty ? days.last.date : DateTime.now();
+      DateTime newDate = lastDate.add(Duration(days: 1));
+      days.add(ItineraryDay(name: 'New Day', date: newDate, locations: [])); // Default name 'New Day'
+    });
+  }
 
   void _deleteDay(int index) {
     setState(() {
@@ -269,22 +213,33 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     });
   }
 
-
-void _addLocation(ItineraryDay day) {
-  setState(() {
-    day.locations.add(Location(name: 'Location', category: 'Category', latitude: 0.0, longitude: 0.0));
-  });
-}
-
   void _deleteLocation(ItineraryDay day, int index) {
     setState(() {
       day.locations.removeAt(index);
     });
   }
 
-  
+  Future<List<Location>> searchLocations(double lat, double lng, String searchTerm) async {
+  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=$API_KEY";
+  final response = await http.get(Uri.parse(url));
+  if (response.statusCode == 200) {
+    Map<String, dynamic> jsonResponse = json.decode(response.body);
+    return (jsonResponse['results'] as List).map((result) {
+      final locationLat = result['geometry']['location']['lat'] as double;
+      final locationLng = result['geometry']['location']['lng'] as double;
+      return Location(
+        name: result['name'], 
+        latitude: locationLat, 
+        longitude: locationLng
+      );
+    }).toList();
+  } else {
+    throw Exception("Failed to load locations");
+  }
+}
 
-   @override
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -312,7 +267,15 @@ void _addLocation(ItineraryDay day) {
                   child: Column(
                     children: [
                       ListTile(
-                        title: Text('Day ${dayIndex + 1}'),
+                        title: TextField(
+                          controller: day.nameController,
+    decoration: InputDecoration(labelText: 'Day Name'),
+    onChanged: (value) {
+      setState(() {
+        day.name = value;
+      });
+                          },
+                        ),
                         subtitle: Text(day.date.toLocal().toString().split(' ')[0]),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -329,17 +292,15 @@ void _addLocation(ItineraryDay day) {
                           ],
                         ),
                       ),
-                      ...day.locations.map((location) {
+                        ...day.locations.map((location) {
                         return ListTile(
                           title: Text(location.name),
-                          subtitle: Text(location.category),
                           trailing: day.locations.length > 1 // Only show delete button if more than one location
                               ? IconButton(
                                   icon: Icon(Icons.delete),
                                   onPressed: () => _deleteLocation(day, day.locations.indexOf(location)),
                                 )
                               : null,
-                          onTap: () => _selectLocationAndUpdate(day, location),
                         );
                       }).toList(),
                       LocationSearchBar(
@@ -349,6 +310,7 @@ void _addLocation(ItineraryDay day) {
                             day.locations.add(location);
                           });
                         },
+                        searchLocations: searchLocations,
                       ),
                     ],
                   ),

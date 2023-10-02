@@ -1,23 +1,30 @@
-import 'dart:convert';
 import 'dart:io';
+<<<<<<< HEAD
 import 'dart:typed_data';
 
+=======
+import 'dart:typed_data'; 
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:geocoding/geocoding.dart' as geo;
-import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
+<<<<<<< HEAD
 import 'package:lakbayan/pages/navigation_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 import 'package:lakbayan/postCard.dart';
+=======
+import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
+import 'package:lakbayan/homepage_Files/destination_service.dart';
+import 'package:lakbayan/homepage_Files/itinerary_card.dart';
+import 'package:lakbayan/homepage_Files/lakbayan_Feed.dart';
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -32,8 +39,6 @@ class _HomePageState extends State<HomePage> {
 
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
-  bool _isPosting = false;
-
   final TextEditingController _postController = TextEditingController();
 
   @override
@@ -60,106 +65,6 @@ class _HomePageState extends State<HomePage> {
         username = docSnapshot.data()?['username'];
       });
     }
-  }
-
-  Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
-    const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0';
-    Position? position = await getCurrentLocation();
-    if (position == null) {
-      print("Location fetch fails, Davao coordinates are currently used.");
-      position = Position(
-          latitude: 7.1907,
-          longitude: 125.4553,
-          timestamp: DateTime.now(),
-          accuracy: 0.0,
-          altitude: 0.0,
-          heading: 0.0,
-          speed: 0.0,
-          speedAccuracy:
-              0.0); // Default to Davao coordinates if location fetch fails.
-    }
-
-    List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(
-        position.latitude, position.longitude);
-    if (placemarks.isEmpty) {
-      return [];
-    }
-
-    String? cityName = placemarks[0].locality;
-
-    if (cityName == null) {
-      return [];
-    }
-
-    List<geo.Location> locations = await geo.locationFromAddress(cityName);
-    if (locations.isEmpty) {
-      return [];
-    }
-
-    double lat = locations[0].latitude;
-    double lng = locations[0].longitude;
-
-    final url =
-        "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=10000&type=tourist_attraction&key=$API_KEY";
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      var jsonResponse = json.decode(response.body);
-      List<Map<String, dynamic>> destinations = [];
-
-      for (var result in jsonResponse['results']) {
-        double distance = Geolocator.distanceBetween(
-            position.latitude,
-            position.longitude,
-            result['geometry']['location']['lat'],
-            result['geometry']['location']['lng']);
-        distance = distance / 1000;
-
-        destinations.add({
-          'name': result['name'] ?? 'Unknown Place',
-          'category': result['types'][0] ?? 'Unknown Category',
-          'gReviews': result['user_ratings_total'] ?? 0.0,
-          'image':
-              "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result['photos']?[0]['photo_reference']}&key=$API_KEY",
-          'distance': distance.toStringAsFixed(2),
-        });
-      }
-
-      destinations
-          .sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
-      return destinations;
-    } else {
-      throw Exception("Failed to load destinations");
-    }
-  }
-
-  Future<Position?> getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      print('Location services are disabled.');
-      return null;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.deniedForever) {
-      print(
-          'Location permissions are permanently denied, we cannot request permissions.');
-      return null;
-    }
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission != LocationPermission.whileInUse &&
-          permission != LocationPermission.always) {
-        print('Location permissions are denied (actual value: $permission).');
-        return null;
-      }
-    }
-
-    return await Geolocator.getCurrentPosition();
   }
 
   Widget _userInfo(BuildContext context) {
@@ -219,185 +124,6 @@ class _HomePageState extends State<HomePage> {
         style: TextStyle(
           fontSize: 30,
           fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _itineraryCard(Map<String, dynamic> itinerary) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20), // Add padding for content
-        decoration: BoxDecoration(
-          color: const Color(0xFFAD547F), // Set container color
-          borderRadius: BorderRadius.circular(15), // Add rounded corners
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 200,
-              height: 200,
-              child: Image.network(
-                itinerary['image'],
-                fit: BoxFit.cover,
-                loadingBuilder: (BuildContext context, Widget child,
-                    ImageChunkEvent? loadingProgress) {
-                  if (loadingProgress == null) {
-                    return child;
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                (loadingProgress.expectedTotalBytes ?? 1)
-                            : null,
-                      ),
-                    );
-                  }
-                },
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return Center(
-                    child: Text('Error loading image'),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 10), // Add some space
-            Text(
-              itinerary['name'],
-              style: TextStyle(
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Set text color
-              ),
-            ),
-            const SizedBox(height: 10), // Add some space
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.yellow, // Set star color
-                  size: 30,
-                ),
-                Text(
-                  '${itinerary['gReviews']}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // Set text color
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10), // Add some space
-            Text(
-              '${itinerary['distance']} km away', // Assuming distance is in kilometers
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Set text color
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navBar(BuildContext context, int currentIndex) {
-    return Container(
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(40),
-            topRight: Radius.circular(40),
-            bottomLeft: Radius.circular(40),
-            bottomRight: Radius.circular(40)),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            canvasColor: const Color(0xFFAD547F), // Setting the color here
-          ),
-          child: BottomNavigationBar(
-            currentIndex: currentIndex,
-            iconSize: 90,
-            onTap: (index) {
-              if (index == 0) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage()),
-                );
-              } else if (index == 1) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const NavigationPage()),
-                );
-              } else if (index == 2) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotifPage()),
-                );
-              } else if (index == 3) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: currentIndex == 0
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 50,
-                        child: Icon(Icons.home, size: 50))
-                    : const Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: currentIndex == 1
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 50,
-                        child: Icon(Icons.search, size: 50))
-                    : const Icon(Icons.search),
-                label: 'Search',
-              ),
-              BottomNavigationBarItem(
-                icon: currentIndex == 2
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 50,
-                        child: Icon(Icons.notifications, size: 50))
-                    : const Icon(Icons.notifications),
-                label: 'Notifications',
-              ),
-              BottomNavigationBarItem(
-                icon: currentIndex == 3
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 50,
-                        child: Icon(Icons.person, size: 50))
-                    : const Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
-            selectedLabelStyle: const TextStyle(color: Color(0xFFAD547F)),
-            unselectedLabelStyle:
-                const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
-          ),
         ),
       ),
     );
@@ -554,6 +280,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+<<<<<<< HEAD
   Widget _lakbayanFeed() {
     return Container(
       color: Colors.pink,
@@ -608,6 +335,8 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+=======
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 
   @override
   Widget build(BuildContext context) {
@@ -669,7 +398,7 @@ class _HomePageState extends State<HomePage> {
                           children: destinations.map((destination) {
                             return Padding(
                               padding: const EdgeInsets.only(right: 20),
-                              child: _itineraryCard(destination),
+                              child: ItineraryCard(itinerary: destination),
                             );
                           }).toList(),
                         ),
@@ -701,7 +430,7 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(height: 20.0), // Adjust the spacing as needed
                         _createPostSection(),
                         const SizedBox(height: 20),
-                        _lakbayanFeed(),
+                        lakbayanFeed(context),
                       ],
                     )),
               ],
@@ -711,7 +440,7 @@ class _HomePageState extends State<HomePage> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _navBar(context, 0),
+            child: customNavBar(context, 0),
           ),
         ],
       ),

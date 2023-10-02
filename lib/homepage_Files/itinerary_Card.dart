@@ -1,0 +1,91 @@
+import 'package:flutter/material.dart';
+
+class ItineraryCard extends StatelessWidget {
+  final Map<String, dynamic> itinerary;
+
+  ItineraryCard({required this.itinerary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20), // Add padding for content
+        decoration: BoxDecoration(
+          color: const Color(0xFFAD547F), // Set container color
+          borderRadius: BorderRadius.circular(15), // Add rounded corners
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              child: Image.network(
+                itinerary['image'],
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) {
+                    return child;
+                  } else {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                (loadingProgress.expectedTotalBytes ?? 1)
+                            : null,
+                      ),
+                    );
+                  }
+                },
+                errorBuilder: (BuildContext context, Object error,
+                    StackTrace? stackTrace) {
+                  return Center(
+                    child: Text('Error loading image'),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10), // Add some space
+            Text(
+              itinerary['name'],
+              style: TextStyle(
+                fontSize: 35,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Set text color
+              ),
+            ),
+            const SizedBox(height: 10), // Add some space
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.star,
+                  color: Colors.yellow, // Set star color
+                  size: 30,
+                ),
+                Text(
+                  '${itinerary['gReviews']}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Set text color
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10), // Add some space
+            Text(
+              '${itinerary['distance']} km away', // Assuming distance is in kilometers
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white, // Set text color
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

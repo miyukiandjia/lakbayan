@@ -5,7 +5,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:lakbayan/constants.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-
 import 'location_services.dart';
 
 class NavigationPage extends StatefulWidget {
@@ -144,24 +143,24 @@ class NavigationPageState extends State<NavigationPage> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () async {
-                  var directions = await LocationService().getDirections(
-                      _originController.text, _destinationController.text);
-                  _goToPlace(
-                    directions['start_location']['lat'],
-                    directions['start_location']['lng'],
-                    directions['bounds_ne'],
-                    directions['bounds_sw'],
-                  );
+              // IconButton(
+              //   onPressed: () async {
+              //     var directions = await LocationService().getDirections(
+              //         _originController.text, _destinationController.text);
+              //     _goToPlace(
+              //       directions['start_location']['lat'],
+              //       directions['start_location']['lng'],
+              //       directions['bounds_ne'],
+              //       directions['bounds_sw'],
+              //     );
 
-                  // var place =
-                  //     await LocationService().getPlace(_searchController.text);
-                  // _goToPlace(place);
-                  _setPolyline(directions['polyline_decoded']);
-                },
-                icon: Icon(Icons.search),
-              )
+              //     // var place =
+              //     //     await LocationService().getPlace(_searchController.text);
+              //     // _goToPlace(place);
+              //     _setPolyline(directions['polyline_decoded']);
+              //   },
+              //   icon: Icon(Icons.search),
+              // )
             ],
           ),
           currentLocation == null
@@ -175,7 +174,11 @@ class NavigationPageState extends State<NavigationPage> {
                         target: sourceLocation, zoom: 13.5),
                     markers: _markers,
                     polygons: _polygons,
+<<<<<<< HEAD
                     polylines: _polylines,
+=======
+ //                   polyline: _polylines,
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
                     onMapCreated: (mapController) {
                       _controller.complete(mapController);
                     },
