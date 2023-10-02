@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data'; 
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,7 +18,6 @@ import 'package:lakbayan/pages/navigation_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page.dart';
 import 'package:lakbayan/postCard.dart';
-
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -546,64 +545,69 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
-          child: Text('Share Your Adventure!', style: TextStyle(fontSize: 20),),
+          child: Text(
+            'Share Your Adventure!',
+            style: TextStyle(fontSize: 20),
+          ),
         ),
       ),
     );
   }
 
-Widget _lakbayanFeed() {
-  return Container(
-    color: Colors.pink,
-    child: StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .orderBy('timestamp', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Text('No posts available.');
-        } else {
-          final posts = snapshot.data!.docs;
-          return ListView.builder(
-            itemCount: posts.length,
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(post['userId'])
-                    .get(),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (userSnapshot.hasError) {
-                    return Text('Error: ${userSnapshot.error}');
-                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return Text('User does not exist.');
-                  } else {
-                    return PostCard(
-                    post: post,
-                    userData: userSnapshot.data!,
-                    userId: FirebaseAuth.instance.currentUser?.uid ?? 'No User ID fetched.', 
-                  );
-                  }
-                },
-              );
-            },
-          );
-        }
-      },
-    ),
-  );
-}
-
+  Widget _lakbayanFeed() {
+    return Container(
+      color: Colors.pink,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('posts')
+            .orderBy('timestamp', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          } else if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Text('No posts available.');
+          } else {
+            final posts = snapshot.data!.docs;
+            return ListView.builder(
+              itemCount: posts.length,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(post['userId'])
+                      .get(),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (userSnapshot.hasError) {
+                      return Text('Error: ${userSnapshot.error}');
+                    } else if (!userSnapshot.hasData ||
+                        !userSnapshot.data!.exists) {
+                      return Text('User does not exist.');
+                    } else {
+                      return PostCard(
+                        post: post,
+                        userData: userSnapshot.data!,
+                        userId: FirebaseAuth.instance.currentUser?.uid ??
+                            'No User ID fetched.',
+                      );
+                    }
+                  },
+                );
+              },
+            );
+          }
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -675,7 +679,7 @@ Widget _lakbayanFeed() {
                 ),
                 //LAKBAYAN CONTAINER
                 Container(
-                  padding: const EdgeInsets.all(40),
+                    padding: const EdgeInsets.all(40),
                     decoration: BoxDecoration(
                       color: const Color(
                           0xFFAD547F), // Set the background color of the container
@@ -683,10 +687,8 @@ Widget _lakbayanFeed() {
                           BorderRadius.circular(8.0), // Set rounded corners
                     ),
                     child: Column(
-                      
                       children: [
                         const Text(
-                          
                           'LAKBAYAN FEED',
                           style: TextStyle(
                             fontSize: 50, // Adjust the font size as needed

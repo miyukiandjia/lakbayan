@@ -43,6 +43,6 @@ class LocationService {
     };
 
     print(results);
-    //return results;
+    return results;
   }
 }

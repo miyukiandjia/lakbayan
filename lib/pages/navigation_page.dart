@@ -74,7 +74,7 @@ class NavigationPageState extends State<NavigationPage> {
     getCurrentLocation();
     getPolyPoints();
     super.initState();
-    _setMarker(LatLng(7.0971, 125.5993));
+    _setMarker(const LatLng(7.0971, 125.5993));
   }
 
   void _setMarker(LatLng point) {
@@ -164,46 +164,18 @@ class NavigationPageState extends State<NavigationPage> {
               )
             ],
           ),
-          // Row(
-          //   children: [
-          //     Expanded(
-          //         child: TextFormField(
-          //       controller: _searchController,
-          //       textCapitalization: TextCapitalization.words,
-          //       decoration: InputDecoration(hintText: 'Search by City'),
-          //       onChanged: (value) {
-          //         print(value);
-          //       },
-          //     )),
-          //     IconButton(
-          //       onPressed: () async {
-          //         var place =
-          //             await LocationService().getPlace(_searchController.text);
-          //         _goToPlace(place);
-          //       },
-          //       icon: Icon(Icons.search),
-          //     )
-          //   ],
-          // ),
           currentLocation == null
               ? const Center(
                   child: Text("Loading"),
                 )
               : Expanded(
                   child: GoogleMap(
+                    mapType: MapType.normal,
                     initialCameraPosition: const CameraPosition(
                         target: sourceLocation, zoom: 13.5),
-                    polylines: {
-                      Polyline(
-                        polylineId: const PolylineId("route"),
-                        points: polylineCoordinates,
-                        color: primaryColor,
-                        width: 6,
-                      )
-                    },
                     markers: _markers,
                     polygons: _polygons,
-                    polyline: _polylines,
+                    polylines: _polylines,
                     onMapCreated: (mapController) {
                       _controller.complete(mapController);
                     },
