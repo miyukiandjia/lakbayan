@@ -42,7 +42,14 @@ class LocationService {
   //         .decodePolyline(json['routes'][0]['overview_polyline']['points'])
   //   };
 
+<<<<<<< HEAD
+    print(results);
+    return results;
+  }
+}
+=======
   //   print(results);
   //   //return results;
   // }
 }
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8

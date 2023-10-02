@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/home_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import this
+import 'package:lakbayan/pages/navigation_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -17,7 +18,8 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _controllerEmail = TextEditingController();
   final TextEditingController _controllerPassword = TextEditingController();
-  final TextEditingController _controllerUsername = TextEditingController(); // Add this line
+  final TextEditingController _controllerUsername =
+      TextEditingController(); // Add this line
 
   Future<void> signInWithEmailAndPassword() async {
     try {
@@ -43,13 +45,14 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-    
+
     try {
       await Auth().createUserWithEmailAndPassword(
           email: _controllerEmail.text, password: _controllerPassword.text);
 
       final user = FirebaseAuth.instance.currentUser;
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(user!.uid);
+      final userDoc =
+          FirebaseFirestore.instance.collection('users').doc(user!.uid);
 
       userDoc.set({
         'username': _controllerUsername.text,
@@ -184,7 +187,10 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _titleName(),
-              isLogin ? SizedBox.shrink() : _entryField('Username', _controllerUsername, 30, false), // Add this line
+              isLogin
+                  ? SizedBox.shrink()
+                  : _entryField('Username', _controllerUsername, 30,
+                      false), // Add this line
               _entryField('Email', _controllerEmail, 200, false),
               _entryField('Password', _controllerPassword, 150, true),
               const SizedBox(height: 10), // Set a relative spacing
