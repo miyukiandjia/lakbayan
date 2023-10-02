@@ -274,61 +274,57 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
     Navigator.of(context).pop();
   }
 
- Future<List<Polyline>> _calculateRoute(
-      List<LatLng> polylineCoordinates) async {
-   List<Location> locations = polylineCoordinates.map((coord) => Location(
-        name: 'Unknown',  // You might want to provide actual names if available
-        category: 'Unknown', // Same here
+ Future<Map<String, dynamic>> _calculateRoute(
+    List<LatLng> polylineCoordinates) async {
+  List<Location> locations = polylineCoordinates.map((coord) => Location(
+        name: 'Unknown',
+        category: 'Unknown',
         latitude: coord.latitude,
         longitude: coord.longitude)).toList();
 
-        print(locations);
+  List<Location> optimizedLocations = await simulatedAnnealingOptimization(locations, useReheat: true);
+  
+  List<LatLng> optimizedCoordinates = optimizedLocations.map((loc) => LatLng(loc.latitude, loc.longitude)).toList();
+  List<Polyline> polylines = [];
+  List<Color> usedColors = [];
 
-    // Use enhancedSimulatedAnnealing to optimize the order
-List<Location> optimizedLocations = await simulatedAnnealingOptimization(locations, useReheat: true);
-    // Convert back to LatLng
-    List<LatLng> optimizedCoordinates = optimizedLocations.map((loc) => LatLng(loc.latitude, loc.longitude)).toList();
-    List<Polyline> polylines = [];
-    // Define the sequence of colors
-    List<Color> colorsSequence = [Colors.blue, Colors.green, Colors.red];
+  for (int i = 0; i < optimizedCoordinates.length - 1; i++) {
+    LatLng from = optimizedCoordinates[i];
+    LatLng to = optimizedCoordinates[i + 1];
 
-    for (int i = 0; i < optimizedCoordinates.length - 1; i++) {
-      LatLng from = optimizedCoordinates[i];
-      LatLng to = optimizedCoordinates[i + 1];
+    gmaps.DirectionsResponse response = await directions.directions(
+      gmaps.Location(lat: from.latitude, lng: from.longitude),
+      gmaps.Location(lat: to.latitude, lng: to.longitude),
+      travelMode: gmaps.TravelMode.driving,
+    );
 
-      gmaps.DirectionsResponse response = await directions.directions(
-        gmaps.Location(lat: from.latitude, lng: from.longitude),
-        gmaps.Location(lat: to.latitude, lng: to.longitude),
-        travelMode: gmaps.TravelMode.driving,
+    if (response.status == 'OK') {
+      PolylinePoints polylinePoints = PolylinePoints();
+      var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
+      List<LatLng> segmentPoints = points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+
+      Color polylineColor = colorsSequence[i % colorsSequence.length];
+      usedColors.add(polylineColor);
+
+      Polyline polyline = Polyline(
+        polylineId: PolylineId('route_$i'),
+        color: polylineColor,
+        points: segmentPoints,
+        width: 5,
       );
 
-      if (response.status == 'OK') {
-        PolylinePoints polylinePoints = PolylinePoints();
-        var points = polylinePoints
-            .decodePolyline(response.routes[0].overviewPolyline.points);
-        List<LatLng> segmentPoints = points
-            .map((point) => LatLng(point.latitude, point.longitude))
-            .toList();
-
-        // Assign the polyline color based on the current index
-        Color polylineColor = colorsSequence[i % colorsSequence.length];
-
-        Polyline polyline = Polyline(
-          polylineId: PolylineId('route_$i'),
-          color: polylineColor,
-          points: segmentPoints,
-          width: 5,
-        );
-
-        polylines.add(polyline);
-      }else{
-        print("Error");
-      }
+      polylines.add(polyline);
+    } else {
+      print("Error");
     }
-    print("polylines: " + polylines.toString());
-    return polylines;
-   
+  }
+
+  return {
+    "polylines": polylines,
+    "colors": usedColors,
+  };
 }
+
 
   double getHueFromColor(Color color) {
     HSLColor hslColor = HSLColor.fromColor(color);
@@ -336,23 +332,22 @@ List<Location> optimizedLocations = await simulatedAnnealingOptimization(locatio
   }
 
   Set<Marker> _generateMarkers(List<LatLng> coordinates, List<Color> colors) {
-    Set<Marker> markers = {};
+  Set<Marker> markers = {};
 
-    for (int i = 0; i < coordinates.length; i++) {
-      final coordinate = coordinates[i];
+  for (int i = 0; i < coordinates.length; i++) {
+    final coordinate = coordinates[i];
 
-      markers.add(
-        Marker(
-          markerId: MarkerId('location_$i'),
-          position: coordinate,
-          icon:
-              BitmapDescriptor.defaultMarkerWithHue(getHueFromColor(colors[i])),
-        ),
-      );
-    }
-
-    return markers;
+    markers.add(
+      Marker(
+        markerId: MarkerId('location_$i'),
+        position: coordinate,
+        icon: BitmapDescriptor.defaultMarkerWithHue(getHueFromColor(colors[i])),
+      ),
+    );
   }
+
+  return markers;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -465,61 +460,55 @@ List<Location> optimizedLocations = await simulatedAnnealingOptimization(locatio
                         polylineCoordinates.insert(0, userLatLng);
 
                         maps.add(FutureBuilder(
-                          future: _calculateRoute(polylineCoordinates),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return CircularProgressIndicator();
-                            } else if (snapshot.hasError) {
-                              return Text('Error calculating route');
-                            } else {
-                              List<Polyline> polylines =
-                                  snapshot.data as List<Polyline>;
+  future: _calculateRoute(polylineCoordinates),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text('Error calculating route');
+    } else {
+      Map<String, dynamic> data = snapshot.data as Map<String, dynamic>;
+      List<Polyline> polylines = data['polylines'] as List<Polyline>;
+      List<Color> usedColors = data['colors'] as List<Color>;
 
-                              return Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 16.0), // Add horizontal padding
-                                child: Container(
-                                  height: 400,
-                                  width: double.infinity,
-                                  margin: EdgeInsets.only(
-                                      bottom: 16.0), // Add space below the map
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.pink.withOpacity(0.3),
-                                        spreadRadius: 5,
-                                        blurRadius: 7,
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                        15.0), // Round the edges
-                                    child: GoogleMap(
-                                      initialCameraPosition: CameraPosition(
-                                        target: polylineCoordinates.first,
-                                        zoom: 18.0,
-                                      ),
-                                      polylines: Set.from(polylines),
-                                      myLocationEnabled: true,
-                                      markers: _generateMarkers(
-                                          polylineCoordinates.sublist(1),
-                                          colorsSequence), // exclude user loc
-                                      gestureRecognizers: <Factory<
-                                          OneSequenceGestureRecognizer>>[
-                                        Factory<OneSequenceGestureRecognizer>(
-                                          () => EagerGestureRecognizer(),
-                                        ),
-                                      ].toSet(),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ));
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: Container(
+          height: 400,
+          width: double.infinity,
+          margin: EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pink.withOpacity(0.3),
+                spreadRadius: 5,
+                blurRadius: 7,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15.0),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: polylineCoordinates.first,
+                zoom: 18.0,
+              ),
+              polylines: Set.from(polylines),
+              myLocationEnabled: true,
+              markers: _generateMarkers(polylineCoordinates.sublist(1), usedColors),
+              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              ].toSet(),
+            ),
+          ),
+        ),
+      );
+    }
+  },
+));
                       }
                     }
                   }
