@@ -399,14 +399,7 @@ Future<LatLng> _getUserLocation() async {
                 ],
               );
             }),
-            ElevatedButton(
-            onPressed: () {
-              setState(() {
-                showMap = !showMap;
-              });
-            },
-            child: Text(showMap ? "Hide Map" : "View in Maps"),
-          ),
+            
              if (widget.itinerary['days'] is List) _buildMap(widget.itinerary['days']),
             const SizedBox(height: 10),
             Row(
@@ -437,6 +430,14 @@ Future<LatLng> _getUserLocation() async {
                   icon: Icon(Icons.comment),
                   onPressed: showCommentsDialog,
                 ),
+                ElevatedButton(
+            onPressed: () {
+              setState(() {
+                showMap = !showMap;
+              });
+            },
+            child: Text(showMap ? "Hide Map" : "View in Maps"),
+          ),
               ],
             ),
           ],

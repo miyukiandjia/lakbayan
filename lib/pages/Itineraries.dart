@@ -41,6 +41,9 @@ class ItinerariesPage extends StatefulWidget {
 
 class _ItinerariesPageState extends State<ItinerariesPage> {
   List<Map<String, dynamic>> _localItineraries = [];
+   final List<Color> colorsSequence = [Colors.blue, Colors.green, Colors.red];
+   bool _enableGyroscope = false;
+
 
   Future<List<Location>> fetchNearbyLocations(String category) async {
   List<Location> locations = [];
@@ -120,7 +123,6 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     );
   }
 
-
   Future<void> _deleteItinerary(Map<String, dynamic> itinerary) async {
     DocumentReference docRef = itinerary['docRef'] as DocumentReference;
     await docRef.delete();
@@ -139,8 +141,11 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
     Navigator.of(context).pop();
   }
 
-Future<void> _calculateRoute(List<LatLng> polylineCoordinates) async {
-  List<LatLng> newPoints = [];
+Future<List<Polyline>> _calculateRoute(List<LatLng> polylineCoordinates) async {
+  List<Polyline> polylines = [];
+  // Define the sequence of colors
+  List<Color> colorsSequence = [Colors.blue, Colors.green, Colors.red];
+
   for (int i = 0; i < polylineCoordinates.length - 1; i++) {
     LatLng from = polylineCoordinates[i];
     LatLng to = polylineCoordinates[i + 1];
@@ -154,12 +159,50 @@ Future<void> _calculateRoute(List<LatLng> polylineCoordinates) async {
     if (response.status == 'OK') {
       PolylinePoints polylinePoints = PolylinePoints();
       var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
-      newPoints.addAll(points.map((point) => LatLng(point.latitude, point.longitude)));
+      List<LatLng> segmentPoints = points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+
+      // Assign the polyline color based on the current index
+      Color polylineColor = colorsSequence[i % colorsSequence.length];
+
+      Polyline polyline = Polyline(
+        polylineId: PolylineId('route_$i'),
+        color: polylineColor,
+        points: segmentPoints,
+        width: 5,
+      );
+
+      polylines.add(polyline);
     }
   }
-  polylineCoordinates.clear(); // Clear the old straight polyline coordinates
-  polylineCoordinates.addAll(newPoints); // Add the new calculated points
+  return polylines;
 }
+
+double getHueFromColor(Color color) {
+  HSLColor hslColor = HSLColor.fromColor(color);
+  return hslColor.hue;
+}
+
+
+Set<Marker> _generateMarkers(List<LatLng> coordinates, List<Color> colors) {
+  Set<Marker> markers = {};
+
+  for (int i = 0; i < coordinates.length; i++) {
+    final coordinate = coordinates[i];
+
+    markers.add(
+      Marker(
+        markerId: MarkerId('location_$i'),
+        position: coordinate,
+        icon: BitmapDescriptor.defaultMarkerWithHue(getHueFromColor(colors[i])),
+      ),
+    );
+  }
+
+  return markers;
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +254,7 @@ Future<void> _calculateRoute(List<LatLng> polylineCoordinates) async {
 
 
 Widget _buildItinerariesList(String status) {
+  Set<String> _gyroscopeEnabledItineraries = {};
   return FutureBuilder<Position>(
     future: fetchUserLocation(),
     builder: (BuildContext context, AsyncSnapshot<Position> positionSnapshot) {
@@ -264,39 +308,55 @@ Widget _buildItinerariesList(String status) {
               polylineCoordinates.insert(0, userLatLng);
               
               maps.add(FutureBuilder(
-                        future: _calculateRoute(polylineCoordinates),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return CircularProgressIndicator();
-                          } else if (snapshot.hasError) {
-                            return Text('Error calculating route');
-                          } else {
-                            Polyline polyline = Polyline(
-                              polylineId: PolylineId('route'),
-                              color: Colors.blue,
-                              points: polylineCoordinates,
-                              width: 5,
-                            );
-                            return Container(
-                              height: 400,
-                              width: double.infinity,
-                              child: GoogleMap(
-                                initialCameraPosition: CameraPosition(
-                                  target: polylineCoordinates.first,
-                                  zoom: 18.0,
-                                ),
-                                polylines: {polyline},
-                                myLocationEnabled: true,
-                                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                                  Factory<OneSequenceGestureRecognizer>(
-                                    () => EagerGestureRecognizer(),
-                                  ),
-                                ].toSet(),
-                              ),
-                            );
-                          }
-                        },
-                      ));
+  future: _calculateRoute(polylineCoordinates),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text('Error calculating route');
+    } else {
+      List<Polyline> polylines = snapshot.data as List<Polyline>;
+
+      return Padding(
+  padding: EdgeInsets.symmetric(horizontal: 16.0), // Add horizontal padding
+  child: Container(
+    height: 400,
+    width: double.infinity,
+    margin: EdgeInsets.only(bottom: 16.0),  // Add space below the map
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(15.0),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.pink.withOpacity(0.3),
+          spreadRadius: 5,
+          blurRadius: 7,
+        ),
+      ],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(15.0), // Round the edges
+      child: GoogleMap(
+  initialCameraPosition: CameraPosition(
+    target: polylineCoordinates.first,
+    zoom: 18.0,
+  ),
+  polylines: Set.from(polylines),
+  myLocationEnabled: true,
+  markers: _generateMarkers(polylineCoordinates.sublist(1), colorsSequence), // exclude user loc
+  gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
+    Factory<OneSequenceGestureRecognizer>(
+      () => EagerGestureRecognizer(),
+    ),
+  ].toSet(),
+),
+
+
+    ),
+  ),
+);
+    }
+  },
+));
                     }
                   }
                 }
@@ -340,14 +400,14 @@ Widget _buildItinerariesList(String status) {
                     ),
                      Text("Active"),
                       Switch(
-                        value: status == "Ongoing",
-                        onChanged: (value) {
-                          String updatedStatus = value ? "Ongoing" : "Upcoming";
-                          DocumentReference docRef =
-                              itinerary['docRef'] as DocumentReference;
-                          docRef.update({'status': updatedStatus});
-                        },
-                      ),
+  value: status == "Ongoing",
+  onChanged: (value) {
+    String updatedStatus = value ? "Ongoing" : "Upcoming";
+    DocumentReference docRef =
+        itinerary['docRef'] as DocumentReference;
+    docRef.update({'status': updatedStatus});
+  },
+),
                       IconButton(
                         icon: Icon(Icons.delete),
                         onPressed: () {
@@ -385,22 +445,39 @@ Widget _buildItinerariesList(String status) {
                   children: <Widget>[
                     if (itinerary['days'] is List)
                       ...((itinerary['days'] as List).map((day) {
+                        final dayName = day['name'] ?? 'Unknown'; 
                         final date = DateFormat('yMMMd')
                             .format((day['date'] as Timestamp).toDate());
-                        final locations =
-                            (day['locations'] as List).map((location) {
-                          return Text((location['name'] as String) +
-                              " - " +
-                              (location['category'] as String));
-                        }).toList();
+                        final locations = (day['locations'] as List).asMap().entries.map((entry) {
+  int idx = entry.key;
+  var location = entry.value;
+  // Use the mod operator to cycle through the colorsSequence list
+  Color currentColor = colorsSequence[idx % colorsSequence.length];
+   return Row(
+    children: [
+      Icon(Icons.circle, color: currentColor, size: 20.0), // Bullet icon
+      SizedBox(width: 5.0), // A small space between the bullet and text
+      Expanded(child: Text(
+        (location['name'] as String),
+        style: TextStyle(fontSize: 25.0),  // Adjust the font size here
+      ))
+    ],
+  );
+}).toList();
+
                         return ListTile(
-                          title: Text(date),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: locations,
-                          ),
-                        );
+    title: Text(
+        '$dayName - $date',
+        style: TextStyle(fontSize: 30.0),  // Adjust the font size here
+    ),
+    subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: locations,
+    ),
+);
+
                       }).toList()), ...maps,]
+                      
             ),
           ));
         },
@@ -416,8 +493,6 @@ Future<Position> fetchUserLocation() async {
     return await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-
-
   } catch (e) {
     // Handle errors here
     print('Failed to get user location: $e');

@@ -11,7 +11,7 @@ import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
 import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
 import 'package:lakbayan/homepage_Files/destination_service.dart';
-import 'package:lakbayan/itinerary_card.dart';
+import 'package:lakbayan/homepage_Files/itinerary_card.dart';
 import 'package:lakbayan/homepage_Files/lakbayan_Feed.dart';
 
 class HomePage extends StatefulWidget {
