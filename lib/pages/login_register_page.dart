@@ -59,16 +59,19 @@ class _LoginPageState extends State<LoginPage> {
         'email': _controllerEmail.text,
       });
 
-      // After successful registration, navigate to the HomePage
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
+      // Toggle to Login UI after registration
+      setState(() {
+        isLogin = true;  // <-- Toggle the isLogin flag
+        errorMessage = "Registration successful! Please log in.";
+      });
+      
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message;
       });
     }
   }
+
 
   Widget _entryField(
     String title,

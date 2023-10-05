@@ -327,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
           () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const savedItineraries()),
+              MaterialPageRoute(builder: (context) => const SavedItineraries()),
             );
           },
         ),

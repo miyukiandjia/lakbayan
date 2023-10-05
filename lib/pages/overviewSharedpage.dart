@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/create_itinerary_page.dart';
+import 'package:lakbayan/pages/getItinerary.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lakbayan/pages/Itineraries.dart';
 
-class OverviewItinerary extends StatelessWidget {
+class OverviewSharedPage extends StatelessWidget {
   final List<ItineraryDay> days;
   final String itineraryName;  // <-- Already added, keep this
 
-  const OverviewItinerary({
+  const OverviewSharedPage({
     required this.days, 
     required this.itineraryName,  // Make sure to pass this when navigating to this page
     Key? key

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:lakbayan/postCard.dart';
 import 'package:lakbayan/homepage_Files/shared_itineraries.dart';
 
-
 Widget lakbayanFeed(BuildContext context) {
   return StreamBuilder<List<dynamic>>(
     stream: Rx.combineLatest2<QuerySnapshot, QuerySnapshot, List<dynamic>>(
@@ -18,6 +17,9 @@ Widget lakbayanFeed(BuildContext context) {
           .orderBy('timestamp', descending: true)
           .snapshots(),
       (QuerySnapshot postsSnapshot, QuerySnapshot itinerariesSnapshot) {
+        print('Posts data: ${postsSnapshot.docs}');
+        print('Itineraries data: ${itinerariesSnapshot.docs}');
+
         return [
           ...postsSnapshot.docs.map((doc) => {'type': 'post', 'data': doc}),
           ...itinerariesSnapshot.docs.map((doc) => {'type': 'itinerary', 'data': doc})
@@ -39,32 +41,13 @@ Widget lakbayanFeed(BuildContext context) {
           physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final item = items[index];
+            print('Processing item: $item');
+
             if (item['type'] == 'post') {
               final post = item['data'];
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(post['userId'])
-                    .get(),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (userSnapshot.hasError) {
-                    return Text('Error: ${userSnapshot.error}');
-                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return Text('User does not exist.');
-                  } else {
-                    return PostCard(
-                      post: post,
-                      userData: userSnapshot.data!,
-                      userId: FirebaseAuth.instance.currentUser?.uid ?? 'No User ID fetched.',
-                    );
-                  }
-                },
-              );
-            } else {
-              final itinerary = item['data'];
-              final userId = itinerary['userId'];
+              final userId = post['userId'];
+
+              print('Fetching user for post with userId: $userId');
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
@@ -78,6 +61,36 @@ Widget lakbayanFeed(BuildContext context) {
                   } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
                     return Text('User does not exist.');
                   } else {
+                    print('Fetched user data: ${userSnapshot.data}');
+                    return PostCard(
+                      post: post,
+                      userData: userSnapshot.data!,
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? 'No User ID fetched.',
+                    );
+                  }
+                },
+              );
+            } else {
+              final itinerary = item['data'];
+                final userIdShared = itinerary['userId'];
+              print("Itinerary Data: ${itinerary.data()}");
+
+
+              print('Fetching user for itinerary with userIds: $userIdShared');
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(userIdShared)
+                    .get(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (userSnapshot.hasError) {
+                    return Text('Error: ${userSnapshot.error}');
+                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                    return Text('User does not exist.');
+                  } else {
+                    print('Fetched user data: ${userSnapshot.data}');
                     return SharedItineraryCard(
                       itinerary: itinerary.data() as Map<String, dynamic>,
                       userData: userSnapshot.data!,
@@ -91,5 +104,4 @@ Widget lakbayanFeed(BuildContext context) {
       }
     },
   );
-      
 }

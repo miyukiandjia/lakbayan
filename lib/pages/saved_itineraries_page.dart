@@ -1,116 +1,145 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/search_page.dart';
-import 'package:lakbayan/pages/profile_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lakbayan/pages/getItinerary.dart';
 
-class savedItineraries extends StatelessWidget {
-  const savedItineraries({super.key});
+class SavedItineraries extends StatefulWidget {
+  const SavedItineraries({Key? key}) : super(key: key);
 
-  Widget _navBar(BuildContext context, int currentIndex) {
-    return Container(
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),
-          ],
-        ),
-        child: ClipRRect(
-            borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(40),
-                topRight: Radius.circular(40),
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40)),
-            child: Theme(
-              data: Theme.of(context).copyWith(
-                canvasColor: const Color(0xFFAD547F), // Setting the color here
-              ),
-              child: BottomNavigationBar(
-                currentIndex: currentIndex,
-                iconSize: 90,
-                onTap: (index) {
-                  if (index == 0) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-                  } else if (index == 1) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SearchPage()),
-                    );
-                  } else if (index == 2) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const savedItineraries()),
-                    );
-                  } else if (index == 3) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ProfilePage()),
-                    );
-                  }
-                },
-                items: <BottomNavigationBarItem>[
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 0
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.home, size: 50))
-                        : const Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 1
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.search, size: 50))
-                        : const Icon(Icons.search),
-                    label: 'Search',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 2
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.notifications, size: 50))
-                        : const Icon(Icons.notifications),
-                    label: 'Notifications',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: currentIndex == 3
-                        ? const CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 50,
-                            child: Icon(Icons.person, size: 50))
-                        : const Icon(Icons.person),
-                    label: 'Profile',
-                  ),
-                ],
-                selectedLabelStyle: const TextStyle(color: Color(0xFFAD547F)),
-                unselectedLabelStyle:
-                    const TextStyle(color: Color.fromARGB(255, 2, 2, 2)),
-              ),
-            )));
+  @override
+  _SavedItinerariesState createState() => _SavedItinerariesState();
+}
+
+class _SavedItinerariesState extends State<SavedItineraries> {
+  Future<List<Map<String, dynamic>>> getSavedItineraries(String userId) async {
+    final sharedItinerariesRef = FirebaseFirestore.instance.collection('sharedItineraries');
+    final sharedItineraries = await sharedItinerariesRef.get();
+    
+    List<Map<String, dynamic>> savedItineraries = [];
+
+    for (final itinerary in sharedItineraries.docs) {
+      final saveDoc = await itinerary.reference.collection('saves').doc(userId).get();
+      if (saveDoc.exists) {
+        final userData = await FirebaseFirestore.instance.collection('users').doc(itinerary['userId']).get();
+        savedItineraries.add({
+          'itinerary': itinerary,
+          'user': userData,
+        });
+      }
+    }
+
+    return savedItineraries;
+  }
+
+  Future<void> _unsaveItinerary(DocumentSnapshot itineraryDoc, String userId) async {
+    // 1. Remove the save
+    await itineraryDoc.reference.collection('saves').doc(userId).delete();
+
+    // 2. Decrement the saves count
+    await itineraryDoc.reference.update({
+      'saves': FieldValue.increment(-1)
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Implement your Create Itinerary screen UI here
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+    final currentUserId = currentUser?.uid;
+
+    if (currentUserId == null) {
+      return Scaffold(
+        body: Center(child: Text('Not logged in!')),
+      );
+    }
+
     return Scaffold(
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
+      appBar: AppBar(
+        title: Text('Saved Itineraries'),
       ),
-      bottomNavigationBar: _navBar(context, 2),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: getSavedItineraries(currentUserId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator()); // Loading indicator
+          }
+
+          final itinerariesWithUser = snapshot.data!;
+          if (itinerariesWithUser.isEmpty) {
+            return Center(child: Text('No saved itineraries.'));
+          }
+
+          return ListView.builder(
+            itemCount: itinerariesWithUser.length,
+            itemBuilder: (context, index) {
+              final itineraryData = itinerariesWithUser[index]['itinerary'].data() as Map<String, dynamic>;
+              final userData = itinerariesWithUser[index]['user'].data() as Map<String, dynamic>;
+              final days = (itineraryData['days'] as List).map((day) => day as Map<String, dynamic>).toList();
+
+              return Card(
+                margin: EdgeInsets.all(10),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Itinerary Name: ${itineraryData['itineraryName']}',
+                            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              await _unsaveItinerary(itinerariesWithUser[index]['itinerary'], currentUserId);
+                              // Refresh the UI
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'By: ${userData['username']}',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                      ),
+                      ...days.map((day) {
+                        final locations = (day['locations'] as List).map((loc) => loc as Map<String, dynamic>).toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Day Name: ${day['name']}',style: TextStyle(fontSize: 25, fontWeight: FontWeight.w500),),
+                            
+                            ...locations.map((loc) {
+                              return Text('Location: ${loc['name']}',style: TextStyle(fontSize: 25),);
+                            }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GetItineraryPage(itinerary: itineraryData),
+                                ),
+                              );
+                            },
+                            child: Text('Get Itinerary'),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

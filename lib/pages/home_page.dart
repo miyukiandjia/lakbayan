@@ -1,10 +1,5 @@
 import 'dart:io';
-<<<<<<< HEAD
 import 'dart:typed_data';
-
-=======
-import 'dart:typed_data'; 
->>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -14,17 +9,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lakbayan/auth.dart';
 import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:lakbayan/pages/login_register_page.dart';
-<<<<<<< HEAD
-import 'package:lakbayan/pages/navigation_page.dart';
-import 'package:lakbayan/pages/notif_page.dart';
-import 'package:lakbayan/pages/profile_page.dart';
-import 'package:lakbayan/postCard.dart';
-=======
 import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
 import 'package:lakbayan/homepage_Files/destination_service.dart';
 import 'package:lakbayan/homepage_Files/itinerary_card.dart';
 import 'package:lakbayan/homepage_Files/lakbayan_Feed.dart';
->>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
+import 'package:lakbayan/pages/migrateSharedItineraries.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -45,10 +34,13 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkAuthentication();
+    migrateSharedItineraries();
   }
 
   _checkAuthentication() async {
     final user = Auth().currentUser;
+    print("Current user ID: ${user}");
+
 
     if (user == null) {
       Navigator.pushReplacement(
@@ -279,64 +271,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-<<<<<<< HEAD
-  Widget _lakbayanFeed() {
-    return Container(
-      color: Colors.pink,
-      child: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('posts')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
-          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Text('No posts available.');
-          } else {
-            final posts = snapshot.data!.docs;
-            return ListView.builder(
-              itemCount: posts.length,
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(post['userId'])
-                      .get(),
-                  builder: (context, userSnapshot) {
-                    if (userSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    } else if (userSnapshot.hasError) {
-                      return Text('Error: ${userSnapshot.error}');
-                    } else if (!userSnapshot.hasData ||
-                        !userSnapshot.data!.exists) {
-                      return Text('User does not exist.');
-                    } else {
-                      return PostCard(
-                        post: post,
-                        userData: userSnapshot.data!,
-                        userId: FirebaseAuth.instance.currentUser?.uid ??
-                            'No User ID fetched.',
-                      );
-                    }
-                  },
-                );
-              },
-            );
-          }
-        },
-      ),
-    );
-  }
-=======
->>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 
   @override
   Widget build(BuildContext context) {
