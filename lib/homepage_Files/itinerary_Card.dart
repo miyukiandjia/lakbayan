@@ -38,12 +38,15 @@ class ItineraryCard extends StatelessWidget {
                     );
                   }
                 },
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return Center(
-                    child: Text('Error loading image'),
-                  );
-                },
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+  return Center(
+    child: Image.network(
+      'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg',
+      fit: BoxFit.cover,
+    ),
+  );
+}
+,
               ),
             ),
             const SizedBox(height: 10), // Add some space

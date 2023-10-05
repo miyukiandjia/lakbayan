@@ -174,7 +174,11 @@ class NavigationPageState extends State<NavigationPage> {
                         target: sourceLocation, zoom: 13.5),
                     markers: _markers,
                     polygons: _polygons,
+<<<<<<< HEAD
                     //                   polyline: _polylines,
+=======
+                    polylines: _polylines,
+>>>>>>> e967e53482caa1be6ccaa0c81b2c99cba51dddbd
                     onMapCreated: (mapController) {
                       _controller.complete(mapController);
                     },

@@ -13,6 +13,7 @@ import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
 import 'package:lakbayan/homepage_Files/destination_service.dart';
 import 'package:lakbayan/homepage_Files/itinerary_card.dart';
 import 'package:lakbayan/homepage_Files/lakbayan_Feed.dart';
+import 'package:lakbayan/pages/migrateSharedItineraries.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -33,10 +34,13 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _checkAuthentication();
+    migrateSharedItineraries();
   }
 
   _checkAuthentication() async {
     final user = Auth().currentUser;
+    print("Current user ID: ${user}");
+
 
     if (user == null) {
       Navigator.pushReplacement(
