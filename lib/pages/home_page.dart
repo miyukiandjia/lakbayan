@@ -13,7 +13,7 @@ import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
 import 'package:lakbayan/homepage_Files/destination_service.dart';
 import 'package:lakbayan/homepage_Files/itinerary_card.dart';
 import 'package:lakbayan/homepage_Files/lakbayan_Feed.dart';
-import 'package:lakbayan/pages/migrateSharedItineraries.dart';
+>>>>>>> 0bc3cf139490d40df23264daed5e6201e5d665e8
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
