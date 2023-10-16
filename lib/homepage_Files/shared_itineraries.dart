@@ -26,26 +26,28 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
   @override
   void initState() {
     super.initState();
-     print("User data in SharedItineraryCard: ${FirebaseAuth.instance.currentUser?.uid}");
+    print(
+        "User data in SharedItineraryCard: ${FirebaseAuth.instance.currentUser?.uid}");
     checkIfLiked(); // Check if the current user has liked the itinerary initially
     checkIfSaved();
     ensureUserDataFields();
   }
+
   void checkIfSaved() async {
-  final itineraryId = widget.itinerary['id']; 
+    final itineraryId = widget.itinerary['id'];
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  DocumentSnapshot saveDoc = await FirebaseFirestore.instance
-      .collection('sharedItineraries')
-      .doc(itineraryId)
-      .collection('saves')
-      .doc(currentUserId)
-      .get();
+    DocumentSnapshot saveDoc = await FirebaseFirestore.instance
+        .collection('sharedItineraries')
+        .doc(itineraryId)
+        .collection('saves')
+        .doc(currentUserId)
+        .get();
 
-  setState(() {
-    isSaved = saveDoc.exists;
-  });
-}
+    setState(() {
+      isSaved = saveDoc.exists;
+    });
+  }
 
   Future<void> ensureUserDataFields() async {
     final userId = widget.userData.id;
@@ -57,9 +59,11 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
 
     Map<String, dynamic> updates = {};
 
-    if (!userData.containsKey('prof_pic_url') || userData['prof_pic_url'] == "") {
+    if (!userData.containsKey('prof_pic_url') ||
+        userData['prof_pic_url'] == "") {
       // If the 'prof_pic_url' field doesn't exist or is empty, set a default value
-      updates['prof_pic_url'] = 'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
+      updates['prof_pic_url'] =
+          'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
     }
     if (!userData.containsKey('username') || userData['username'] == "") {
       // If the 'username' field doesn't exist or is empty, set a default value
@@ -74,12 +78,13 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
   }
 
   Future<LatLng> _getUserLocation() async {
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
     return LatLng(position.latitude, position.longitude);
   }
 
   void checkIfLiked() async {
-    final itineraryId = widget.itinerary['id']; 
+    final itineraryId = widget.itinerary['id'];
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     DocumentSnapshot likeDoc = await FirebaseFirestore.instance
@@ -94,74 +99,74 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     });
   }
 
-void toggleLike() async {
-  print("Toggling like for user: ${widget.userData.id}");
-  final itineraryId = widget.itinerary['id']; 
-  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  
-  if (isLiked) {
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .collection('likes')
-        .doc(currentUserId) 
-        .delete();
+  void toggleLike() async {
+    print("Toggling like for user: ${widget.userData.id}");
+    final itineraryId = widget.itinerary['id'];
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .set({'likes': FieldValue.increment(-1)}, SetOptions(merge: true));
-  } else {
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .collection('likes')
-        .doc(currentUserId) 
-        .set({'likedAt': FieldValue.serverTimestamp()});
+    if (isLiked) {
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .collection('likes')
+          .doc(currentUserId)
+          .delete();
 
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .set({'likes': FieldValue.increment(1)}, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .set({'likes': FieldValue.increment(-1)}, SetOptions(merge: true));
+    } else {
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .collection('likes')
+          .doc(currentUserId)
+          .set({'likedAt': FieldValue.serverTimestamp()});
+
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .set({'likes': FieldValue.increment(1)}, SetOptions(merge: true));
+    }
+    setState(() {
+      isLiked = !isLiked;
+    });
   }
-  setState(() {
-    isLiked = !isLiked;
-  });
-}
 
-void toggleSave() async {
-  final itineraryId = widget.itinerary['id']; 
-  final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  void toggleSave() async {
+    final itineraryId = widget.itinerary['id'];
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  if (isSaved) {
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .collection('saves')
-        .doc(currentUserId) 
-        .delete();
+    if (isSaved) {
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .collection('saves')
+          .doc(currentUserId)
+          .delete();
 
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .set({'saves': FieldValue.increment(-1)}, SetOptions(merge: true));
-  } else {
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .collection('saves')
-        .doc(currentUserId) 
-        .set({'savedAt': FieldValue.serverTimestamp()});
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .set({'saves': FieldValue.increment(-1)}, SetOptions(merge: true));
+    } else {
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .collection('saves')
+          .doc(currentUserId)
+          .set({'savedAt': FieldValue.serverTimestamp()});
 
-    await FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(itineraryId)
-        .set({'saves': FieldValue.increment(1)}, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection('sharedItineraries')
+          .doc(itineraryId)
+          .set({'saves': FieldValue.increment(1)}, SetOptions(merge: true));
+    }
+    setState(() {
+      isSaved = !isSaved;
+    });
   }
-  setState(() {
-    isSaved = !isSaved;
-  });
-}
 
   void showCommentsDialog() async {
     TextEditingController commentController = TextEditingController();
@@ -194,7 +199,8 @@ void toggleSave() async {
                     shrinkWrap: true,
                     itemCount: comments.length,
                     itemBuilder: (context, index) {
-                      final comment = comments[index].data() as Map<String, dynamic>;
+                      final comment =
+                          comments[index].data() as Map<String, dynamic>;
                       return ListTile(
                         title: Text(comment['username']),
                         subtitle: Text(comment['text']),
@@ -218,7 +224,8 @@ void toggleSave() async {
                               if (value == 'edit') {
                                 // Show a dialog to edit the comment
                                 final TextEditingController editController =
-                                    TextEditingController(text: comment['text']);
+                                    TextEditingController(
+                                        text: comment['text']);
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -229,7 +236,8 @@ void toggleSave() async {
                                     actions: [
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.of(context).pop(); // Close the dialog
+                                          Navigator.of(context)
+                                              .pop(); // Close the dialog
                                         },
                                         child: Text('Cancel'),
                                       ),
@@ -243,8 +251,11 @@ void toggleSave() async {
                                               .doc(widget.itinerary['id'])
                                               .collection('comments')
                                               .doc(commentId)
-                                              .update({'text': editController.text});
-                                          Navigator.of(context).pop(); // Close the dialog
+                                              .update({
+                                            'text': editController.text
+                                          });
+                                          Navigator.of(context)
+                                              .pop(); // Close the dialog
                                         },
                                         child: Text('Save'),
                                       ),
@@ -258,11 +269,13 @@ void toggleSave() async {
                                   builder: (BuildContext context) {
                                     return AlertDialog(
                                       title: Text('Confirm Delete'),
-                                      content: Text('Are you sure you want to delete this comment?'),
+                                      content: Text(
+                                          'Are you sure you want to delete this comment?'),
                                       actions: <Widget>[
                                         TextButton(
                                           onPressed: () {
-                                            Navigator.of(context).pop(); // Close the dialog
+                                            Navigator.of(context)
+                                                .pop(); // Close the dialog
                                           },
                                           child: Text('Cancel'),
                                         ),
@@ -277,7 +290,8 @@ void toggleSave() async {
                                                 .collection('comments')
                                                 .doc(commentId)
                                                 .delete();
-                                            Navigator.of(context).pop(); // Close the dialog
+                                            Navigator.of(context)
+                                                .pop(); // Close the dialog
                                           },
                                           child: Text('Delete'),
                                         ),
@@ -320,11 +334,11 @@ void toggleSave() async {
                     .doc(widget.itinerary['id'])
                     .collection('comments')
                     .add({
-                      'userId': widget.userData.id,
-                      'username': widget.userData['username'],
-                      'text': commentText,
-                      'timestamp': FieldValue.serverTimestamp(),
-                    });
+                  'userId': widget.userData.id,
+                  'username': widget.userData['username'],
+                  'text': commentText,
+                  'timestamp': FieldValue.serverTimestamp(),
+                });
 
                 // Clear the controller
                 commentController.clear();
@@ -338,9 +352,10 @@ void toggleSave() async {
   }
 
   Future<List<LatLng>> _getDirections(LatLng start, LatLng destination) async {
-    const String apiKey = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";  // Replace with your Google Maps API Key
+    const String apiKey =
+        "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0"; // Replace with your Google Maps API Key
     final directions = gmaps.GoogleMapsDirections(apiKey: apiKey);
-    
+
     gmaps.DirectionsResponse response = await directions.directions(
       gmaps.Location(lat: start.latitude, lng: start.longitude),
       gmaps.Location(lat: destination.latitude, lng: destination.longitude),
@@ -349,10 +364,13 @@ void toggleSave() async {
 
     if (response.status == 'OK') {
       PolylinePoints polylinePoints = PolylinePoints();
-      var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
-      return points.map((point) => LatLng(point.latitude, point.longitude)).toList();
+      var points = polylinePoints
+          .decodePolyline(response.routes[0].overviewPolyline.points);
+      return points
+          .map((point) => LatLng(point.latitude, point.longitude))
+          .toList();
     }
-    
+
     return [];
   }
 
@@ -364,32 +382,36 @@ void toggleSave() async {
       future: _getUserLocation(),
       builder: (BuildContext context, AsyncSnapshot<LatLng> snapshot) {
         if (!snapshot.hasData) {
-          return CircularProgressIndicator();  // Show loading indicator until user location is fetched
+          return CircularProgressIndicator(); // Show loading indicator until user location is fetched
         }
 
         LatLng userLocation = snapshot.data!;
-        List<LatLng> polylineCoordinates = [userLocation];  // Start with the user's location
-        
+        List<LatLng> polylineCoordinates = [
+          userLocation
+        ]; // Start with the user's location
+
         for (var day in days) {
           if (day['locations'] != null) {
             for (var location in day['locations']) {
-              if (location['latitude'] != null && location['longitude'] != null) {
-                LatLng latLng = LatLng(location['latitude'], location['longitude']);
+              if (location['latitude'] != null &&
+                  location['longitude'] != null) {
+                LatLng latLng =
+                    LatLng(location['latitude'], location['longitude']);
                 polylineCoordinates.add(latLng);
               }
             }
           }
         }
-        
+
         return FutureBuilder<List<LatLng>>(
           future: _getDirections(userLocation, polylineCoordinates.last),
           builder: (context, routeSnapshot) {
             if (!routeSnapshot.hasData) {
-              return CircularProgressIndicator();  // Show loading indicator until route is fetched
+              return CircularProgressIndicator(); // Show loading indicator until route is fetched
             }
-            
+
             List<LatLng> routeCoordinates = routeSnapshot.data!;
-            
+
             Polyline polyline = Polyline(
               polylineId: PolylineId('route'),
               color: Colors.blue,
@@ -423,7 +445,8 @@ void toggleSave() async {
   Widget build(BuildContext context) {
     String profileImageUrl = widget.userData['prof_pic_url'] ?? "";
     if (profileImageUrl.isEmpty) {
-      profileImageUrl = "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
+      profileImageUrl =
+          "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
     }
 
     return Card(
@@ -468,8 +491,8 @@ void toggleSave() async {
                 ],
               );
             }),
-            
-            if (widget.itinerary['days'] is List) _buildMap(widget.itinerary['days']),
+            if (widget.itinerary['days'] is List)
+              _buildMap(widget.itinerary['days']),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -481,49 +504,56 @@ void toggleSave() async {
                   onPressed: toggleLike,
                 ),
                 StreamBuilder<DocumentSnapshot>(
-    stream: FirebaseFirestore.instance
-        .collection('sharedItineraries')
-        .doc(widget.itinerary['id'])
-        .snapshots(),
-    builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-            return CircularProgressIndicator();  // Loading indicator
-        }
-        final itineraryData = snapshot.data!.data() as Map<String, dynamic>;
-        return Text(itineraryData['likes']?.toString() ?? '0');
-    },
-),
+                  stream: FirebaseFirestore.instance
+                      .collection('sharedItineraries')
+                      .doc(widget.itinerary['id'])
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return CircularProgressIndicator(); // Loading indicator
+                    }
+                    final itineraryData =
+                        snapshot.data!.data() as Map<String, dynamic>;
+                    return Text(itineraryData['likes']?.toString() ?? '0');
+                  },
+                ),
                 IconButton(
-  icon: Icon(
-    isSaved ? Icons.star : Icons.star_border,
-    color: isSaved ? Colors.yellow : null,
-  ),
-  onPressed: toggleSave,
-),
-StreamBuilder<DocumentSnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('sharedItineraries')
-      .doc(widget.itinerary['id'])
-      .snapshots(),
-  builder: (context, snapshot) {
-      if (!snapshot.hasData) {
-          return CircularProgressIndicator();  // Loading indicator
-      }
-      final itineraryData = snapshot.data!.data() as Map<String, dynamic>;
-      return Text(itineraryData['saves']?.toString() ?? '0');
-  },
-),
+                  icon: Icon(
+                    isSaved ? Icons.star : Icons.star_border,
+                    color: isSaved ? Colors.yellow : null,
+                  ),
+                  onPressed: toggleSave,
+                ),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('sharedItineraries')
+                      .doc(widget.itinerary['id'])
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return CircularProgressIndicator(); // Loading indicator
+                    }
+                    final itineraryData =
+                        snapshot.data!.data() as Map<String, dynamic>;
+                    return Text(itineraryData['saves']?.toString() ?? '0');
+                  },
+                ),
                 IconButton(
                   icon: Icon(Icons.comment),
                   onPressed: showCommentsDialog,
                 ),
-                
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
                       showMap = !showMap;
                     });
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFAD547F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
                   child: Text(showMap ? "Hide Map" : "View in Maps"),
                 ),
               ],

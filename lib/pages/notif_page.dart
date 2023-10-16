@@ -23,7 +23,20 @@ class ListViewBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("LAKBAYAN NOTIFICATIONS")),
+      appBar: AppBar(
+        elevation: 0.0,
+        bottomOpacity: 0.0,
+        toolbarHeight: 100,
+        backgroundColor: Color(0xFFAD547F),
+        title: const Text(
+          "Notifications",
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w500,
+            fontSize: 32,
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: ListView.builder(
