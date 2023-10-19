@@ -127,35 +127,49 @@ class _PostCardState extends State<PostCard> {
                     return ListTile(
                       title: Text(comment['username']),
                       subtitle: Text(comment['text']),
-                      onLongPress: () { //I think i might change this kay onCLick mostly sa app natin for consistency
-                        showMenu(
-                          context: context,
-                          position: RelativeRect.fill,
-                          items: [
-                            PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Edit'),
-                            ),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
-                            ),
-                          ],
-                        ).then((value) async {
-                          if (value != null) {
-                            final commentId = comments[index].id;
-                            if (value == 'edit') {
-                              // Show a dialog to edit the comment
-                              final TextEditingController editController =
-                                  TextEditingController(text: comment['text']);
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text('Edit Comment'),
-                                  content: TextField(
-                                    controller: editController,
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          final commentId = comments[index].id;
+                          if (value == 'edit') {
+                            final TextEditingController editController =
+                                TextEditingController(text: comment['text']);
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Edit Comment'),
+                                content: TextField(
+                                  controller: editController,
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(); // Close the dialog
+                                    },
+                                    child: Text('Cancel'),
                                   ),
-                                  actions: [
+                                  TextButton(
+                                    onPressed: () async {
+                                      await FirebaseFirestore.instance
+                                          .collection('posts')
+                                          .doc(widget.post.id)
+                                          .collection('comments')
+                                          .doc(commentId)
+                                          .update({'text': editController.text});
+                                      Navigator.of(context).pop(); // Close the dialog
+                                    },
+                                    child: Text('Save'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else if (value == 'delete') {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Confirm Delete'),
+                                  content: Text('Are you sure you want to delete this comment?'),
+                                  actions: <Widget>[
                                     TextButton(
                                       onPressed: () {
                                         Navigator.of(context).pop(); // Close the dialog
@@ -164,56 +178,33 @@ class _PostCardState extends State<PostCard> {
                                     ),
                                     TextButton(
                                       onPressed: () async {
-                                        // Update the comment in Firestore
                                         await FirebaseFirestore.instance
                                             .collection('posts')
                                             .doc(widget.post.id)
                                             .collection('comments')
                                             .doc(commentId)
-                                            .update({'text': editController.text});
+                                            .delete();
                                         Navigator.of(context).pop(); // Close the dialog
                                       },
-                                      child: Text('Save'),
+                                      child: Text('Delete'),
                                     ),
                                   ],
-                                ),
-                              );
-                            } else if (value == 'delete') {
-                              // Confirm and delete the comment
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Confirm Delete'),
-                                    content: Text('Are you sure you want to delete this comment?'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop(); // Close the dialog
-                                        },
-                                        child: Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () async {
-                                          // Delete the comment from Firestore
-                                          await FirebaseFirestore.instance
-                                              .collection('posts')
-                                              .doc(widget.post.id)
-                                              .collection('comments')
-                                              .doc(commentId)
-                                              .delete();
-                                          Navigator.of(context).pop(); // Close the dialog
-                                        },
-                                        child: Text('Delete'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
+                                );
+                              },
+                            );
                           }
-                        });
-                      },
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text('Delete'),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 );
@@ -231,37 +222,37 @@ class _PostCardState extends State<PostCard> {
       ),
       actions: [
         ElevatedButton(
-  onPressed: () async {
-    // Get the text from the controller
-    final commentText = commentController.text.trim();
+          onPressed: () async {
+            // Get the text from the controller
+            final commentText = commentController.text.trim();
 
-    // Check if the comment text is not empty
-    if (commentText.isNotEmpty) {
-      // Add the comment to Firestore
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc(widget.post.id)
-          .collection('comments')
-          .add({
-        'userId': widget.userId, // Use the current user's ID
-        'username': (widget.userData.data() as Map<String, dynamic>)['username'], // Use the current user's username
-        'text': commentText,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+            // Check if the comment text is not empty
+            if (commentText.isNotEmpty) {
+              // Add the comment to Firestore
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(widget.post.id)
+                  .collection('comments')
+                  .add({
+                'userId': widget.userId, // Use the current user's ID
+                'username': (widget.userData.data() as Map<String, dynamic>)['username'], // Use the current user's username
+                'text': commentText,
+                'timestamp': FieldValue.serverTimestamp(),
+              });
 
-      // Clear the controller
-      commentController.clear();
-    }
-  },
-  child: Text('Post Comment'),
-),
+              // Clear the controller
+              commentController.clear();
+            }
+          },
+          child: Text('Post Comment'),
+        ),
       ],
     ),
   );
 }
 
 
-  @override
+    @override
   Widget build(BuildContext context) {
     final post = widget.post;
     final userData = widget.userData.data() as Map<String, dynamic>;
@@ -279,15 +270,40 @@ class _PostCardState extends State<PostCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(userProfilePic),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundImage: NetworkImage(userProfilePic),
+                            ),
+                            SizedBox(width: 8.0),
+                            Text(
+                              post['username'] ?? 'Username',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 8.0),
-                        Text(
-                          post['username'] ?? 'Username',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                        if (widget.userId == post['userId']) // If it's the current user's post
+                          PopupMenuButton<String>(
+                            onSelected: (String result) async {
+                              if (result == 'edit') {
+                                _editPost();
+                              } else if (result == 'delete') {
+                                _deletePost();
+                              }
+                            },
+                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                              const PopupMenuItem<String>(
+                                value: 'edit',
+                                child: Text('Edit'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                     SizedBox(height: 8.0),
@@ -332,4 +348,131 @@ class _PostCardState extends State<PostCard> {
                   ]),
             )));
   }
+
+  void _editPost() {
+    TextEditingController editController = TextEditingController(text: widget.post['text']);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit Post'),
+        content: TextField(
+          controller: editController,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Update the post in Firestore
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(widget.post.id)
+                  .update({'text': editController.text});
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deletePost() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete this post?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Delete the post from Firestore
+                await FirebaseFirestore.instance.collection('posts').doc(widget.post.id).delete();
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  void _editComment(DocumentSnapshot comment) {
+  TextEditingController editController = TextEditingController(text: comment['text']);
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Edit Comment'),
+      content: TextField(
+        controller: editController,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          child: Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () async {
+            // Update the comment in Firestore
+            await FirebaseFirestore.instance
+                .collection('posts')
+                .doc(widget.post.id)
+                .collection('comments')
+                .doc(comment.id)
+                .update({'text': editController.text});
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          child: Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
+void _deleteComment(DocumentSnapshot comment) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Confirm Delete'),
+        content: Text('Are you sure you want to delete this comment?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Delete the comment from Firestore
+              await FirebaseFirestore.instance
+                  .collection('posts')
+                  .doc(widget.post.id)
+                  .collection('comments')
+                  .doc(comment.id)
+                  .delete();
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 }

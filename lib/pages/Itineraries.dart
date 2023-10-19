@@ -123,7 +123,6 @@ List<Location> getNeighbor(List<Location> locations) {
   return newLocations;
 }
 
-
 List<Location> perturbRoute(List<Location> currentRoute) {
   List<Location> newRoute = List.from(currentRoute);
   Random rand = Random();
@@ -148,8 +147,6 @@ Future<double> calculateRouteCost(List<Location> route) async {
   }
   return cost;
 }
-
-
 
 Future<List<Location>> simulatedAnnealingOptimization(List<Location> initialRoute, {bool useReheat = false}) async {
   print("Starting simulated annealing optimization...");
@@ -196,13 +193,9 @@ Future<List<Location>> simulatedAnnealingOptimization(List<Location> initialRout
   return bestRoute;
 }
 
-
-
-
 Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async {
   return await simulatedAnnealingOptimization(initialRoute);
 }
-
 
 
   Stream<QuerySnapshot> _getItinerariesByStatus(String status) {
@@ -557,6 +550,18 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
                                   onChanged: (value) {
                                     String updatedStatus =
                                         value ? "Ongoing" : "Upcoming";
+                                    DocumentReference docRef =
+                                        itinerary['docRef']
+                                            as DocumentReference;
+                                    docRef.update({'status': updatedStatus});
+                                  },
+                                ),
+                                 Text("Done"),
+                                Switch(
+                                  value: status == "Done",
+                                  onChanged: (value) {
+                                    String updatedStatus =
+                                        value ? "Done" : "Ongoing";
                                     DocumentReference docRef =
                                         itinerary['docRef']
                                             as DocumentReference;

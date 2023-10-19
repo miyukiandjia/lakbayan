@@ -41,13 +41,10 @@ Widget lakbayanFeed(BuildContext context) {
           physics: NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final item = items[index];
-            print('Processing item: $item');
-
             if (item['type'] == 'post') {
               final post = item['data'];
               final userId = post['userId'];
 
-              print('Fetching user for post with userId: $userId');
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
@@ -61,7 +58,6 @@ Widget lakbayanFeed(BuildContext context) {
                   } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
                     return Text('User does not exist.');
                   } else {
-                    print('Fetched user data: ${userSnapshot.data}');
                     return PostCard(
                       post: post,
                       userData: userSnapshot.data!,
@@ -73,10 +69,6 @@ Widget lakbayanFeed(BuildContext context) {
             } else {
               final itinerary = item['data'];
                 final userIdShared = itinerary['userId'];
-              print("Itinerary Data: ${itinerary.data()}");
-
-
-              print('Fetching user for itinerary with userIds: $userIdShared');
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
@@ -90,7 +82,6 @@ Widget lakbayanFeed(BuildContext context) {
                   } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
                     return Text('User does not exist.');
                   } else {
-                    print('Fetched user data: ${userSnapshot.data}');
                     return SharedItineraryCard(
                       itinerary: itinerary.data() as Map<String, dynamic>,
                       userData: userSnapshot.data!,

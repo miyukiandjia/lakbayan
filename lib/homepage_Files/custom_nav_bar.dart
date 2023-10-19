@@ -38,7 +38,7 @@ Widget customNavBar(BuildContext context, int currentIndex) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const NavigationPage()),
+                    builder: (context) => NavigationPage()),
               );
             } else if (index == 2) {
               Navigator.pushReplacement(
