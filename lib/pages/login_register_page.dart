@@ -61,17 +61,15 @@ class _LoginPageState extends State<LoginPage> {
 
       // Toggle to Login UI after registration
       setState(() {
-        isLogin = true;  // <-- Toggle the isLogin flag
+        isLogin = true; // <-- Toggle the isLogin flag
         errorMessage = "Registration successful! Please log in.";
       });
-      
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message;
       });
     }
   }
-
 
   Widget _entryField(
     String title,
@@ -104,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _errorMessage() {
     return Text(errorMessage == '' ? '' : 'Error! $errorMessage',
         style: const TextStyle(
-          fontSize: 40,
+          fontSize: 36,
         ));
   }
 
@@ -124,12 +122,13 @@ class _LoginPageState extends State<LoginPage> {
         padding: EdgeInsets.symmetric(
           vertical: buttonHeight * 0.3,
         ),
+        elevation: 5,
       ),
       child: Text(
         isLogin ? 'Login' : 'Register',
         style: TextStyle(
           fontSize: buttonWidth * 0.04, // Use relative value here
-          fontFamily: 'Roboto',
+          fontFamily: 'Nunito',
         ),
       ),
     );
@@ -149,23 +148,26 @@ class _LoginPageState extends State<LoginPage> {
             ? 'Don\'t have an account? Create now'
             : 'Already have an account? Login instead',
         style: TextStyle(
-          fontSize: fontSize,
-          color: Color.fromARGB(192, 167, 166, 166),
-          fontFamily: 'Roboto',
+          fontSize: fontSize - 20,
+          color: Color.fromARGB(255, 58, 70, 70),
+          fontFamily: 'Nunito',
         ),
       ),
     );
   }
 
   Widget _titleName() {
-    return Center(
-      child: Text(
-        isLogin ? 'Login' : 'Register',
-        style: const TextStyle(
-          fontSize: 50,
-          fontFamily: 'Roboto',
-          color: Color(0xFFAD547F),
-          fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.all(50.0),
+      child: Center(
+        child: Text(
+          isLogin ? 'Login' : 'Register',
+          style: const TextStyle(
+            fontSize: 50,
+            fontFamily: 'Nunito',
+            color: Color.fromARGB(255, 58, 70, 70),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -174,34 +176,87 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          width: double.infinity,
-          padding: const EdgeInsets.all(30), // Set a relative padding
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("lib/images/Login.png"),
-              fit: BoxFit.cover,
+      body: Container(
+        child: Column(
+          children: [
+            Container(
+              height: MediaQuery.of(context).size.height,
+              width: double.infinity,
+              //color: const Color(0xFFAD547F),
+              // decoration: const BoxDecoration(
+              //   image: DecorationImage(
+              //     image: AssetImage("lib/images/login-bg.jpg"),
+              //     fit: BoxFit.cover,
+              //   ),
+              // ),
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                colors: [Color(0xFFAD547F), Colors.pink.shade200],
+              )),
+              child: Column(
+                children: <Widget>[
+                  const SizedBox(
+                    height: 80,
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: <Widget>[
+                        SizedBox(
+                          height: 200,
+                        ),
+                        Text(
+                          "Welcome to Lakbayan!",
+                          style: TextStyle(
+                              fontSize: 48,
+                              fontFamily: 'Roboto',
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 400,
+                  ),
+                  Expanded(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(100),
+                              topRight: Radius.circular(120))),
+                      child: Column(
+                        children: <Widget>[
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              _titleName(),
+                              isLogin
+                                  ? SizedBox.shrink()
+                                  : _entryField('Username', _controllerUsername,
+                                      30, false), // Add this line
+                              _entryField(
+                                  'Email', _controllerEmail, 200, false),
+                              _entryField(
+                                  'Password', _controllerPassword, 150, true),
+                              const SizedBox(
+                                  height: 10), // Set a relative spacing
+                              _errorMessage(),
+                              _submitButton(),
+                              _loginOrRegisterButton(),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _titleName(),
-              isLogin
-                  ? SizedBox.shrink()
-                  : _entryField('Username', _controllerUsername, 30,
-                      false), // Add this line
-              _entryField('Email', _controllerEmail, 200, false),
-              _entryField('Password', _controllerPassword, 150, true),
-              const SizedBox(height: 10), // Set a relative spacing
-              _errorMessage(),
-              _submitButton(),
-              _loginOrRegisterButton(),
-            ],
-          ),
+          ],
         ),
       ),
     );

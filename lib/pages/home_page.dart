@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:excel/excel.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,6 @@ class _HomePageState extends State<HomePage> {
     final user = Auth().currentUser;
     print("Current user ID: ${user}");
 
-
     if (user == null) {
       Navigator.pushReplacement(
         context,
@@ -77,45 +77,53 @@ class _HomePageState extends State<HomePage> {
 
     double fontSize = MediaQuery.of(context).size.width * 0.03;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          greeting,
-          style: TextStyle(
-            fontSize: fontSize,
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            greeting,
+            style: TextStyle(fontSize: fontSize, fontFamily: 'Nunito'),
           ),
-        ),
-        Text(
-          nameToShow,
-          style: const TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
+          Text(
+            nameToShow,
+            style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Nunito'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _createItinerary(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CreateItineraryPage()),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: OutlinedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const CreateItineraryPage()),
+          );
+        },
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(width: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(50),
+          ),
         ),
-      ),
-      child: const Text(
-        '+ Create Itinerary',
-        style: TextStyle(
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
+        child: const Text(
+          '+ Create Itinerary',
+          style: TextStyle(
+            fontSize: 30,
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 58, 70, 70),
+          ),
         ),
       ),
     );
@@ -222,9 +230,9 @@ class _HomePageState extends State<HomePage> {
                         child: TextField(
                           controller: _postController,
                           decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Share Your Adventure!',
-                          ),
+                              border: InputBorder.none,
+                              hintText: 'Share Your Adventure!',
+                              hintStyle: TextStyle(fontFamily: 'Nunito')),
                           maxLines: null,
                         ),
                       ),
@@ -246,7 +254,8 @@ class _HomePageState extends State<HomePage> {
                             });
                           }
                         },
-                        child: Text('Photo Upload'),
+                        child: Text('Photo Upload',
+                            style: TextStyle(fontFamily: 'Nunito')),
                       ),
                     ],
                   ),
@@ -279,7 +288,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         elevation: 0.0,
         bottomOpacity: 0.0,
-        toolbarHeight: 90,
+        toolbarHeight: 150,
         backgroundColor: Colors.white,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -293,26 +302,28 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Stack(
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: ListView(
-              children: <Widget>[
-                Center(child: _davaoImage(context)),
-                const SizedBox(height: 20),
-                const Align(
-                  alignment: Alignment.centerLeft,
+          ListView(
+            children: <Widget>[
+              Center(child: _davaoImage(context)),
+              const SizedBox(height: 20),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
                   child: Text(
                     'Popular Destinations',
                     style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 50,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                        fontFamily: 'Nunito',
+                        fontSize: 50,
+                        fontWeight: FontWeight.w600,
+                        color: Color.fromARGB(255, 58, 70, 70)),
                   ),
                 ),
-                const SizedBox(height: 20),
-                FutureBuilder<List<Map<String, dynamic>>>(
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(30),
+                child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: fetchNearbyDestinations(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -340,35 +351,35 @@ class _HomePageState extends State<HomePage> {
                     }
                   },
                 ),
-                //LAKBAYAN CONTAINER
-                Container(
-                    padding: const EdgeInsets.all(40),
-                    decoration: BoxDecoration(
-                      color: const Color(
-                          0xFFAD547F), // Set the background color of the container
-                      borderRadius:
-                          BorderRadius.circular(8.0), // Set rounded corners
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'LAKBAYAN FEED',
-                          style: TextStyle(
-                            fontSize: 50, // Adjust the font size as needed
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Nunito',
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
+              ),
+              //LAKBAYAN CONTAINER
+              Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: const Color(
+                        0xFFAD547F), // Set the background color of the container
+                    borderRadius:
+                        BorderRadius.circular(8.0), // Set rounded corners
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'LAKBAYAN FEED',
+                        style: TextStyle(
+                          fontSize: 50, // Adjust the font size as needed
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Nunito',
+                          color: Colors.white,
                         ),
-                        SizedBox(height: 20.0), // Adjust the spacing as needed
-                        _createPostSection(),
-                        const SizedBox(height: 20),
-                        lakbayanFeed(context),
-                      ],
-                    )),
-              ],
-            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 20.0), // Adjust the spacing as needed
+                      _createPostSection(),
+                      const SizedBox(height: 20),
+                      lakbayanFeed(context),
+                    ],
+                  )),
+            ],
           ),
           Positioned(
             left: 0,

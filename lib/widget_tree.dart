@@ -93,10 +93,11 @@ class SplashScreen extends StatelessWidget {
                   backgroundColor: const Color(0xFFF9CDDD),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
-                        screenWidth * 0.05), // Adjust the value as needed
+                        screenWidth * 0.5), // Adjust the value as needed
                   ),
                   minimumSize: Size(screenWidth * 0.8,
-                      screenHeight * 0.1), // Adjust the values as needed
+                      screenHeight * 0.08), // Adjust the values as needed
+                  elevation: 10,
                   padding: EdgeInsets.symmetric(
                       vertical:
                           screenHeight * 0.02), // Adjust the value as needed
@@ -104,9 +105,10 @@ class SplashScreen extends StatelessWidget {
                 child: Text(
                   "Get Started",
                   style: TextStyle(
-                    fontSize: screenWidth * 0.05, // Adjust the value as needed
-                    fontFamily: 'Roboto',
-                    color: Color.fromARGB(255, 12, 12, 12),
+                    fontSize: screenWidth * 0.05,
+                    fontWeight: FontWeight.w400, // Adjust the value as needed
+                    fontFamily: 'Nunito',
+                    color: Color.fromARGB(255, 58, 70, 70),
                   ),
                 ),
               ),

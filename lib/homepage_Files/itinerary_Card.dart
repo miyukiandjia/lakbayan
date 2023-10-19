@@ -38,15 +38,15 @@ class ItineraryCard extends StatelessWidget {
                     );
                   }
                 },
-                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-  return Center(
-    child: Image.network(
-      'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg',
-      fit: BoxFit.cover,
-    ),
-  );
-}
-,
+                errorBuilder: (BuildContext context, Object error,
+                    StackTrace? stackTrace) {
+                  return Center(
+                    child: Image.network(
+                      'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 10), // Add some space
@@ -54,7 +54,8 @@ class ItineraryCard extends StatelessWidget {
               itinerary['name'],
               style: TextStyle(
                 fontSize: 35,
-                fontWeight: FontWeight.bold,
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w500,
                 color: Colors.white, // Set text color
               ),
             ),
@@ -71,7 +72,7 @@ class ItineraryCard extends StatelessWidget {
                   '${itinerary['gReviews']}',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                     color: Colors.white, // Set text color
                   ),
                 ),
@@ -82,7 +83,7 @@ class ItineraryCard extends StatelessWidget {
               '${itinerary['distance']} km away', // Assuming distance is in kilometers
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w500,
                 color: Colors.white, // Set text color
               ),
             ),

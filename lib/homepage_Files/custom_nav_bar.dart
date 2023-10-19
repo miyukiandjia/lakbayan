@@ -17,17 +17,17 @@ Widget customNavBar(BuildContext context, int currentIndex) {
     ),
     child: ClipRRect(
       borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(40),
-          topRight: Radius.circular(40),
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40)),
+          topLeft: Radius.circular(70),
+          topRight: Radius.circular(70),
+          bottomLeft: Radius.circular(70),
+          bottomRight: Radius.circular(70)),
       child: Theme(
         data: Theme.of(context).copyWith(
           canvasColor: const Color(0xFFAD547F), // Setting the color here
         ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
-          iconSize: 90,
+          iconSize: 80,
           onTap: (index) {
             if (index == 0) {
               Navigator.pushReplacement(
