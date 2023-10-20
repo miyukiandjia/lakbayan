@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/pages/Itineraries.dart';
-import 'package:lakbayan/pages/gallery_page.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/pages/login_register_page.dart';
+import 'package:lakbayan/pages/authentication/auth.dart';
+import 'package:lakbayan/pages/profile_page/my_itineraries_page.dart';
+import 'package:lakbayan/pages/profile_page/gallery_page.dart';
+import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/authentication/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:lakbayan/pages/saved_itineraries_page.dart';
+import 'package:lakbayan/pages/profile_page/saved_itineraries_page/saved_itineraries_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -313,7 +313,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         _buildSectionIcon(
           Icons.photo_library,
-          'Photos',
+          'Gallery',
           () {
             Navigator.push(
               context,

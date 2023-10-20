@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/homepage_Files/custom_nav_bar.dart';
+import 'package:lakbayan/pages/homepage/nav_bar.dart';
 
 
 class NotifPage extends StatelessWidget {

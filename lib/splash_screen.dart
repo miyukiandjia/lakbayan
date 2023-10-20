@@ -1,12 +1,13 @@
-import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/pages/login_register_page.dart';
+import 'package:lakbayan/pages/authentication/auth.dart';
+import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/authentication/login_register_page.dart';
 import 'package:flutter/material.dart';
 
 class WidgetTree extends StatefulWidget {
   const WidgetTree({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _WidgetTreeState createState() => _WidgetTreeState();
 }
 
@@ -17,6 +18,7 @@ class _WidgetTreeState extends State<WidgetTree> {
     });
   }
 
+
   bool _hasPressedButton = false;
 
   @override
@@ -25,7 +27,6 @@ class _WidgetTreeState extends State<WidgetTree> {
 
     Auth().authStateChanges.listen((user) {
       if (user != null && mounted) {
-        // Ensure the widget is mounted before navigating
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => HomePage()),
         );
@@ -53,7 +54,7 @@ class _WidgetTreeState extends State<WidgetTree> {
               return const LoginPage();
             }
           }
-          return const CircularProgressIndicator(); // or some other loading widget
+          return const CircularProgressIndicator();
         });
   }
 }
@@ -86,29 +87,29 @@ class SplashScreen extends StatelessWidget {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.only(
-                  bottom: screenHeight * 0.1), // Adjust the value as needed
+                  bottom: screenHeight * 0.1), 
               child: ElevatedButton(
                 onPressed: onButtonPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF9CDDD),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(
-                        screenWidth * 0.5), // Adjust the value as needed
+                        screenWidth * 0.5), 
                   ),
                   minimumSize: Size(screenWidth * 0.8,
-                      screenHeight * 0.08), // Adjust the values as needed
+                      screenHeight * 0.08), 
                   elevation: 10,
                   padding: EdgeInsets.symmetric(
                       vertical:
-                          screenHeight * 0.02), // Adjust the value as needed
+                          screenHeight * 0.02), 
                 ),
                 child: Text(
                   "Get Started",
                   style: TextStyle(
                     fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.w400, // Adjust the value as needed
+                    fontWeight: FontWeight.w400, 
                     fontFamily: 'Nunito',
-                    color: Color.fromARGB(255, 58, 70, 70),
+                    color: const Color.fromARGB(255, 58, 70, 70),
                   ),
                 ),
               ),

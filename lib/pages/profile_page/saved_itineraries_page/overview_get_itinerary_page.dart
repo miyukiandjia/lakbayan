@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/getItinerary.dart';
+import 'package:lakbayan/pages/profile_page/saved_itineraries_page/get_itinerary.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lakbayan/pages/Itineraries.dart';
+import 'package:lakbayan/pages/profile_page/my_itineraries_page.dart';
 
 class OverviewSharedPage extends StatelessWidget {
   final List<ItineraryDay> days;

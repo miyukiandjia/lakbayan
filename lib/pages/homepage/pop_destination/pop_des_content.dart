@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:lakbayan/current_Loc.dart';
+import 'package:lakbayan/pages/homepage/pop_destination/current_loc.dart';
+import 'package:lakbayan/constants.dart';
 
 Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
-  const API_KEY = 'AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0';
   Position? position = await getCurrentLocation();
   if (position == null) {
+    // ignore: avoid_print
     print("Location fetch fails, Davao coordinates are currently used.");
     position = Position(
         latitude: 7.1907,

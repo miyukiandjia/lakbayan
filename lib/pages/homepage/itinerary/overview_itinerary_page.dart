@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/create_itinerary_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lakbayan/pages/Itineraries.dart';
+import 'package:lakbayan/pages/homepage/itinerary/subclasses/create_subclasses.dart';
+import 'package:lakbayan/pages/profile_page/my_itineraries_page.dart';
 
 class OverviewItinerary extends StatelessWidget {
   final List<ItineraryDay> days;
@@ -25,7 +25,7 @@ class OverviewItinerary extends StatelessWidget {
           // Display the Itinerary Name at the top
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text('Itinerary: $itineraryName', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+            child: Text('Itinerary: $itineraryName', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
           ),
           ...List.generate(days.length, (index) {  // Using List.generate for better clarity
             ItineraryDay day = days[index];
@@ -42,6 +42,7 @@ class OverviewItinerary extends StatelessWidget {
                     Text('Day Name: ${day.name}', style: const TextStyle(fontSize: 30)),
                     const Text('Locations:', style: TextStyle(fontSize: 30)),
                     for (var location in day.locations)
+                      // ignore: unnecessary_null_comparison
                       if (location != null)
                         Text(location.name, style: const TextStyle(fontSize: 30)),
                   ],
@@ -68,9 +69,10 @@ class OverviewItinerary extends StatelessWidget {
               'name': day.name,
               'date': day.date,
               'locations': day.locations
+                  // ignore: unnecessary_null_comparison
                   .where((loc) => loc != null)
                   .map((loc) => {
-                    'name': loc!.name,
+                    'name': loc.name,
                     'category': loc.category,
                     'status': 'Upcoming',
                     'latitude': loc.latitude, // Save the latitude
@@ -95,9 +97,11 @@ class OverviewItinerary extends StatelessWidget {
           };
 
 await newItineraryRef.set(itineraryMap);
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to Firebase!')));
 
           // Navigate to the ItinerariesPage
+          // ignore: use_build_context_synchronously
           Navigator.of(context).pushReplacement(MaterialPageRoute(
             builder: (context) => ItinerariesPage()
           ));

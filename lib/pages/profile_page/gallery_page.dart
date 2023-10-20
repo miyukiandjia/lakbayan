@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/search_page.dart';
-import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/search_page.dart';
+import 'package:lakbayan/pages/profile_page/profile_page.dart';
 
 class Gallery extends StatelessWidget {
   const Gallery({super.key});
@@ -40,7 +40,7 @@ class Gallery extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const SearchPage()),
+                          builder: (context) => NavigationPage()),
                     );
                   } else if (index == 2) {
                     Navigator.pushReplacement(

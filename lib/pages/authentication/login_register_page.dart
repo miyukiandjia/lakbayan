@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lakbayan/auth.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import this
-import 'package:lakbayan/pages/navigation_page.dart';
+import 'package:lakbayan/pages/authentication/auth.dart';
+import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -18,8 +17,7 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _controllerEmail = TextEditingController();
   final TextEditingController _controllerPassword = TextEditingController();
-  final TextEditingController _controllerUsername =
-      TextEditingController(); // Add this line
+  final TextEditingController _controllerUsername = TextEditingController();
 
   Future<void> signInWithEmailAndPassword() async {
     try {
@@ -27,8 +25,9 @@ class _LoginPageState extends State<LoginPage> {
           email: _controllerEmail.text, password: _controllerPassword.text);
 
       // After successful login, navigate to the HomePage
+      // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => HomePage()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -61,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Toggle to Login UI after registration
       setState(() {
-        isLogin = true; // <-- Toggle the isLogin flag
+        isLogin = true;
         errorMessage = "Registration successful! Please log in.";
       });
     } on FirebaseAuthException catch (e) {
@@ -80,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
     double fontSize = MediaQuery.of(context).size.width * 0.04;
 
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.8, // Adjust the width
+      width: MediaQuery.of(context).size.width * 0.8,
       child: TextField(
         controller: controller,
         obscureText: isPassword,
@@ -92,8 +91,8 @@ class _LoginPageState extends State<LoginPage> {
           labelText: title,
           contentPadding: EdgeInsets.symmetric(
             vertical: fontSize * 0.5,
-          ), // Set a relative padding
-          labelStyle: TextStyle(fontSize: fontSize), // Set a relative font size
+          ),
+          labelStyle: TextStyle(fontSize: fontSize),
         ),
       ),
     );
@@ -127,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
       child: Text(
         isLogin ? 'Login' : 'Register',
         style: TextStyle(
-          fontSize: buttonWidth * 0.04, // Use relative value here
+          fontSize: buttonWidth * 0.04,
           fontFamily: 'Nunito',
         ),
       ),
@@ -149,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
             : 'Already have an account? Login instead',
         style: TextStyle(
           fontSize: fontSize - 20,
-          color: Color.fromARGB(255, 58, 70, 70),
+          color: const Color.fromARGB(255, 58, 70, 70),
           fontFamily: 'Nunito',
         ),
       ),
@@ -176,88 +175,78 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child: Column(
-          children: [
-            Container(
-              height: MediaQuery.of(context).size.height,
-              width: double.infinity,
-              //color: const Color(0xFFAD547F),
-              // decoration: const BoxDecoration(
-              //   image: DecorationImage(
-              //     image: AssetImage("lib/images/login-bg.jpg"),
-              //     fit: BoxFit.cover,
-              //   ),
-              // ),
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                colors: [Color(0xFFAD547F), Colors.pink.shade200],
-              )),
-              child: Column(
-                children: <Widget>[
-                  const SizedBox(
-                    height: 80,
+      body: Column(
+        children: [
+          Container(
+            height: MediaQuery.of(context).size.height,
+            width: double.infinity,
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              colors: [const Color(0xFFAD547F), Colors.pink.shade200],
+            )),
+            child: Column(
+              children: <Widget>[
+                const SizedBox(
+                  height: 80,
+                ),
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 200,
+                      ),
+                      Text(
+                        "Welcome to Lakbayan!",
+                        style: TextStyle(
+                            fontSize: 48,
+                            fontFamily: 'Roboto',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(20),
+                ),
+                const SizedBox(
+                  height: 400,
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(100),
+                            topRight: Radius.circular(120))),
                     child: Column(
                       children: <Widget>[
-                        SizedBox(
-                          height: 200,
-                        ),
-                        Text(
-                          "Welcome to Lakbayan!",
-                          style: TextStyle(
-                              fontSize: 48,
-                              fontFamily: 'Roboto',
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500),
-                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            _titleName(),
+                            isLogin
+                                ? const SizedBox.shrink()
+                                : _entryField('Username', _controllerUsername,
+                                    30, false), // Add this line
+                            _entryField('Email', _controllerEmail, 200, false),
+                            _entryField(
+                                'Password', _controllerPassword, 150, true),
+                            const SizedBox(
+                                height: 10), // Set a relative spacing
+                            _errorMessage(),
+                            _submitButton(),
+                            _loginOrRegisterButton(),
+                          ],
+                        )
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 400,
-                  ),
-                  Expanded(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(100),
-                              topRight: Radius.circular(120))),
-                      child: Column(
-                        children: <Widget>[
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              _titleName(),
-                              isLogin
-                                  ? SizedBox.shrink()
-                                  : _entryField('Username', _controllerUsername,
-                                      30, false), // Add this line
-                              _entryField(
-                                  'Email', _controllerEmail, 200, false),
-                              _entryField(
-                                  'Password', _controllerPassword, 150, true),
-                              const SizedBox(
-                                  height: 10), // Set a relative spacing
-                              _errorMessage(),
-                              _submitButton(),
-                              _loginOrRegisterButton(),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

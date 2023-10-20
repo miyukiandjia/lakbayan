@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'package:lakbayan/pages/overview_itinerary_page.dart';
+import 'package:lakbayan/pages/profile_page/saved_itineraries_page/overview_get_itinerary_page.dart';
 import 'dart:async'; 
+export '../../homepage/itinerary/create_itinerary_page.dart';
 const BASE_URL = "https://maps.googleapis.com/maps/api/place/textsearch/json";
 
 class Location {
@@ -37,20 +38,27 @@ class Location {
 class ItineraryDay {
   String name;
   DateTime date;
-  List<Location> locations = [];
+  List<Location> locations;
 
-  ItineraryDay({required this.name, required this.date});
+  ItineraryDay({
+    required this.name, 
+    required this.date,
+    this.locations = const []
+  });
 }
 
-class CreateItineraryPage extends StatefulWidget {
-  const CreateItineraryPage({Key? key}) : super(key: key);
+
+class GetItineraryPage extends StatefulWidget {
+  final Map<String, dynamic> itinerary;
+
+  GetItineraryPage({required this.itinerary});
 
   @override
-  _CreateItineraryPageState createState() => _CreateItineraryPageState();
+  _GetItineraryPageState createState() => _GetItineraryPageState();
 }
 
-class _CreateItineraryPageState extends State<CreateItineraryPage> {
-  List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now())];
+class _GetItineraryPageState extends State<GetItineraryPage> {
+  List<ItineraryDay> days = [];
   final TextEditingController _itineraryNameController = TextEditingController();
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
@@ -68,7 +76,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   }
 
  Future<List<Location>> searchLocations(double lat, double lng, String searchTerm) async {
-  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
+  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyAXRlk4WJ4sqmtMArNRHBwIK1bmj7fYZao";
   final response = await http.get(Uri.parse(url));
   if (response.statusCode == 200) {
     Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -127,6 +135,25 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     });
   }
 
+    @override
+  void initState() {
+    super.initState();
+    // Load the saved locations from the passed itinerary into days list
+    days = (widget.itinerary['days'] as List).map((day) {
+  final locations = (day['locations'] as List).map((location) {
+    return Location(
+      name: location['name'],
+      category: location['category'],
+      latitude: location['latitude'],
+      longitude: location['longitude'],
+    );
+  }).toList();
+
+  return ItineraryDay(name: "", date: DateTime.now(), locations: locations);
+}).toList();
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,13 +203,13 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                         ],
                       ),
                       child: ItineraryDayWidget(
-  day: days[index],
-  selectDate: () => _selectDate(context, days[index]),
-  removeDay: () => removeDay(index),
-  removeLocation: removeLocation,
-  totalDays: days.length,
-  searchLocations: searchLocations,
-),
+                        day: days[index],
+                        selectDate: () => _selectDate(context, days[index]),
+                        removeDay: () => removeDay(index),
+                        removeLocation: removeLocation,
+                        totalDays: days.length,
+                        searchLocations: searchLocations,
+                      ),
 
                     );
                   }
@@ -201,16 +228,19 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
             return;
           }
           Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => OverviewItinerary(
-              days: days,
-              itineraryName: _itineraryNameController.text,
-            ),
-          ));
+          builder: (context) => OverviewSharedPage(
+            days: days,
+            itineraryName: _itineraryNameController.text,
+          ),
+        ));
+
         },
       ),
     );
   }
 }
+
+
 
 class ItineraryDayWidget extends StatefulWidget {
   final ItineraryDay day;

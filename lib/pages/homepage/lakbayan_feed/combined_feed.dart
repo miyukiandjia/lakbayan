@@ -1,9 +1,12 @@
+// fetches and displays a combined list of 'posts' and 'itineraries' from Firestore, 
+// sorts them by timestamp, and then displays them in a list along with the associated user data for each post or itinerary.
+
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/postCard.dart';
-import 'package:lakbayan/homepage_Files/shared_itineraries.dart';
+import 'package:lakbayan/pages/homepage/lakbayan_feed/ordinary_post_container.dart';
+import 'package:lakbayan/pages/homepage/lakbayan_feed/itinerary_post_container.dart';
 
 Widget lakbayanFeed(BuildContext context) {
   return StreamBuilder<List<dynamic>>(
@@ -17,7 +20,9 @@ Widget lakbayanFeed(BuildContext context) {
           .orderBy('timestamp', descending: true)
           .snapshots(),
       (QuerySnapshot postsSnapshot, QuerySnapshot itinerariesSnapshot) {
+        // ignore: avoid_print
         print('Posts data: ${postsSnapshot.docs}');
+        // ignore: avoid_print
         print('Itineraries data: ${itinerariesSnapshot.docs}');
 
         return [
@@ -28,17 +33,17 @@ Widget lakbayanFeed(BuildContext context) {
     ),
     builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return CircularProgressIndicator();
+        return const CircularProgressIndicator();
       } else if (snapshot.hasError) {
         return Text('Error: ${snapshot.error}');
       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-        return Text('No posts or itineraries available.');
+        return const Text('No posts or itineraries available.');
       } else {
         final items = snapshot.data!;
         return ListView.builder(
           itemCount: items.length,
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
             final item = items[index];
             if (item['type'] == 'post') {
@@ -52,11 +57,11 @@ Widget lakbayanFeed(BuildContext context) {
                     .get(),
                 builder: (context, userSnapshot) {
                   if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return const CircularProgressIndicator();
                   } else if (userSnapshot.hasError) {
                     return Text('Error: ${userSnapshot.error}');
                   } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return Text('User does not exist.');
+                    return const Text('User does not exist.');
                   } else {
                     return PostCard(
                       post: post,
@@ -76,11 +81,11 @@ Widget lakbayanFeed(BuildContext context) {
                     .get(),
                 builder: (context, userSnapshot) {
                   if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
+                    return const CircularProgressIndicator();
                   } else if (userSnapshot.hasError) {
                     return Text('Error: ${userSnapshot.error}');
                   } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                    return Text('User does not exist.');
+                    return const Text('User does not exist.');
                   } else {
                     return SharedItineraryCard(
                       itinerary: itinerary.data() as Map<String, dynamic>,

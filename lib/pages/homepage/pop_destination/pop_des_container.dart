@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ItineraryCard extends StatelessWidget {
   final Map<String, dynamic> itinerary;
 
-  ItineraryCard({required this.itinerary});
+  const ItineraryCard({super.key, required this.itinerary});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class ItineraryCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Container(
+            SizedBox(
               width: 200,
               height: 200,
               child: Image.network(
@@ -52,7 +52,7 @@ class ItineraryCard extends StatelessWidget {
             const SizedBox(height: 10), // Add some space
             Text(
               itinerary['name'],
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 35,
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.w500,
@@ -63,14 +63,14 @@ class ItineraryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.star,
                   color: Colors.yellow, // Set star color
                   size: 30,
                 ),
                 Text(
                   '${itinerary['gReviews']}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
                     color: Colors.white, // Set text color
@@ -81,7 +81,7 @@ class ItineraryCard extends StatelessWidget {
             const SizedBox(height: 10), // Add some space
             Text(
               '${itinerary['distance']} km away', // Assuming distance is in kilometers
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
                 color: Colors.white, // Set text color

@@ -6,19 +6,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'package:lakbayan/pages/edit_itinerary_page.dart';
+import 'package:lakbayan/pages/homepage/itinerary/edit_itinerary_page.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/pages/profile_page/profile_page.dart';
 import 'package:google_maps_webservice/directions.dart' as gmaps;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'dart:math';
+import 'package:lakbayan/constants.dart';
 
-
-final directions = gmaps.GoogleMapsDirections(
-    apiKey: "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0");
-const BASE_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
-const API_KEY = "AIzaSyDMxSHLjuBE_QPy6OoJ1EPqpDsBCJ32Rr0";
+final directions = gmaps.GoogleMapsDirections(apiKey: API_KEY);
 
 class Location {
   final String name;
@@ -33,8 +30,7 @@ class Location {
     required this.longitude, // Initialize longitude
   });
 
-
- @override
+  @override
   String toString() {
     return 'Location(name: $name, category: $category, latitude: $latitude, longitude: $longitude)';
   }
@@ -83,120 +79,127 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   }
 
   double euclideanDistance(Location a, Location b) {
-  return sqrt(pow(a.latitude - b.latitude, 2) + pow(a.longitude - b.longitude, 2));
-}
+    return sqrt(
+        pow(a.latitude - b.latitude, 2) + pow(a.longitude - b.longitude, 2));
+  }
 
-
- Future<double> totalDistance(List<Location> locations) async {
-  double distance = 0.0;
-  for (int i = 0; i < locations.length - 1; i++) {
-    String cacheKey = "${locations[i].latitude},${locations[i].longitude}-${locations[i+1].latitude},${locations[i+1].longitude}";
-    if (distanceCache.containsKey(cacheKey)) {
-      distance += distanceCache[cacheKey]!;
-    } else {
-      gmaps.DirectionsResponse response = await directions.directions(
-        gmaps.Location(lat: locations[i].latitude, lng: locations[i].longitude),
-        gmaps.Location(lat: locations[i+1].latitude, lng: locations[i+1].longitude),
-        travelMode: gmaps.TravelMode.driving,
-      );
-      if (response.status == 'OK' && response.routes.isNotEmpty) {
-        double routeDistance = (response.routes[0].legs[0].distance.value as num).toDouble();
-        distance += routeDistance;
-        distanceCache[cacheKey] = routeDistance;
+  Future<double> totalDistance(List<Location> locations) async {
+    double distance = 0.0;
+    for (int i = 0; i < locations.length - 1; i++) {
+      String cacheKey =
+          "${locations[i].latitude},${locations[i].longitude}-${locations[i + 1].latitude},${locations[i + 1].longitude}";
+      if (distanceCache.containsKey(cacheKey)) {
+        distance += distanceCache[cacheKey]!;
+      } else {
+        gmaps.DirectionsResponse response = await directions.directions(
+          gmaps.Location(
+              lat: locations[i].latitude, lng: locations[i].longitude),
+          gmaps.Location(
+              lat: locations[i + 1].latitude, lng: locations[i + 1].longitude),
+          travelMode: gmaps.TravelMode.driving,
+        );
+        if (response.status == 'OK' && response.routes.isNotEmpty) {
+          double routeDistance =
+              (response.routes[0].legs[0].distance.value as num).toDouble();
+          distance += routeDistance;
+          distanceCache[cacheKey] = routeDistance;
+        }
       }
     }
+    return distance;
   }
-  return distance;
-}
 
-
-List<Location> getNeighbor(List<Location> locations) {
-  List<Location> newLocations = List.from(locations);
-  int a = (newLocations.length * Random().nextDouble()).toInt();
-  int b = (newLocations.length * Random().nextDouble()).toInt();
-  while (b == a) {
-    b = (newLocations.length * Random().nextDouble()).toInt();
+  List<Location> getNeighbor(List<Location> locations) {
+    List<Location> newLocations = List.from(locations);
+    int a = (newLocations.length * Random().nextDouble()).toInt();
+    int b = (newLocations.length * Random().nextDouble()).toInt();
+    while (b == a) {
+      b = (newLocations.length * Random().nextDouble()).toInt();
+    }
+    Location temp = newLocations[a];
+    newLocations[a] = newLocations[b];
+    newLocations[b] = temp;
+    return newLocations;
   }
-  Location temp = newLocations[a];
-  newLocations[a] = newLocations[b];
-  newLocations[b] = temp;
-  return newLocations;
-}
 
-List<Location> perturbRoute(List<Location> currentRoute) {
-  List<Location> newRoute = List.from(currentRoute);
-  Random rand = Random();
-  
-  int index1 = rand.nextInt(newRoute.length);
-  int index2 = rand.nextInt(newRoute.length);
-  while (index1 == index2) {
-    index2 = rand.nextInt(newRoute.length);
+  List<Location> perturbRoute(List<Location> currentRoute) {
+    List<Location> newRoute = List.from(currentRoute);
+    Random rand = Random();
+
+    int index1 = rand.nextInt(newRoute.length);
+    int index2 = rand.nextInt(newRoute.length);
+    while (index1 == index2) {
+      index2 = rand.nextInt(newRoute.length);
+    }
+
+    Location temp = newRoute[index1];
+    newRoute[index1] = newRoute[index2];
+    newRoute[index2] = temp;
+
+    return newRoute;
   }
-  
-  Location temp = newRoute[index1];
-  newRoute[index1] = newRoute[index2];
-  newRoute[index2] = temp;
-  
-  return newRoute;
-}
 
-Future<double> calculateRouteCost(List<Location> route) async {
-  double cost = 0.0;
-  for (int i = 0; i < route.length - 1; i++) {
-    cost += euclideanDistance(route[i], route[i+1]);
+  Future<double> calculateRouteCost(List<Location> route) async {
+    double cost = 0.0;
+    for (int i = 0; i < route.length - 1; i++) {
+      cost += euclideanDistance(route[i], route[i + 1]);
+    }
+    return cost;
   }
-  return cost;
-}
 
-Future<List<Location>> simulatedAnnealingOptimization(List<Location> initialRoute, {bool useReheat = false}) async {
-  print("Starting simulated annealing optimization...");
-  
-  List<Location> currentRoute = List.from(initialRoute);
-  List<Location> bestRoute = List.from(initialRoute);
+  Future<List<Location>> simulatedAnnealingOptimization(
+      List<Location> initialRoute,
+      {bool useReheat = false}) async {
+    print("Starting simulated annealing optimization...");
 
-  double currentCost = await calculateRouteCost(currentRoute);
-  double bestCost = currentCost;
+    List<Location> currentRoute = List.from(initialRoute);
+    List<Location> bestRoute = List.from(initialRoute);
 
-  double temperature = 1.0;
-  double coolingRate = 0.995;
+    double currentCost = await calculateRouteCost(currentRoute);
+    double bestCost = currentCost;
 
-  Random rand = Random();
+    double temperature = 1.0;
+    double coolingRate = 0.995;
 
-  int iteration = 0;
-  int maxIterations = 10;  // Setting the maximum iterations to 50
+    Random rand = Random();
 
-  while (temperature > 0.01 && iteration < maxIterations) {
-    List<Location> newRoute = perturbRoute(List.from(currentRoute));
-    double newCost = await calculateRouteCost(newRoute);
+    int iteration = 0;
+    int maxIterations = 10; // Setting the maximum iterations to 50
 
-    if (newCost < currentCost || rand.nextDouble() < exp((currentCost - newCost) / temperature)) {
-      currentRoute = newRoute;
-      currentCost = newCost;
+    while (temperature > 0.01 && iteration < maxIterations) {
+      List<Location> newRoute = perturbRoute(List.from(currentRoute));
+      double newCost = await calculateRouteCost(newRoute);
 
-      if (currentCost < bestCost) {
-        bestRoute = currentRoute;
-        bestCost = currentCost;
+      if (newCost < currentCost ||
+          rand.nextDouble() < exp((currentCost - newCost) / temperature)) {
+        currentRoute = newRoute;
+        currentCost = newCost;
+
+        if (currentCost < bestCost) {
+          bestRoute = currentRoute;
+          bestCost = currentCost;
+        }
       }
+
+      temperature *= coolingRate;
+
+      // Reheat logic, which is used only if useReheat is set to true
+      if (useReheat && temperature < 0.01) {
+        temperature = 0.3; // Reheat to 30% of the initial temperature
+      }
+
+      iteration++;
     }
 
-    temperature *= coolingRate;
-
-    // Reheat logic, which is used only if useReheat is set to true
-    if (useReheat && temperature < 0.01) {
-      temperature = 0.3;  // Reheat to 30% of the initial temperature
-    }
-
-    iteration++;
+    print(
+        "Finished optimization after $iteration iterations with cost: $currentCost");
+    return bestRoute;
   }
 
-  print("Finished optimization after $iteration iterations with cost: $currentCost");
-  return bestRoute;
-}
-
-Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async {
-  return await simulatedAnnealingOptimization(initialRoute);
-}
-
+  Future<List<Location>> generateOptimizedRoute(
+      List<Location> initialRoute) async {
+    return await simulatedAnnealingOptimization(initialRoute);
+  }
 
   Stream<QuerySnapshot> _getItinerariesByStatus(String status) {
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -267,57 +270,64 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
     Navigator.of(context).pop();
   }
 
- Future<Map<String, dynamic>> _calculateRoute(
-    List<LatLng> polylineCoordinates) async {
-  List<Location> locations = polylineCoordinates.map((coord) => Location(
-        name: 'Unknown',
-        category: 'Unknown',
-        latitude: coord.latitude,
-        longitude: coord.longitude)).toList();
+  Future<Map<String, dynamic>> _calculateRoute(
+      List<LatLng> polylineCoordinates) async {
+    List<Location> locations = polylineCoordinates
+        .map((coord) => Location(
+            name: 'Unknown',
+            category: 'Unknown',
+            latitude: coord.latitude,
+            longitude: coord.longitude))
+        .toList();
 
-  List<Location> optimizedLocations = await simulatedAnnealingOptimization(locations, useReheat: true);
-  
-  List<LatLng> optimizedCoordinates = optimizedLocations.map((loc) => LatLng(loc.latitude, loc.longitude)).toList();
-  List<Polyline> polylines = [];
-  List<Color> usedColors = [];
+    List<Location> optimizedLocations =
+        await simulatedAnnealingOptimization(locations, useReheat: true);
 
-  for (int i = 0; i < optimizedCoordinates.length - 1; i++) {
-    LatLng from = optimizedCoordinates[i];
-    LatLng to = optimizedCoordinates[i + 1];
+    List<LatLng> optimizedCoordinates = optimizedLocations
+        .map((loc) => LatLng(loc.latitude, loc.longitude))
+        .toList();
+    List<Polyline> polylines = [];
+    List<Color> usedColors = [];
 
-    gmaps.DirectionsResponse response = await directions.directions(
-      gmaps.Location(lat: from.latitude, lng: from.longitude),
-      gmaps.Location(lat: to.latitude, lng: to.longitude),
-      travelMode: gmaps.TravelMode.driving,
-    );
+    for (int i = 0; i < optimizedCoordinates.length - 1; i++) {
+      LatLng from = optimizedCoordinates[i];
+      LatLng to = optimizedCoordinates[i + 1];
 
-    if (response.status == 'OK') {
-      PolylinePoints polylinePoints = PolylinePoints();
-      var points = polylinePoints.decodePolyline(response.routes[0].overviewPolyline.points);
-      List<LatLng> segmentPoints = points.map((point) => LatLng(point.latitude, point.longitude)).toList();
-
-      Color polylineColor = colorsSequence[i % colorsSequence.length];
-      usedColors.add(polylineColor);
-
-      Polyline polyline = Polyline(
-        polylineId: PolylineId('route_$i'),
-        color: polylineColor,
-        points: segmentPoints,
-        width: 5,
+      gmaps.DirectionsResponse response = await directions.directions(
+        gmaps.Location(lat: from.latitude, lng: from.longitude),
+        gmaps.Location(lat: to.latitude, lng: to.longitude),
+        travelMode: gmaps.TravelMode.driving,
       );
 
-      polylines.add(polyline);
-    } else {
-      print("Error");
+      if (response.status == 'OK') {
+        PolylinePoints polylinePoints = PolylinePoints();
+        var points = polylinePoints
+            .decodePolyline(response.routes[0].overviewPolyline.points);
+        List<LatLng> segmentPoints = points
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList();
+
+        Color polylineColor = colorsSequence[i % colorsSequence.length];
+        usedColors.add(polylineColor);
+
+        Polyline polyline = Polyline(
+          polylineId: PolylineId('route_$i'),
+          color: polylineColor,
+          points: segmentPoints,
+          width: 5,
+        );
+
+        polylines.add(polyline);
+      } else {
+        print("Error");
+      }
     }
+
+    return {
+      "polylines": polylines,
+      "colors": usedColors,
+    };
   }
-
-  return {
-    "polylines": polylines,
-    "colors": usedColors,
-  };
-}
-
 
   double getHueFromColor(Color color) {
     HSLColor hslColor = HSLColor.fromColor(color);
@@ -325,22 +335,23 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
   }
 
   Set<Marker> _generateMarkers(List<LatLng> coordinates, List<Color> colors) {
-  Set<Marker> markers = {};
+    Set<Marker> markers = {};
 
-  for (int i = 0; i < coordinates.length; i++) {
-    final coordinate = coordinates[i];
+    for (int i = 0; i < coordinates.length; i++) {
+      final coordinate = coordinates[i];
 
-    markers.add(
-      Marker(
-        markerId: MarkerId('location_$i'),
-        position: coordinate,
-        icon: BitmapDescriptor.defaultMarkerWithHue(getHueFromColor(colors[i])),
-      ),
-    );
+      markers.add(
+        Marker(
+          markerId: MarkerId('location_$i'),
+          position: coordinate,
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(getHueFromColor(colors[i])),
+        ),
+      );
+    }
+
+    return markers;
   }
-
-  return markers;
-}
 
   @override
   Widget build(BuildContext context) {
@@ -453,55 +464,62 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
                         polylineCoordinates.insert(0, userLatLng);
 
                         maps.add(FutureBuilder(
-  future: _calculateRoute(polylineCoordinates),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return CircularProgressIndicator();
-    } else if (snapshot.hasError) {
-      return Text('Error calculating route');
-    } else {
-      Map<String, dynamic> data = snapshot.data as Map<String, dynamic>;
-      List<Polyline> polylines = data['polylines'] as List<Polyline>;
-      List<Color> usedColors = data['colors'] as List<Color>;
+                          future: _calculateRoute(polylineCoordinates),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error calculating route');
+                            } else {
+                              Map<String, dynamic> data =
+                                  snapshot.data as Map<String, dynamic>;
+                              List<Polyline> polylines =
+                                  data['polylines'] as List<Polyline>;
+                              List<Color> usedColors =
+                                  data['colors'] as List<Color>;
 
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.0),
-        child: Container(
-          height: 400,
-          width: double.infinity,
-          margin: EdgeInsets.only(bottom: 16.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.pink.withOpacity(0.3),
-                spreadRadius: 5,
-                blurRadius: 7,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15.0),
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: polylineCoordinates.first,
-                zoom: 18.0,
-              ),
-              polylines: Set.from(polylines),
-              myLocationEnabled: true,
-              markers: _generateMarkers(polylineCoordinates.sublist(1), usedColors),
-              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>[
-                Factory<OneSequenceGestureRecognizer>(
-                  () => EagerGestureRecognizer(),
-                ),
-              ].toSet(),
-            ),
-          ),
-        ),
-      );
-    }
-  },
-));
+                              return Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Container(
+                                  height: 400,
+                                  width: double.infinity,
+                                  margin: EdgeInsets.only(bottom: 16.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.pink.withOpacity(0.3),
+                                        spreadRadius: 5,
+                                        blurRadius: 7,
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    child: GoogleMap(
+                                      initialCameraPosition: CameraPosition(
+                                        target: polylineCoordinates.first,
+                                        zoom: 18.0,
+                                      ),
+                                      polylines: Set.from(polylines),
+                                      myLocationEnabled: true,
+                                      markers: _generateMarkers(
+                                          polylineCoordinates.sublist(1),
+                                          usedColors),
+                                      gestureRecognizers: <Factory<
+                                          OneSequenceGestureRecognizer>>[
+                                        Factory<OneSequenceGestureRecognizer>(
+                                          () => EagerGestureRecognizer(),
+                                        ),
+                                      ].toSet(),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ));
                       }
                     }
                   }
@@ -556,7 +574,7 @@ Future<List<Location>> generateOptimizedRoute(List<Location> initialRoute) async
                                     docRef.update({'status': updatedStatus});
                                   },
                                 ),
-                                 Text("Done"),
+                                Text("Done"),
                                 Switch(
                                   value: status == "Done",
                                   onChanged: (value) {

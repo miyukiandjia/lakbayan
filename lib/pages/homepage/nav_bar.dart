@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/home_page.dart';
-import 'package:lakbayan/pages/navigation_page.dart';
+import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
-import 'package:lakbayan/pages/profile_page.dart';
+import 'package:lakbayan/pages/profile_page/profile_page.dart';
 
 Widget customNavBar(BuildContext context, int currentIndex) {
   return Container(
@@ -32,7 +32,7 @@ Widget customNavBar(BuildContext context, int currentIndex) {
             if (index == 0) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()),
+                MaterialPageRoute(builder: (context) => const HomePage()),
               );
             } else if (index == 1) {
               Navigator.pushReplacement(
