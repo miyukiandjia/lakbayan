@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:geocoding/geocoding.dart' as geo;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:lakbayan/pages/homepage/pop_destination/current_loc.dart';
+import 'package:lakbayan/pages/home_page/pop_destination/current_loc.dart';
 import 'package:lakbayan/constants.dart';
 
 Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
@@ -18,11 +18,12 @@ Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
         altitude: 0.0,
         heading: 0.0,
         speed: 0.0,
-        speedAccuracy: 0.0); // Default to Davao coordinates if location fetch fails.
+        speedAccuracy:
+            0.0); // Default to Davao coordinates if location fetch fails.
   }
 
-  List<geo.Placemark> placemarks = await geo.placemarkFromCoordinates(
-      position.latitude, position.longitude);
+  List<geo.Placemark> placemarks =
+      await geo.placemarkFromCoordinates(position.latitude, position.longitude);
   if (placemarks.isEmpty) {
     return [];
   }
@@ -66,8 +67,8 @@ Future<List<Map<String, dynamic>>> fetchNearbyDestinations() async {
       });
     }
 
-    destinations.sort(
-        (a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
+    destinations
+        .sort((a, b) => (b['gReviews'] as num).compareTo(a['gReviews']));
     return destinations;
   } else {
     throw Exception("Failed to load destinations");

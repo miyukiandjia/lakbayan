@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:lakbayan/constants.dart';
-import 'package:lakbayan/pages/homepage/itinerary/subclasses/edit_subclasses.dart';
+import 'package:lakbayan/pages/home_page/itinerary/subclasses/edit_subclasses.dart';
 
 class EditItineraryPage extends StatefulWidget {
   final Map<String, dynamic> itinerary;
@@ -21,24 +21,25 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
   late TextEditingController itineraryNameController;
   late List<ItineraryDay> days;
 
- @override
+  @override
   void initState() {
     super.initState();
     itineraryName = widget.itinerary['itineraryName'] ?? 'Unknown';
     itineraryNameController = TextEditingController(text: itineraryName);
     days = (widget.itinerary['days'] as List).map((day) {
-  final date = (day['date'] as Timestamp).toDate();
-  final dayName = day['name'] ?? 'Unknown'; // Default to 'Unknown' if name is null
-  final locations = (day['locations'] as List).map((location) {
-    return Location(
-      name: location['name'],
-      latitude: location['latitude'],
-      longitude: location['longitude'],
-    );
-  }).toList();
+      final date = (day['date'] as Timestamp).toDate();
+      final dayName =
+          day['name'] ?? 'Unknown'; // Default to 'Unknown' if name is null
+      final locations = (day['locations'] as List).map((location) {
+        return Location(
+          name: location['name'],
+          latitude: location['latitude'],
+          longitude: location['longitude'],
+        );
+      }).toList();
 
-  return ItineraryDay(name: dayName, date: date, locations: locations);
-}).toList();
+      return ItineraryDay(name: dayName, date: date, locations: locations);
+    }).toList();
   }
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
@@ -84,7 +85,10 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     setState(() {
       DateTime lastDate = days.isNotEmpty ? days.last.date : DateTime.now();
       DateTime newDate = lastDate.add(const Duration(days: 1));
-      days.add(ItineraryDay(name: 'New Day', date: newDate, locations: [])); // Default name 'New Day'
+      days.add(ItineraryDay(
+          name: 'New Day',
+          date: newDate,
+          locations: [])); // Default name 'New Day'
     });
   }
 
@@ -100,25 +104,25 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
     });
   }
 
-  Future<List<Location>> searchLocations(double lat, double lng, String searchTerm) async {
-  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=$API_KEY";
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    Map<String, dynamic> jsonResponse = json.decode(response.body);
-    return (jsonResponse['results'] as List).map((result) {
-      final locationLat = result['geometry']['location']['lat'] as double;
-      final locationLng = result['geometry']['location']['lng'] as double;
-      return Location(
-        name: result['name'], 
-        latitude: locationLat, 
-        longitude: locationLng
-      );
-    }).toList();
-  } else {
-    throw Exception("Failed to load locations");
+  Future<List<Location>> searchLocations(
+      double lat, double lng, String searchTerm) async {
+    final url =
+        "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=$API_KEY";
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      return (jsonResponse['results'] as List).map((result) {
+        final locationLat = result['geometry']['location']['lat'] as double;
+        final locationLng = result['geometry']['location']['lng'] as double;
+        return Location(
+            name: result['name'],
+            latitude: locationLat,
+            longitude: locationLng);
+      }).toList();
+    } else {
+      throw Exception("Failed to load locations");
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -150,18 +154,21 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
                       ListTile(
                         title: TextField(
                           controller: day.nameController,
-                          decoration: const InputDecoration(labelText: 'Day Name'),
+                          decoration:
+                              const InputDecoration(labelText: 'Day Name'),
                           onChanged: (value) {
                             setState(() {
                               day.name = value;
                             });
                           },
                         ),
-                        subtitle: Text(day.date.toLocal().toString().split(' ')[0]),
+                        subtitle:
+                            Text(day.date.toLocal().toString().split(' ')[0]),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (days.length > 1) // Only show delete button if more than one day
+                            if (days.length >
+                                1) // Only show delete button if more than one day
                               IconButton(
                                 icon: const Icon(Icons.delete),
                                 onPressed: () => _deleteDay(dayIndex),
@@ -173,13 +180,15 @@ class _EditItineraryPageState extends State<EditItineraryPage> {
                           ],
                         ),
                       ),
-                        ...day.locations.map((location) {
+                      ...day.locations.map((location) {
                         return ListTile(
                           title: Text(location.name),
-                          trailing: day.locations.length > 1 // Only show delete button if more than one location
+                          trailing: day.locations.length >
+                                  1 // Only show delete button if more than one location
                               ? IconButton(
                                   icon: const Icon(Icons.delete),
-                                  onPressed: () => _deleteLocation(day, day.locations.indexOf(location)),
+                                  onPressed: () => _deleteLocation(
+                                      day, day.locations.indexOf(location)),
                                 )
                               : null,
                         );

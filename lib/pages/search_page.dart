@@ -6,7 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_webservice/directions.dart' as gmaps;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
 import 'package:lakbayan/constants.dart';
 
 final directions = gmaps.GoogleMapsDirections(apiKey: API_KEY);

@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/authentication/auth.dart';
-import 'package:lakbayan/pages/homepage/itinerary/create_itinerary_page.dart';
-import 'package:lakbayan/pages/authentication/login_register_page.dart';
-import 'package:lakbayan/pages/homepage/lakbayan_feed/create_post.dart';
-import 'package:lakbayan/pages/homepage/nav_bar.dart';
-import 'package:lakbayan/pages/homepage/pop_destination/pop_des_content.dart';
-import 'package:lakbayan/pages/homepage/pop_destination/pop_des_container.dart';
-import 'package:lakbayan/pages/homepage/lakbayan_feed/combined_feed.dart';
-import 'package:lakbayan/pages/homepage/itinerary/migrate_shared_itineraries.dart';
+import 'package:lakbayan/pages/authentication_page/auth.dart';
+import 'package:lakbayan/pages/home_page/itinerary/create_itinerary_page.dart';
+import 'package:lakbayan/pages/authentication_page/login_register_page.dart';
+import 'package:lakbayan/pages/home_page/lakbayan_feed/create_post.dart';
+import 'package:lakbayan/pages/home_page/nav_bar.dart';
+import 'package:lakbayan/pages/home_page/pop_destination/pop_des_content.dart';
+import 'package:lakbayan/pages/home_page/pop_destination/pop_des_container.dart';
+import 'package:lakbayan/pages/home_page/lakbayan_feed/combined_feed.dart';
+import 'package:lakbayan/pages/home_page/itinerary/migrate_shared_itineraries.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);

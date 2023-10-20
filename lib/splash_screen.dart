@@ -1,6 +1,6 @@
-import 'package:lakbayan/pages/authentication/auth.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
-import 'package:lakbayan/pages/authentication/login_register_page.dart';
+import 'package:lakbayan/pages/authentication_page/auth.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
+import 'package:lakbayan/pages/authentication_page/login_register_page.dart';
 import 'package:flutter/material.dart';
 
 class WidgetTree extends StatefulWidget {
@@ -17,7 +17,6 @@ class _WidgetTreeState extends State<WidgetTree> {
       _hasPressedButton = true;
     });
   }
-
 
   bool _hasPressedButton = false;
 
@@ -86,28 +85,23 @@ class SplashScreen extends StatelessWidget {
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.only(
-                  bottom: screenHeight * 0.1), 
+              padding: EdgeInsets.only(bottom: screenHeight * 0.1),
               child: ElevatedButton(
                 onPressed: onButtonPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF9CDDD),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                        screenWidth * 0.5), 
+                    borderRadius: BorderRadius.circular(screenWidth * 0.5),
                   ),
-                  minimumSize: Size(screenWidth * 0.8,
-                      screenHeight * 0.08), 
+                  minimumSize: Size(screenWidth * 0.8, screenHeight * 0.08),
                   elevation: 10,
-                  padding: EdgeInsets.symmetric(
-                      vertical:
-                          screenHeight * 0.02), 
+                  padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
                 ),
                 child: Text(
                   "Get Started",
                   style: TextStyle(
                     fontSize: screenWidth * 0.05,
-                    fontWeight: FontWeight.w400, 
+                    fontWeight: FontWeight.w400,
                     fontFamily: 'Nunito',
                     color: const Color.fromARGB(255, 58, 70, 70),
                   ),

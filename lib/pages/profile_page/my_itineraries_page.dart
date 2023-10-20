@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'package:lakbayan/pages/homepage/itinerary/edit_itinerary_page.dart';
+import 'package:lakbayan/pages/home_page/itinerary/edit_itinerary_page.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lakbayan/pages/profile_page/profile_page.dart';
@@ -14,30 +14,15 @@ import 'package:google_maps_webservice/directions.dart' as gmaps;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'dart:math';
 import 'package:lakbayan/constants.dart';
+import 'package:lakbayan/pages/profile_page/subclasses/my_itin_subclasses.dart';
 
 final directions = gmaps.GoogleMapsDirections(apiKey: API_KEY);
 
-class Location {
-  final String name;
-  final String category;
-  final double latitude; // Add latitude field
-  final double longitude; // Add longitude field
-
-  Location({
-    required this.name,
-    required this.category,
-    required this.latitude, // Initialize latitude
-    required this.longitude, // Initialize longitude
-  });
-
-  @override
-  String toString() {
-    return 'Location(name: $name, category: $category, latitude: $latitude, longitude: $longitude)';
-  }
-}
-
 class ItinerariesPage extends StatefulWidget {
+  const ItinerariesPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ItinerariesPageState createState() => _ItinerariesPageState();
 }
 
@@ -67,11 +52,13 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
               longitude: longitude));
         }
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to load locations')));
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load locations')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
               'An error occurred. Please check your location permissions.')));
     }
@@ -100,7 +87,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
         );
         if (response.status == 'OK' && response.routes.isNotEmpty) {
           double routeDistance =
-              (response.routes[0].legs[0].distance.value as num).toDouble();
+              (response.routes[0].legs[0].distance.value).toDouble();
           distance += routeDistance;
           distanceCache[cacheKey] = routeDistance;
         }
@@ -150,6 +137,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   Future<List<Location>> simulatedAnnealingOptimization(
       List<Location> initialRoute,
       {bool useReheat = false}) async {
+    // ignore: avoid_print
     print("Starting simulated annealing optimization...");
 
     List<Location> currentRoute = List.from(initialRoute);
@@ -191,6 +179,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
       iteration++;
     }
 
+    // ignore: avoid_print
     print(
         "Finished optimization after $iteration iterations with cost: $currentCost");
     return bestRoute;
@@ -213,8 +202,8 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
           .snapshots();
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('User not logged in')));
-      return Stream<QuerySnapshot>.empty();
+          .showSnackBar(const SnackBar(content: Text('User not logged in')));
+      return const Stream<QuerySnapshot>.empty();
     }
   }
 
@@ -223,14 +212,14 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Edit Itinerary'),
-          content: Text('Do you want to edit this itinerary?'),
+          title: const Text('Edit Itinerary'),
+          content: const Text('Do you want to edit this itinerary?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -244,7 +233,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                   ),
                 );
               },
-              child: Text('Edit'),
+              child: const Text('Edit'),
             ),
           ],
         );
@@ -255,19 +244,15 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   Future<void> _deleteItinerary(Map<String, dynamic> itinerary) async {
     DocumentReference docRef = itinerary['docRef'] as DocumentReference;
     await docRef.delete();
+    // ignore: use_build_context_synchronously
     Navigator.of(context).pop(); // Close the delete confirmation dialog
 
     // Navigate back to the ItinerariesPage
+    // ignore: use_build_context_synchronously
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => ItinerariesPage()),
+      MaterialPageRoute(builder: (context) => const ItinerariesPage()),
       (Route<dynamic> route) => false,
     );
-  }
-
-  Future<void> _unmarkAsDone(Map<String, dynamic> itinerary) async {
-    DocumentReference docRef = itinerary['docRef'] as DocumentReference;
-    await docRef.update({'status': 'Ongoing'});
-    Navigator.of(context).pop();
   }
 
   Future<Map<String, dynamic>> _calculateRoute(
@@ -319,6 +304,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
 
         polylines.add(polyline);
       } else {
+        // ignore: avoid_print
         print("Error");
       }
     }
@@ -357,13 +343,13 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Itineraries'),
+        title: const Text('Itineraries'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             // Navigate back to ProfilePage
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => ProfilePage()),
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
             );
           },
         ),
@@ -373,8 +359,8 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
         child: Column(
           children: <Widget>[
             Container(
-              constraints: BoxConstraints(maxHeight: 150.0),
-              child: Material(
+              constraints: const BoxConstraints(maxHeight: 150.0),
+              child: const Material(
                 color: Colors.pink,
                 child: TabBar(
                   indicatorColor: Colors.blue,
@@ -407,11 +393,11 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
         builder:
             (BuildContext context, AsyncSnapshot<Position> positionSnapshot) {
           if (positionSnapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator(); // Loading indicator while fetching user's location
+            return const CircularProgressIndicator(); // Loading indicator while fetching user's location
           }
 
           if (positionSnapshot.hasError) {
-            return Text('Failed to get user location'); // Handle errors
+            return const Text('Failed to get user location'); // Handle errors
           }
 
           final userPosition = positionSnapshot.data;
@@ -420,13 +406,13 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
             builder:
                 (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
-                return Text('Something went wrong');
+                return const Text('Something went wrong');
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return CircularProgressIndicator();
+                return const CircularProgressIndicator();
               }
               if (snapshot.data == null) {
-                return Text('No data found');
+                return const Text('No data found');
               }
 
               final itineraries =
@@ -468,9 +454,9 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                              return const CircularProgressIndicator();
                             } else if (snapshot.hasError) {
-                              return Text('Error calculating route');
+                              return const Text('Error calculating route');
                             } else {
                               Map<String, dynamic> data =
                                   snapshot.data as Map<String, dynamic>;
@@ -480,11 +466,12 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                   data['colors'] as List<Color>;
 
                               return Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0),
                                 child: Container(
                                   height: 400,
                                   width: double.infinity,
-                                  margin: EdgeInsets.only(bottom: 16.0),
+                                  margin: const EdgeInsets.only(bottom: 16.0),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(15.0),
                                     boxShadow: [
@@ -508,11 +495,11 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                           polylineCoordinates.sublist(1),
                                           usedColors),
                                       gestureRecognizers: <Factory<
-                                          OneSequenceGestureRecognizer>>[
+                                          OneSequenceGestureRecognizer>>{
                                         Factory<OneSequenceGestureRecognizer>(
                                           () => EagerGestureRecognizer(),
                                         ),
-                                      ].toSet(),
+                                      },
                                     ),
                                   ),
                                 ),
@@ -525,7 +512,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                   }
 
                   return Container(
-                      margin: EdgeInsets.all(8.0),
+                      margin: const EdgeInsets.all(8.0),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8.0),
@@ -534,7 +521,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -548,10 +535,10 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                 Expanded(
                                   child: Text(
                                     itinerary['itineraryName'] ?? 'Unknown',
-                                    style: TextStyle(fontSize: 30),
+                                    style: const TextStyle(fontSize: 30),
                                   ),
                                 ),
-                                Text("Share"),
+                                const Text("Share"),
                                 Switch(
                                   value: itinerary['shareStatus'] ??
                                       false, // default to private if shareStatus is null
@@ -562,7 +549,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                     docRef.update({'shareStatus': value});
                                   },
                                 ),
-                                Text("Active"),
+                                const Text("Active"),
                                 Switch(
                                   value: status == "Ongoing",
                                   onChanged: (value) {
@@ -574,7 +561,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                     docRef.update({'status': updatedStatus});
                                   },
                                 ),
-                                Text("Done"),
+                                const Text("Done"),
                                 Switch(
                                   value: status == "Done",
                                   onChanged: (value) {
@@ -587,14 +574,14 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.delete),
+                                  icon: const Icon(Icons.delete),
                                   onPressed: () {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialog(
-                                          title: Text('Delete Itinerary'),
-                                          content: Text(
+                                          title: const Text('Delete Itinerary'),
+                                          content: const Text(
                                               'Are you sure you want to delete this itinerary?'),
                                           actions: <Widget>[
                                             TextButton(
@@ -602,7 +589,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                                 Navigator.of(context)
                                                     .pop(); // Close the dialog
                                               },
-                                              child: Text('Cancel'),
+                                              child: const Text('Cancel'),
                                             ),
                                             TextButton(
                                               onPressed: () {
@@ -610,7 +597,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                                     .pop(); // Close the dialog
                                                 _deleteItinerary(itinerary);
                                               },
-                                              child: Text('Delete'),
+                                              child: const Text('Delete'),
                                             ),
                                           ],
                                         );
@@ -640,13 +627,13 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                         Icon(Icons.circle,
                                             color: currentColor,
                                             size: 20.0), // Bullet icon
-                                        SizedBox(
+                                        const SizedBox(
                                             width:
                                                 5.0), // A small space between the bullet and text
                                         Expanded(
                                             child: Text(
                                           (location['name'] as String),
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                               fontSize:
                                                   25.0), // Adjust the font size here
                                         ))
@@ -657,7 +644,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                   return ListTile(
                                     title: Text(
                                       '$dayName - $date',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize:
                                               30.0), // Adjust the font size here
                                     ),
@@ -686,9 +673,10 @@ Future<Position> fetchUserLocation() async {
     );
   } catch (e) {
     // Handle errors here
+    // ignore: avoid_print
     print('Failed to get user location: $e');
-    throw e; // Propagate the error to the FutureBuilder
+    rethrow; // Propagate the error to the FutureBuilder
   }
 }
 
-void main() => runApp(MaterialApp(home: ItinerariesPage()));
+void main() => runApp(const MaterialApp(home: ItinerariesPage()));

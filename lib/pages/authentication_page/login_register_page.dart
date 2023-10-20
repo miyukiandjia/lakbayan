@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lakbayan/pages/authentication/auth.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/authentication_page/auth.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {

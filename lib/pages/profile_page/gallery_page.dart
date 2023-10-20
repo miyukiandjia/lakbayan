@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
 import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/profile_page/profile_page.dart';
 
@@ -34,13 +34,12 @@ class Gallery extends StatelessWidget {
                   if (index == 0) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
+                      MaterialPageRoute(builder: (context) => const HomePage()),
                     );
                   } else if (index == 1) {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => NavigationPage()),
+                      MaterialPageRoute(builder: (context) => NavigationPage()),
                     );
                   } else if (index == 2) {
                     Navigator.pushReplacement(

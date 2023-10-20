@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'package:lakbayan/pages/homepage/itinerary/overview_itinerary_page.dart';
-import 'dart:async'; 
+import 'package:lakbayan/pages/home_page/itinerary/overview_itinerary_page.dart';
+import 'dart:async';
 import 'package:lakbayan/constants.dart';
-import 'package:lakbayan/pages/homepage/itinerary/subclasses/create_subclasses.dart';
+import 'package:lakbayan/pages/home_page/itinerary/subclasses/create_subclasses.dart';
 
 class CreateItineraryPage extends StatefulWidget {
   const CreateItineraryPage({Key? key}) : super(key: key);
@@ -17,7 +17,8 @@ class CreateItineraryPage extends StatefulWidget {
 
 class _CreateItineraryPageState extends State<CreateItineraryPage> {
   List<ItineraryDay> days = [ItineraryDay(name: "", date: DateTime.now())];
-  final TextEditingController _itineraryNameController = TextEditingController();
+  final TextEditingController _itineraryNameController =
+      TextEditingController();
 
   Future<void> _selectDate(BuildContext context, ItineraryDay day) async {
     DateTime? pickedDate = await showDatePicker(
@@ -33,26 +34,26 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     }
   }
 
- Future<List<Location>> searchLocations(double lat, double lng, String searchTerm) async {
-  final url = "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyAXRlk4WJ4sqmtMArNRHBwIK1bmj7fYZao";
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    Map<String, dynamic> jsonResponse = json.decode(response.body);
-    return (jsonResponse['results'] as List).map((result) {
-      final locationLat = result['geometry']['location']['lat'] as double;
-      final locationLng = result['geometry']['location']['lng'] as double;
-      return Location(
-        name: result['name'], 
-        category: '', 
-        latitude: locationLat, 
-        longitude: locationLng
-      );
-    }).toList();
-  } else {
-    throw Exception("Failed to load locations");
+  Future<List<Location>> searchLocations(
+      double lat, double lng, String searchTerm) async {
+    final url =
+        "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyAXRlk4WJ4sqmtMArNRHBwIK1bmj7fYZao";
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      return (jsonResponse['results'] as List).map((result) {
+        final locationLat = result['geometry']['location']['lat'] as double;
+        final locationLng = result['geometry']['location']['lng'] as double;
+        return Location(
+            name: result['name'],
+            category: '',
+            latitude: locationLat,
+            longitude: locationLng);
+      }).toList();
+    } else {
+      throw Exception("Failed to load locations");
+    }
   }
-}
-
 
   Future<Position?> getCurrentLocation() async {
     bool serviceEnabled;
@@ -120,7 +121,8 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                       onPressed: () {
                         setState(() {
                           DateTime lastDate = days.last.date;
-                          DateTime newDate = lastDate.add(const Duration(days: 1));
+                          DateTime newDate =
+                              lastDate.add(const Duration(days: 1));
                           days.add(ItineraryDay(name: "", date: newDate));
                         });
                       },
@@ -149,7 +151,6 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
                         totalDays: days.length,
                         searchLocations: searchLocations,
                       ),
-
                     );
                   }
                 },
@@ -177,4 +178,3 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
     );
   }
 }
-

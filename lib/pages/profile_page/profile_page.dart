@@ -1,10 +1,12 @@
+// optimization resumes here ji! 10/20 11:47 pm
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/authentication/auth.dart';
+import 'package:lakbayan/pages/authentication_page/auth.dart';
 import 'package:lakbayan/pages/profile_page/my_itineraries_page.dart';
 import 'package:lakbayan/pages/profile_page/gallery_page.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
-import 'package:lakbayan/pages/authentication/login_register_page.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
+import 'package:lakbayan/pages/authentication_page/login_register_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -15,6 +17,7 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ProfilePageState createState() => _ProfilePageState();
 }
 

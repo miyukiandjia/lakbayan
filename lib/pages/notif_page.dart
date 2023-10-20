@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/homepage/nav_bar.dart';
-
+import 'package:lakbayan/pages/home_page/nav_bar.dart';
 
 class NotifPage extends StatelessWidget {
   const NotifPage({super.key});
@@ -49,7 +48,8 @@ class ListViewBuilder extends StatelessWidget {
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: customNavBar(context, 2), // I'm assuming 2 is the index for the "Notif" page.
+            child: customNavBar(context,
+                2), // I'm assuming 2 is the index for the "Notif" page.
           ),
         ],
       ),

@@ -1,12 +1,12 @@
-// fetches and displays a combined list of 'posts' and 'itineraries' from Firestore, 
+// fetches and displays a combined list of 'posts' and 'itineraries' from Firestore,
 // sorts them by timestamp, and then displays them in a list along with the associated user data for each post or itinerary.
 
 import 'package:rxdart/rxdart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/homepage/lakbayan_feed/ordinary_post_container.dart';
-import 'package:lakbayan/pages/homepage/lakbayan_feed/itinerary_post_container.dart';
+import 'package:lakbayan/pages/home_page/lakbayan_feed/ordinary_post_container.dart';
+import 'package:lakbayan/pages/home_page/lakbayan_feed/itinerary_post_container.dart';
 
 Widget lakbayanFeed(BuildContext context) {
   return StreamBuilder<List<dynamic>>(
@@ -15,7 +15,8 @@ Widget lakbayanFeed(BuildContext context) {
           .collection('posts')
           .orderBy('timestamp', descending: true)
           .snapshots(),
-      FirebaseFirestore.instance.collectionGroup('itineraries')
+      FirebaseFirestore.instance
+          .collectionGroup('itineraries')
           .where('shareStatus', isEqualTo: true)
           .orderBy('timestamp', descending: true)
           .snapshots(),
@@ -27,8 +28,10 @@ Widget lakbayanFeed(BuildContext context) {
 
         return [
           ...postsSnapshot.docs.map((doc) => {'type': 'post', 'data': doc}),
-          ...itinerariesSnapshot.docs.map((doc) => {'type': 'itinerary', 'data': doc})
-        ]..sort((a, b) => b['data']['timestamp'].compareTo(a['data']['timestamp']));
+          ...itinerariesSnapshot.docs
+              .map((doc) => {'type': 'itinerary', 'data': doc})
+        ]..sort(
+            (a, b) => b['data']['timestamp'].compareTo(a['data']['timestamp']));
       },
     ),
     builder: (context, snapshot) {
@@ -60,20 +63,22 @@ Widget lakbayanFeed(BuildContext context) {
                     return const CircularProgressIndicator();
                   } else if (userSnapshot.hasError) {
                     return Text('Error: ${userSnapshot.error}');
-                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  } else if (!userSnapshot.hasData ||
+                      !userSnapshot.data!.exists) {
                     return const Text('User does not exist.');
                   } else {
                     return PostCard(
                       post: post,
                       userData: userSnapshot.data!,
-                      userId: FirebaseAuth.instance.currentUser?.uid ?? 'No User ID fetched.',
+                      userId: FirebaseAuth.instance.currentUser?.uid ??
+                          'No User ID fetched.',
                     );
                   }
                 },
               );
             } else {
               final itinerary = item['data'];
-                final userIdShared = itinerary['userId'];
+              final userIdShared = itinerary['userId'];
               return FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance
                     .collection('users')
@@ -84,7 +89,8 @@ Widget lakbayanFeed(BuildContext context) {
                     return const CircularProgressIndicator();
                   } else if (userSnapshot.hasError) {
                     return Text('Error: ${userSnapshot.error}');
-                  } else if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+                  } else if (!userSnapshot.hasData ||
+                      !userSnapshot.data!.exists) {
                     return const Text('User does not exist.');
                   } else {
                     return SharedItineraryCard(

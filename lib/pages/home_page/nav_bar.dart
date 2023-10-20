@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lakbayan/pages/homepage/home_page.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
 import 'package:lakbayan/pages/search_page.dart';
 import 'package:lakbayan/pages/notif_page.dart';
 import 'package:lakbayan/pages/profile_page/profile_page.dart';
@@ -37,8 +37,7 @@ Widget customNavBar(BuildContext context, int currentIndex) {
             } else if (index == 1) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => NavigationPage()),
+                MaterialPageRoute(builder: (context) => NavigationPage()),
               );
             } else if (index == 2) {
               Navigator.pushReplacement(
