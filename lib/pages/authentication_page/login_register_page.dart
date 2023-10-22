@@ -180,10 +180,10 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             height: MediaQuery.of(context).size.height,
             width: double.infinity,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
                 gradient: LinearGradient(
               begin: Alignment.topCenter,
-              colors: [const Color(0xFFAD547F), Colors.pink.shade200],
+              colors: [Color(0xFFAD547F), Color.fromARGB(255, 244, 143, 177)],
             )),
             child: Column(
               children: <Widget>[
