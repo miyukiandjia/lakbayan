@@ -53,8 +53,8 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
 
     Map<String, dynamic> updates = {};
 
-    if (!userData.containsKey('prof_pic_url') ||
-        userData['prof_pic_url'] == "") {
+    if (!userData.containsKey('profile_pic_url') ||
+        userData['profile_pic_url'] == "") {
       // If the 'prof_pic_url' field doesn't exist or is empty, set a default value
       updates['prof_pic_url'] =
           'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
