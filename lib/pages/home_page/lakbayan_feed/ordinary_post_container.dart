@@ -38,25 +38,33 @@ class _PostCardState extends State<PostCard> {
 
   Future<void> _checkIfLiked() async {
     DocumentSnapshot likeDoc = await _likesCollection.doc(widget.userId).get();
+    print("Check if liked: ${likeDoc.exists}");
     setState(() {
       isLiked = likeDoc.exists;
     });
   }
 
   Future<void> _toggleLike() async {
+    final userId = widget.userId;
+    print("Toggle like for userId $userId, current isLiked: $isLiked");
     if (isLiked) {
+      print("Unliking the post");
       await _unlikePost();
     } else {
+      print("Post is liked.");
       await _likePost();
     }
     setState(() {
       isLiked = !isLiked;
+      print("isLiked set to: $isLiked");
     });
   }
 
   Future<void> _likePost() async {
-    await _likesCollection.doc(widget.userId).set({});
+    await _likesCollection.doc(widget.userId).set({'userId': true});
+    print("Likes collection was accesed.");
     await _updatePostLikes(1);
+    print("Like value was succesfully updated.");
   }
 
   Future<void> _unlikePost() async {
@@ -120,17 +128,13 @@ class _PostCardState extends State<PostCard> {
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(
-                      isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: isLiked ? Colors.red : null,
-                    ),
-                    onPressed: _toggleLike,
-                  ),
-                  Text(post['likes']?.toString() ?? '0'),
-                  IconButton(
-                    icon: const Icon(Icons.star_border),
-                    onPressed: () => _postsCollection.doc(widget.post.id).update({'saves': FieldValue.increment(1)}),
-                  ),
+                          icon: Icon(
+                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: isLiked ? Colors.red : null,
+                          ),
+                          onPressed: _toggleLike,
+                        ),
+                        Text(post['likes']?.toString() ?? '0'),
                   IconButton(
                     icon: const Icon(Icons.comment),
                     onPressed: _showCommentsDialog,
