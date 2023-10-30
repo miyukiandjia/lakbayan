@@ -193,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
       username ?? 'Loading...', // Default text while loading username
       style: const TextStyle(
         fontSize: 60,
-        color: Colors.white,
+        color: Color.fromARGB(255, 58, 70, 70),
         fontWeight: FontWeight.bold,
       ),
     );
@@ -267,20 +267,20 @@ class _ProfilePageState extends State<ProfilePage> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            _bioController.text.isEmpty
-                ? "User's bio comes here..."
-                : _bioController.text,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 45,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(
+                _bioController.text.isEmpty
+                    ? "User's bio comes here..."
+                    : _bioController.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 45,
+                  color: Color.fromARGB(255, 58, 70, 70),
+                ),
+              ),
+              const SizedBox(height: 10),
               IconButton(
                 onPressed: () {
                   setState(() {
@@ -290,11 +290,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: const Icon(
                   Icons.edit,
                   size: 35,
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 58, 70, 70),
                 ),
               ),
             ],
           ),
+          const SizedBox(
+            height: 50,
+          )
         ],
       );
     }
@@ -346,14 +349,14 @@ class _ProfilePageState extends State<ProfilePage> {
           Icon(
             icon,
             size: 60,
-            color: Colors.white,
+            color: Color.fromARGB(255, 58, 70, 70),
           ),
           const SizedBox(height: 5),
           Text(
             label,
             style: const TextStyle(
               fontSize: 25,
-              color: Colors.white,
+              color: Color.fromARGB(255, 58, 70, 70),
             ),
           ),
         ],
@@ -363,8 +366,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _signOutButton(BuildContext context) {
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(20),
+      width: 800,
+      margin: const EdgeInsets.all(10),
       child: ElevatedButton(
         onPressed: () => signOut(context),
         style: ElevatedButton.styleFrom(
@@ -377,9 +380,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         child: const Text('Sign Out',
             style: (TextStyle(
-                fontSize: 50,
+                fontSize: 42,
                 color: Color(0xFFAD547F),
-                fontWeight: FontWeight.bold))),
+                fontWeight: FontWeight.w500))),
       ),
     );
   }
@@ -432,64 +435,88 @@ class _ProfilePageState extends State<ProfilePage> {
     final currentUser = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
-        elevation: 0.0,
-        bottomOpacity: 0.0,
-        toolbarHeight: 90,
+        toolbarHeight: 100,
+        title: const Text(
+          'Profile',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
         backgroundColor: const Color(0xFFAD547F),
-        leading: Container(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            // Navigate back to the HomePage
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+            );
+          },
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[300],
-          ),
-          child: Row(
+              gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            colors: [const Color(0xFFAD547F), Colors.pink.shade200],
+          )),
+          child: Column(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFFAD547F)),
-                iconSize: 50,
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => HomePage()),
-                  );
-                },
+              Row(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 100, horizontal: 50),
+                    child: SizedBox(
+                      height: 350,
+                      child: Image.asset('lib/images/lakbayan-text-2.png'),
+                    ),
+                  )
+                ],
               ),
-              const SizedBox(width: 20),
-              const Text(
-                'Profile',
-                style: TextStyle(fontSize: 45, color: Colors.white),
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 50),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(100),
+                              topRight: Radius.circular(100),
+                              bottomLeft: Radius.circular(100),
+                              bottomRight: Radius.circular(100)),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black38,
+                                spreadRadius: 0,
+                                blurRadius: 20),
+                          ]),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 80),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Center(
+                                child: _buildImageSection()), // Profile image
+                            Center(child: _buildUserEmail(currentUser?.email)),
+                            const SizedBox(height: 20),
+                            _buildBioSection(), // Bio section
+                            _buildSectionIcons(context), // Bio section
+                            // Add more sections here as needed
+                            const SizedBox(height: 50),
+                            Center(
+                                child:
+                                    _signOutButton(context)), // Sign-out button
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-      ),
-      body: Container(
-        color: const Color(0xFFAD547F),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    _buildImageSection(), // Image upload section
-
-                    _buildUserEmail(currentUser?.email),
-                    const SizedBox(height: 20),
-
-                    _buildBioSection(), // Bio section
-
-                    _buildSectionIcons(context),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: _signOutButton(context),
-            ),
-          ],
         ),
       ),
     );

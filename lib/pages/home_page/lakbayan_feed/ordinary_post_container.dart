@@ -23,7 +23,8 @@ class _PostCardState extends State<PostCard> {
   final _formKey = GlobalKey<FormState>();
   bool isLiked = false;
 
-  CollectionReference get _postsCollection => FirebaseFirestore.instance.collection('posts');
+  CollectionReference get _postsCollection =>
+      FirebaseFirestore.instance.collection('posts');
   late CollectionReference _likesCollection;
   late CollectionReference _commentsCollection;
 
@@ -32,7 +33,8 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     _commentController = TextEditingController();
     _likesCollection = _postsCollection.doc(widget.post.id).collection('likes');
-    _commentsCollection = _postsCollection.doc(widget.post.id).collection('comments');
+    _commentsCollection =
+        _postsCollection.doc(widget.post.id).collection('comments');
     _checkIfLiked();
   }
 
@@ -65,7 +67,9 @@ class _PostCardState extends State<PostCard> {
   }
 
   Future<void> _updatePostLikes(int increment) async {
-    await _postsCollection.doc(widget.post.id).update({'likes': FieldValue.increment(increment)});
+    await _postsCollection
+        .doc(widget.post.id)
+        .update({'likes': FieldValue.increment(increment)});
   }
 
   @override
@@ -78,66 +82,83 @@ class _PostCardState extends State<PostCard> {
   Widget build(BuildContext context) {
     final post = widget.post.data() as Map<String, dynamic>;
     final userData = widget.userData.data() as Map<String, dynamic>;
-    final userProfilePic = userData['profile_pic_url'] ?? 'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
+    final userProfilePic = userData['profile_pic_url'] ??
+        'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 200),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CircleAvatar(
-                        backgroundImage: NetworkImage(userProfilePic),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: NetworkImage(userProfilePic),
+                          ),
+                          const SizedBox(width: 8.0),
+                          Text(
+                            post['username'] ?? 'Username',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8.0),
+                      if (widget.userId == post['userId']) _buildPostActions(),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  if (post['imageURL']?.isNotEmpty ?? false)
+                    Image.network(
+                      post['imageURL']!,
+                      height: 500,
+                      width: 500,
+                      fit: BoxFit.cover,
+                    ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
                       Text(
                         post['username'] ?? 'Username',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
+                      Text(' '),
+                      Text(post['text'] ?? ''),
                     ],
                   ),
-                  if (widget.userId == post['userId'])
-                    _buildPostActions(),
-                ],
-              ),
-              const SizedBox(height: 8.0),
-              if (post['imageURL']?.isNotEmpty ?? false)
-                Image.network(
-                  post['imageURL']!,
-                  height: 100,
-                  width: 100,
-                  fit: BoxFit.cover,
-                ),
-              const SizedBox(height: 8.0),
-              Text(post['text'] ?? ''),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      isLiked ? Icons.favorite : Icons.favorite_border,
-                      color: isLiked ? Colors.red : null,
-                    ),
-                    onPressed: _toggleLike,
-                  ),
-                  Text(post['likes']?.toString() ?? '0'),
-                  IconButton(
-                    icon: const Icon(Icons.star_border),
-                    onPressed: () => _postsCollection.doc(widget.post.id).update({'saves': FieldValue.increment(1)}),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.comment),
-                    onPressed: _showCommentsDialog,
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: isLiked ? Colors.red : null,
+                        ),
+                        onPressed: _toggleLike,
+                      ),
+                      Text(post['likes']?.toString() ?? '0'),
+                      IconButton(
+                        icon: const Icon(Icons.star_border),
+                        onPressed: () => _postsCollection
+                            .doc(widget.post.id)
+                            .update({'saves': FieldValue.increment(1)}),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.comment),
+                        onPressed: _showCommentsDialog,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -167,17 +188,22 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _editPost() {
-    TextEditingController editController = TextEditingController(text: widget.post['text']);
+    TextEditingController editController =
+        TextEditingController(text: widget.post['text']);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Post'),
         content: TextField(controller: editController),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
-              await _postsCollection.doc(widget.post.id).update({'text': editController.text});
+              await _postsCollection
+                  .doc(widget.post.id)
+                  .update({'text': editController.text});
               // ignore: use_build_context_synchronously
               Navigator.of(context).pop();
             },
@@ -196,7 +222,9 @@ class _PostCardState extends State<PostCard> {
           title: const Text('Confirm Delete'),
           content: const Text('Are you sure you want to delete this post?'),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel')),
             TextButton(
               onPressed: () async {
                 await _postsCollection.doc(widget.post.id).delete();
@@ -224,7 +252,8 @@ class _PostCardState extends State<PostCard> {
               if (commentText.isNotEmpty) {
                 await _commentsCollection.add({
                   'userId': widget.userId,
-                  'username': (widget.userData.data() as Map<String, dynamic>)['username'],
+                  'username': (widget.userData.data()
+                      as Map<String, dynamic>)['username'],
                   'text': commentText,
                   'timestamp': FieldValue.serverTimestamp(),
                 });
@@ -245,7 +274,9 @@ class _PostCardState extends State<PostCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           StreamBuilder<QuerySnapshot>(
-            stream: _commentsCollection.orderBy('timestamp', descending: true).snapshots(),
+            stream: _commentsCollection
+                .orderBy('timestamp', descending: true)
+                .snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const CircularProgressIndicator();
               final comments = snapshot.data!.docs;
@@ -253,7 +284,8 @@ class _PostCardState extends State<PostCard> {
                 shrinkWrap: true,
                 itemCount: comments.length,
                 itemBuilder: (context, index) {
-                  final comment = comments[index].data() as Map<String, dynamic>;
+                  final comment =
+                      comments[index].data() as Map<String, dynamic>;
                   return ListTile(
                     title: Text(comment['username']),
                     subtitle: Text(comment['text']),
@@ -289,17 +321,22 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _editComment(DocumentSnapshot comment) {
-    TextEditingController editController = TextEditingController(text: comment['text']);
+    TextEditingController editController =
+        TextEditingController(text: comment['text']);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Comment'),
         content: TextField(controller: editController),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () async {
-              await _commentsCollection.doc(comment.id).update({'text': editController.text});
+              await _commentsCollection
+                  .doc(comment.id)
+                  .update({'text': editController.text});
               // ignore: use_build_context_synchronously
               Navigator.of(context).pop();
             },
@@ -318,7 +355,9 @@ class _PostCardState extends State<PostCard> {
           title: const Text('Confirm Delete'),
           content: const Text('Are you sure you want to delete this comment?'),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel')),
             TextButton(
               onPressed: () async {
                 await _commentsCollection.doc(comment.id).delete();

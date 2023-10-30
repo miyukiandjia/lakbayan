@@ -456,116 +456,120 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
           "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(profileImageUrl),
-                  radius: 25,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  widget.userData['username'] ?? 'Unknown User',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Itinerary Name: ${widget.itinerary['itineraryName']}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            ...List.generate(widget.itinerary['days'].length, (index) {
-              final day = widget.itinerary['days'][index];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 200),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(70),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text('Day ${index + 1}: ${day['name']}'),
-                  ...List.generate(day['locations'].length, (locIndex) {
-                    final location = day['locations'][locIndex];
-                    return Text('Location: ${location['name']}');
-                  }),
-                ],
-              );
-            }),
-            if (widget.itinerary['days'] is List)
-              _buildMap(widget.itinerary['days']),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? Colors.red : null,
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(profileImageUrl),
+                    radius: 25,
                   ),
-                  onPressed: _toggleLike,
-                ),
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('sharedItineraries')
-                      .doc(widget.itinerary['id'])
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-                    final itineraryData =
-                        snapshot.data!.data() as Map<String, dynamic>;
-                    return Text(itineraryData['likes']?.toString() ?? '0');
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    isSaved ? Icons.star : Icons.star_border,
-                    color: isSaved ? Colors.yellow : null,
-                  ),
-                  onPressed: _toggleSave,
-                ),
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('sharedItineraries')
-                      .doc(widget.itinerary['id'])
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-                    final itineraryData =
-                        snapshot.data!.data() as Map<String, dynamic>;
-                    return Text(itineraryData['saves']?.toString() ?? '0');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.comment),
-                  onPressed: _showCommentsDialog,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      showMap = !showMap;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFAD547F),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.userData['username'] ?? 'Unknown User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Text(showMap ? "Hide Map" : "View in Maps"),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Itinerary Name: ${widget.itinerary['itineraryName']}',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...List.generate(widget.itinerary['days'].length, (index) {
+                final day = widget.itinerary['days'][index];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Day ${index + 1}: ${day['name']}'),
+                    ...List.generate(day['locations'].length, (locIndex) {
+                      final location = day['locations'][locIndex];
+                      return Text('Location: ${location['name']}');
+                    }),
+                    const SizedBox(height: 15),
+                  ],
+                );
+              }),
+              if (widget.itinerary['days'] is List)
+                _buildMap(widget.itinerary['days']),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: isLiked ? Colors.red : null,
+                    ),
+                    onPressed: _toggleLike,
+                  ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('sharedItineraries')
+                        .doc(widget.itinerary['id'])
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+                      final itineraryData =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      return Text(itineraryData['likes']?.toString() ?? '0');
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isSaved ? Icons.star : Icons.star_border,
+                      color: isSaved ? Colors.yellow : null,
+                    ),
+                    onPressed: _toggleSave,
+                  ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('sharedItineraries')
+                        .doc(widget.itinerary['id'])
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+                      final itineraryData =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      return Text(itineraryData['saves']?.toString() ?? '0');
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.comment),
+                    onPressed: _showCommentsDialog,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showMap = !showMap;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFAD547F),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                    ),
+                    child: Text(showMap ? "Hide Map" : "View in Maps"),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
