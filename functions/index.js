@@ -1,45 +1,59 @@
-const functions = require('firebase-functions');
-const { Storage } = require('@google-cloud/storage');
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
-const im = require('imagemagick');
+const functions = require("firebase-functions");
+const {Storage} = require("@google-cloud/storage");
+const path = require("path");
+const os = require("os");
+const fs = require("fs");
+const {GoogleAuth} = require("google-auth-library");
+process.env.GCLOUD_PROJECT = 'lakbayanv2';
+// Set your project ID here
+const projectId = 'lakbayanv2';
 
-const gcs = new Storage();
-
-exports.convertImage = functions.storage.object().onFinalize(async (object) => {
-   const filePath = object.name;
-   const contentType = object.contentType;
-
-   // Check if contentType and filePath are defined
-   if (!filePath || !contentType) return null;
-
-   if (contentType === 'image/heic') {
-      const bucketName = object.bucket;
-      const bucket = gcs.bucket(bucketName);
-
-      const tempLocalFile = path.join(os.tmpdir(), filePath);
-      const tempLocalDir = path.dirname(tempLocalFile);
-
-      await fs.promises.mkdir(tempLocalDir, { recursive: true });
-      await bucket.file(filePath).download({ destination: tempLocalFile });
-
-      const convertedTempLocalFile = tempLocalFile.replace(/\.heic$/, '.jpg');
-      
-      // Wrap the convert function in a Promise
-      await new Promise((resolve, reject) => {
-         im.convert([tempLocalFile, convertedTempLocalFile], (err) => {
-            if (err) reject(err);
-            else resolve();
-         });
-      });
-
-      const destination = 'converted_images/' + path.basename(convertedTempLocalFile);
-      await bucket.upload(convertedTempLocalFile, { destination });
-      
-      await fs.promises.unlink(tempLocalFile);
-      await fs.promises.unlink(convertedTempLocalFile);
-   }
-
-   return null;
+// Initialize Firebase Admin with project ID and default credentials
+const admin = require('firebase-admin');
+admin.initializeApp({
+  projectId: projectId,
+  credential: admin.credential.applicationDefault()
 });
+
+
+exports.sendLikeNotification = functions.firestore
+    .document("sharedItineraries/{itineraryId}/likes/{likeId}")
+    .onCreate((snap, context) => {
+      const itineraryId = context.params.itineraryId;
+      const newLike = snap.data();
+
+      return admin.firestore().doc(`sharedItineraries/${itineraryId}`).get()
+          .then((itineraryDoc) => {
+            if (!itineraryDoc.exists) {
+              throw new Error("Shared itinerary not found");
+            }
+
+            const itinerary = itineraryDoc.data();
+            const itineraryOwnerId = itinerary.userId;
+
+            return admin.firestore().doc(`users/${itineraryOwnerId}`).get();
+          })
+          .then((userDoc) => {
+            if (!userDoc.exists) {
+              throw new Error("User not found");
+            }
+
+            const user = userDoc.data();
+            const fcmToken = user.fcmToken;
+
+            // Break long strings
+            const title = "Your itinerary was liked!";
+            const body = `${newLike.username} liked your shared itinerary.`;
+
+            const message = {
+              token: fcmToken,
+              notification: {title, body},
+            };
+
+            return admin.messaging().send(message);
+          })
+          .catch((error) => {
+            console.log("Error sending notification", error);
+            throw error;
+          });
+    });

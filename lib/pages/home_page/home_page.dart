@@ -10,6 +10,7 @@ import 'package:lakbayan/pages/home_page/pop_destination/pop_des_content.dart';
 import 'package:lakbayan/pages/home_page/pop_destination/pop_des_container.dart';
 import 'package:lakbayan/pages/home_page/lakbayan_feed/combined_feed.dart';
 import 'package:lakbayan/pages/home_page/itinerary/migrate_shared_itineraries.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -30,30 +31,70 @@ class _HomePageState extends State<HomePage> {
     post = CreatePost(user: user, username: username, context: context);
     _checkAuthentication();
     migrateSharedItineraries();
+    _setupMessaging();
   }
 
   _checkAuthentication() async {
-    final user = Auth().currentUser;
-    // ignore: avoid_print
-    print("Current user ID: $user");
+  final user = Auth().currentUser;
+  print("Current user ID: ${user?.uid}");
 
-    if (user == null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    } else {
-      // Fetch the username from Firestore
-      final docSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      setState(() {
-        username = docSnapshot.data()?['username'];
-        post = CreatePost(user: user, username: username, context: context);
-      });
+  if (user == null) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  } else {
+    // Fetch the username from Firestore
+    final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final docSnapshot = await userDocRef.get();
+    setState(() {
+      username = docSnapshot.data()?['username'];
+      post = CreatePost(user: user, username: username, context: context);
+    });
+
+    // Retrieve and update FCM token
+    String? token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await userDocRef.update({'fcmToken': token});
+      print("FCM Token updated: $token");
     }
   }
+}
+
+  void _setupMessaging() async {
+    // Request permissions for notifications
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
+    print('User granted permission: ${settings.authorizationStatus}');
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("Got a message whilst in the foreground!");
+      print("Message data: ${message.data}");
+
+      if (message.notification != null) {
+        print("Message also contained a notification: ${message.notification}");
+        // Here you can update your UI accordingly
+      }
+    });
+
+    // Handle messages when the app is opened from a terminated state
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('Message clicked!');
+      // Here you can navigate to the specific screen related to the notification
+    });
+
+    // Update the FCM token in Firestore
+    final user = Auth().currentUser;
+    if (user != null) {
+      final userDocRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await userDocRef.update({'fcmToken': token});
+        print("FCM Token updated: $token");
+      }
+    }
+  }
+
 
   Widget _userInfo(BuildContext context) {
     var now = DateTime.now();

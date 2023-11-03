@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 class PostCard extends StatefulWidget {
   final DocumentSnapshot post;
@@ -26,6 +30,27 @@ class _PostCardState extends State<PostCard> {
   CollectionReference get _postsCollection => FirebaseFirestore.instance.collection('posts');
   late CollectionReference _likesCollection;
   late CollectionReference _commentsCollection;
+
+   Future<XFile?> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    // Pick an image
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    return image;
+  }
+
+   Future<String?> _uploadImage(XFile? image) async {
+    if (image == null) return null;
+
+    firebase_storage.UploadTask uploadTask;
+    firebase_storage.Reference ref = firebase_storage.FirebaseStorage.instance
+        .ref()
+        .child('path/to/your/directory/${DateTime.now().toIso8601String() + '_' + image.name}');
+
+    uploadTask = ref.putFile(File(image.path));
+
+    final url = await (await uploadTask).ref.getDownloadURL();
+    return url; // URL of the uploaded image
+  }
 
   @override
   void initState() {
@@ -170,27 +195,71 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
-  void _editPost() {
-    TextEditingController editController = TextEditingController(text: widget.post['text']);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Post'),
-        content: TextField(controller: editController),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+void _editPost() async {
+  TextEditingController editController = TextEditingController(text: widget.post['text']);
+  XFile? newImage;
+  bool deleteImage = false;  // Flag to track if user wants to delete the image
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Edit Post'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(controller: editController),
           TextButton(
             onPressed: () async {
-              await _postsCollection.doc(widget.post.id).update({'text': editController.text});
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
+              newImage = await _pickImage();
+              // Optionally add an image preview here
+              deleteImage = false; // Reset deleteImage flag if new image is picked
             },
-            child: const Text('Save'),
+            child: const Text('Pick a New Image'),
           ),
+          if (widget.post['imageURL'] != null && widget.post['imageURL'].isNotEmpty)
+            TextButton(
+              onPressed: () {
+                // Set deleteImage to true to indicate the image should be deleted
+                deleteImage = true;
+              },
+              child: const Text('Delete Current Image'),
+            ),
         ],
       ),
-    );
-  }
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel')
+        ),
+        TextButton(
+          onPressed: () async {
+            String? newImageUrl;
+            if (newImage != null) {
+              // If a new image was picked, upload it
+              newImageUrl = await _uploadImage(newImage);
+            } else if (deleteImage) {
+              // If deleteImage is true, set newImageUrl to null
+              newImageUrl = null;
+            } else {
+              // Otherwise, keep the old image URL
+              newImageUrl = widget.post['imageURL'];
+            }
+            await _postsCollection.doc(widget.post.id).update({
+              'text': editController.text,
+              'imageURL': newImageUrl // Update with new image URL, null, or keep the old one
+            });
+            Navigator.of(context).pop();
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+
 
   void _deletePost() {
     showDialog(
@@ -216,39 +285,42 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _showCommentsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Comments'),
-        content: _buildCommentContent(),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              final commentText = _commentController.text.trim();
-              if (commentText.isNotEmpty) {
-                await _commentsCollection.add({
-                  'userId': widget.userId,
-                  'username': (widget.userData.data() as Map<String, dynamic>)['username'],
-                  'text': commentText,
-                  'timestamp': FieldValue.serverTimestamp(),
-                });
-                _commentController.clear();
-              }
-            },
-            child: const Text('Post Comment'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Declare a local TextEditingController
+  TextEditingController commentController = TextEditingController();
 
-  Widget _buildCommentContent() {
-    return SizedBox(
-      width: double.maxFinite,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          StreamBuilder<QuerySnapshot>(
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Comments'),
+      content: _buildCommentContent(commentController), // Pass the controller to the build method
+      actions: [
+        ElevatedButton(
+          onPressed: () async {
+            final commentText = commentController.text.trim();
+            if (commentText.isNotEmpty) {
+              await _commentsCollection.add({
+                'userId': widget.userId,
+                'username': (widget.userData.data() as Map<String, dynamic>)['username'],
+                'text': commentText,
+                'timestamp': FieldValue.serverTimestamp(),
+              });
+              commentController.clear(); // Clear the text field
+            }
+          },
+          child: const Text('Post Comment'),
+        ),
+      ],
+    ),
+  );
+}
+
+  Widget _buildCommentContent(TextEditingController commentController) {
+  return SizedBox(
+    width: double.maxFinite,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StreamBuilder<QuerySnapshot>(
             stream: _commentsCollection.orderBy('timestamp', descending: true).snapshots(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) return const CircularProgressIndicator();
@@ -267,14 +339,14 @@ class _PostCardState extends State<PostCard> {
               );
             },
           ),
-          TextFormField(
-            controller: _commentController,
-            decoration: const InputDecoration(labelText: 'Write a comment...'),
-          ),
-        ],
-      ),
-    );
-  }
+        TextFormField(
+          controller: commentController,
+          decoration: const InputDecoration(labelText: 'Write a comment...'),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildCommentActions(DocumentSnapshot comment) {
     return PopupMenuButton<String>(

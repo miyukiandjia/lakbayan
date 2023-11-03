@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/constants.dart';
+import 'package:lakbayan/pages/home_page/itinerary/edit_itinerary_page.dart';
 
 class SharedItineraryCard extends StatefulWidget {
   final Map<String, dynamic> itinerary;
@@ -448,6 +449,32 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     );
   }
 
+  void _deleteItinerary() {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this itinerary?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel')
+          ),
+          TextButton(
+            onPressed: () async {
+              final itineraryId = widget.itinerary['id'];
+              await FirebaseFirestore.instance.collection('sharedItineraries').doc(itineraryId).delete();
+              Navigator.of(context).pop(); // Close the dialog
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     String profileImageUrl = widget.userData['prof_pic_url'] ?? "";
@@ -563,6 +590,28 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
                   ),
                   child: Text(showMap ? "Hide Map" : "View in Maps"),
                 ),
+                PopupMenuButton<String>(
+                onSelected: (String result) {
+                  if (result == 'edit') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EditItineraryPage(itinerary: widget.itinerary)),
+                    );
+                  } else if (result == 'delete') {
+                    _deleteItinerary();
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
+                ],
+              ),
               ],
             ),
           ],

@@ -7,16 +7,27 @@ class NotifPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: "ListView.builder",
-        theme: ThemeData(primarySwatch: Colors.pink),
-        debugShowCheckedModeBanner: false,
-        // home : new ListViewBuilder(),  NO Need To Use Unnecessary New Keyword
-        home: const ListViewBuilder());
+      title: "ListView.builder",
+      theme: ThemeData(primarySwatch: Colors.pink),
+      debugShowCheckedModeBanner: false,
+//      home: const ListViewBuilder(),
+    );
   }
 }
 
 class ListViewBuilder extends StatelessWidget {
-  const ListViewBuilder({Key? key}) : super(key: key);
+//  const ListViewBuilder({Key? key}) : super(key: key);
+
+  // This list should be dynamically updated with real notification data
+  final List<Map<String, dynamic>> notifications = [
+    {
+      'username': 'UserA',
+      'action': 'liked your itinerary',
+      'time': '5 minutes ago',
+      'imageUrl': 'lib/images/user.png'
+    },
+    // Add more notification items here
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -27,29 +38,29 @@ class ListViewBuilder extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8),
             child: ListView.builder(
-                itemCount: 10,
+                itemCount: notifications.length,
                 shrinkWrap: true,
                 itemBuilder: (BuildContext context, int index) {
+                  final notification = notifications[index];
                   return Padding(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: ListTile(
-                        leading:
-                            SizedBox(child: Image.asset('lib/images/user.png')),
-                        trailing: const Text(
-                          "5 minutes ago",
+                        leading: SizedBox(
+                            child: Image.asset(notification['imageUrl'])),
+                        trailing: Text(
+                          notification['time'],
                         ),
                         title: Text(
-                          "Username",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          notification['username'],
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text("liked a recent Itinerary."),
+                        subtitle: Text(notification['action']),
                       ));
                 }),
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: customNavBar(context,
-                2), // I'm assuming 2 is the index for the "Notif" page.
+            child: customNavBar(context, 2),
           ),
         ],
       ),

@@ -99,11 +99,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _errorMessage() {
-    return Text(errorMessage == '' ? '' : 'Error! $errorMessage',
-        style: const TextStyle(
-          fontSize: 36,
-        ));
-  }
+  return Text(errorMessage ?? '', style: const TextStyle(fontSize: 36));
+}
+
 
   Widget _submitButton() {
     double buttonWidth = MediaQuery.of(context).size.width * 0.8;
