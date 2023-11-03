@@ -479,7 +479,7 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
 
   @override
   Widget build(BuildContext context) {
-    String profileImageUrl = widget.userData['prof_pic_url'] ?? "";
+String profileImageUrl = widget.userData['profile_pic_url'] ?? "";
     if (profileImageUrl.isEmpty) {
       profileImageUrl =
           "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
@@ -592,28 +592,6 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
                   ),
                   child: Text(showMap ? "Hide Map" : "View in Maps"),
                 ),
-                PopupMenuButton<String>(
-                onSelected: (String result) {
-                  if (result == 'edit') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => EditItineraryPage(itinerary: widget.itinerary)),
-                    );
-                  } else if (result == 'delete') {
-                    _deleteItinerary();
-                  }
-                },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text('Edit'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text('Delete'),
-                  ),
-                ],
-              ),
               ],
             ),
           ],

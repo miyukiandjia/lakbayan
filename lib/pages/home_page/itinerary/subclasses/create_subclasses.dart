@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -63,10 +63,18 @@ class ItineraryDayWidget extends StatefulWidget {
 class _ItineraryDayWidgetState extends State<ItineraryDayWidget> {
   @override
   Widget build(BuildContext context) {
+  var formattedDate = DateFormat('yyyy-MM-dd').format(widget.day.date);
     return Column(
-      children: [
+      children: [Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'Date: $formattedDate', // This will display the date
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
         Row(
           children: [
+            
             Expanded(
               child: TextField(
                 controller: TextEditingController()..text = widget.day.name,

@@ -290,10 +290,6 @@ void _editPost() async {
   );
 }
 
-
-
-
-
   void _deletePost() {
     showDialog(
       context: context,
@@ -319,15 +315,99 @@ void _editPost() async {
     );
   }
 
-  void _showCommentsDialog() {
-  // Declare a local TextEditingController
+void _showCommentsDialog() {
   TextEditingController commentController = TextEditingController();
 
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Comments'),
-      content: _buildCommentContent(commentController), // Pass the controller to the build method
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            StreamBuilder<QuerySnapshot>(
+              stream: _commentsCollection.orderBy('timestamp', descending: true).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const CircularProgressIndicator();
+                final comments = snapshot.data!.docs;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index].data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(comment['username']),
+                      subtitle: Text(comment['text']),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            TextEditingController editController = TextEditingController(text: comment['text']);
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Edit Comment'),
+                                content: TextField(controller: editController),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text('Cancel')
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      await _commentsCollection
+                                        .doc(comments[index].id)
+                                        .update({'text': editController.text});
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Save')
+                                  ),
+                                ],
+                              ),
+                            );
+                          } else if (value == 'delete') {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('Confirm Delete'),
+                                  content: const Text('Are you sure you want to delete this comment?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: const Text('Cancel')
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        await _commentsCollection.doc(comments[index].id).delete();
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: const Text('Delete')
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
+                          const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            TextFormField(
+              controller: commentController,
+              decoration: const InputDecoration(labelText: 'Write a comment...'),
+            ),
+          ],
+        ),
+      ),
       actions: [
         ElevatedButton(
           onPressed: () async {
@@ -339,7 +419,9 @@ void _editPost() async {
                 'text': commentText,
                 'timestamp': FieldValue.serverTimestamp(),
               });
-              commentController.clear(); // Clear the text field
+              commentController.clear();
+              // If you want to refresh the StreamBuilder, you could call setState here, if it's within the State class
+              // setState(() {});
             }
           },
           child: const Text('Post Comment'),
@@ -348,107 +430,4 @@ void _editPost() async {
     ),
   );
 }
-
-  Widget _buildCommentContent(TextEditingController commentController) {
-  return SizedBox(
-    width: double.maxFinite,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        StreamBuilder<QuerySnapshot>(
-            stream: _commentsCollection.orderBy('timestamp', descending: true).snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) return const CircularProgressIndicator();
-              final comments = snapshot.data!.docs;
-              return ListView.builder(
-                shrinkWrap: true,
-                itemCount: comments.length,
-                itemBuilder: (context, index) {
-                  final comment =
-                      comments[index].data() as Map<String, dynamic>;
-                  return ListTile(
-                    title: Text(comment['username']),
-                    subtitle: Text(comment['text']),
-                    trailing: _buildCommentActions(comments[index]),
-                  );
-                },
-              );
-            },
-          ),
-        TextFormField(
-          controller: commentController,
-          decoration: const InputDecoration(labelText: 'Write a comment...'),
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildCommentActions(DocumentSnapshot comment) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == 'edit') {
-          _editComment(comment);
-        } else if (value == 'delete') {
-          _deleteComment(comment);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
-        const PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
-      ],
-    );
-  }
-
-  void _editComment(DocumentSnapshot comment) {
-    TextEditingController editController =
-        TextEditingController(text: comment['text']);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Comment'),
-        content: TextField(controller: editController),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              await _commentsCollection
-                  .doc(comment.id)
-                  .update({'text': editController.text});
-              // ignore: use_build_context_synchronously
-              Navigator.of(context).pop();
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteComment(DocumentSnapshot comment) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: const Text('Are you sure you want to delete this comment?'),
-          actions: <Widget>[
-            TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel')),
-            TextButton(
-              onPressed: () async {
-                await _commentsCollection.doc(comment.id).delete();
-                // ignore: use_build_context_synchronously
-                Navigator.of(context).pop();
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
