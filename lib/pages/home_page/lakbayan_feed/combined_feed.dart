@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page/lakbayan_feed/ordinary_post_container.dart';
 import 'package:lakbayan/pages/home_page/lakbayan_feed/itinerary_post_container.dart';
 
+
 Widget lakbayanFeed(BuildContext context) {
   return StreamBuilder<List<dynamic>>(
     stream: Rx.combineLatest2<QuerySnapshot, QuerySnapshot, List<dynamic>>(
@@ -22,9 +23,11 @@ Widget lakbayanFeed(BuildContext context) {
           .snapshots(),
       (QuerySnapshot postsSnapshot, QuerySnapshot itinerariesSnapshot) {
         // ignore: avoid_print
-        print('Posts data: ${postsSnapshot.docs}');
-        // ignore: avoid_print
-        print('Itineraries data: ${itinerariesSnapshot.docs}');
+// ignore: avoid_print
+print('Posts data: ${postsSnapshot.docs.map((doc) => doc.data())}');
+// ignore: avoid_print
+print('Itineraries data: ${itinerariesSnapshot.docs.map((doc) => doc.data())}');
+
 
         return [
           ...postsSnapshot.docs.map((doc) => {'type': 'post', 'data': doc}),

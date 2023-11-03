@@ -57,7 +57,7 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     if (!userData.containsKey('profile_pic_url') ||
         userData['profile_pic_url'] == "") {
       // If the 'prof_pic_url' field doesn't exist or is empty, set a default value
-      updates['prof_pic_url'] =
+      updates['profile_pic_url'] =
           'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
     }
     if (!userData.containsKey('username') || userData['username'] == "") {
@@ -100,7 +100,8 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     final itineraryId = widget.itinerary['id'];
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
     DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
-    String username = userDoc['username'] ?? 'Anonymous'; // Default to 'Anonymous' if username is not found
+Map<String, dynamic> userData = (userDoc.data() as Map<String, dynamic>?) ?? {};
+String username = userData.containsKey('username') ? userData['username'] as String : 'Anonymous';
     if (isLiked) {
       await FirebaseFirestore.instance
           .collection('sharedItineraries')
@@ -479,7 +480,7 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
 
   @override
   Widget build(BuildContext context) {
-String profileImageUrl = widget.userData['profile_pic_url'] ?? "";
+    String profileImageUrl = widget.userData['profile_pic_url'] ?? "";
     if (profileImageUrl.isEmpty) {
       profileImageUrl =
           "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
