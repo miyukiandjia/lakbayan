@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PostCard extends StatefulWidget {
   final DocumentSnapshot post;
@@ -87,12 +88,18 @@ class _PostCardState extends State<PostCard> {
     });
   }
 
-  Future<void> _likePost() async {
-    await _likesCollection.doc(widget.userId).set({'userId': true});
-    print("Likes collection was accesed.");
-    await _updatePostLikes(1);
-    print("Like value was succesfully updated.");
-  }
+Future<void> _likePost() async {
+  // Fetch the username from Firestore
+  DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+  String username = userDoc['username'] ?? 'Anonymous'; // Default to 'Anonymous' if username is not found
+  // Set the like with the username
+  await _likesCollection.doc(widget.userId).set({
+    'userId': widget.userId,
+    'username': username, // Include the username
+  });
+  await _updatePostLikes(1);
+}
+
 
   Future<void> _unlikePost() async {
     await _likesCollection.doc(widget.userId).delete();
@@ -100,6 +107,7 @@ class _PostCardState extends State<PostCard> {
   }
 
   Future<void> _updatePostLikes(int increment) async {
+
     await _postsCollection
         .doc(widget.post.id)
         .update({'likes': FieldValue.increment(increment)});

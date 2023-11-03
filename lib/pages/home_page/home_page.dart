@@ -11,6 +11,8 @@ import 'package:lakbayan/pages/home_page/pop_destination/pop_des_container.dart'
 import 'package:lakbayan/pages/home_page/lakbayan_feed/combined_feed.dart';
 import 'package:lakbayan/pages/home_page/itinerary/migrate_shared_itineraries.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -25,6 +27,11 @@ class _HomePageState extends State<HomePage> {
   String? username;
   late CreatePost post;
 
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  late AndroidInitializationSettings initializationSettingsAndroid;
+  late DarwinInitializationSettings initializationSettingsIOS;
+  late InitializationSettings initSetttings;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +39,22 @@ class _HomePageState extends State<HomePage> {
     _checkAuthentication();
     migrateSharedItineraries();
     _setupMessaging();
+
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    initializationSettingsIOS = DarwinInitializationSettings();
+    initSetttings = InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+
+    flutterLocalNotificationsPlugin.initialize(initSetttings);
+  
+  }
+
+    Future onSelectNotification(String? payload) async {
+    if (payload != null && payload.isNotEmpty) {
+      // Handle the payload
+      print('notification payload: $payload');
+      // You can navigate to the desired page here
+    }
   }
 
   _checkAuthentication() async {
@@ -67,15 +90,41 @@ class _HomePageState extends State<HomePage> {
     print('User granted permission: ${settings.authorizationStatus}');
 
     // Handle foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("Got a message whilst in the foreground!");
-      print("Message data: ${message.data}");
+FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  print("Got a message whilst in the foreground!");
+  print("Message data: ${message.data}");
 
-      if (message.notification != null) {
-        print("Message also contained a notification: ${message.notification}");
-        // Here you can update your UI accordingly
-      }
-    });
+  if (message.notification != null) {
+    print("Message also contained a notification: ${message.notification}");
+
+    // Show the notification using flutter_local_notifications
+var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+  'your_channel_id', 
+  'your_channel_name', 
+  importance: Importance.max,
+  priority: Priority.high,
+);
+
+// For iOS, you should use DarwinNotificationDetails instead of DarwinInitializationSettings
+var iOSPlatformChannelSpecifics = DarwinNotificationDetails(
+  // You can specify iOS-specific notification details here
+);
+
+var platformChannelSpecifics = NotificationDetails(
+  android: androidPlatformChannelSpecifics, 
+  iOS: iOSPlatformChannelSpecifics
+);
+
+flutterLocalNotificationsPlugin.show(
+  0, 
+  message.notification?.title, 
+  message.notification?.body, 
+  platformChannelSpecifics,
+  payload: 'item x',
+);
+  }
+});
+
 
     // Handle messages when the app is opened from a terminated state
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {

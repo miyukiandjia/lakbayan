@@ -99,7 +99,8 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     print("Toggling like for user: ${widget.userData.id}");
     final itineraryId = widget.itinerary['id'];
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
+    String username = userDoc['username'] ?? 'Anonymous'; // Default to 'Anonymous' if username is not found
     if (isLiked) {
       await FirebaseFirestore.instance
           .collection('sharedItineraries')
@@ -118,7 +119,8 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
           .doc(itineraryId)
           .collection('likes')
           .doc(currentUserId)
-          .set({'likedAt': FieldValue.serverTimestamp()});
+          .set({'likedAt': FieldValue.serverTimestamp(),
+          'username': username,});
 
       await FirebaseFirestore.instance
           .collection('sharedItineraries')
