@@ -16,8 +16,8 @@ class CreatePost {
   final ImagePicker _picker = ImagePicker();
   StateSetter? _setLocalState;
 
-
-  CreatePost({required this.user, required this.username, required this.context});
+  CreatePost(
+      {required this.user, required this.username, required this.context});
 
   Future<void> _create() async {
     final text = _postController.text;

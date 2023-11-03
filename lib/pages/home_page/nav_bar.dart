@@ -8,8 +8,8 @@ Widget customNavBar(BuildContext context, int currentIndex) {
   return Container(
     decoration: const BoxDecoration(
       borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(30),
-        topRight: Radius.circular(30),
+        topLeft: Radius.circular(70),
+        topRight: Radius.circular(70),
       ),
       boxShadow: [
         BoxShadow(color: Colors.black38, spreadRadius: 0, blurRadius: 10),

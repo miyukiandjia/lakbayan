@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lakbayan/pages/home_page/nav_bar.dart';
+import 'package:lakbayan/pages/home_page/home_page.dart';
 
 class NotifPage extends StatelessWidget {
   const NotifPage({super.key});
@@ -32,7 +33,24 @@ class ListViewBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("LAKBAYAN NOTIFICATIONS")),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            // Navigate back to the HomePage
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+            );
+          },
+        ),
+        toolbarHeight: 100,
+        backgroundColor: const Color(0xFFAD547F),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
+      ),
       body: Stack(
         children: [
           Padding(
@@ -45,10 +63,10 @@ class ListViewBuilder extends StatelessWidget {
                   return Padding(
                       padding: const EdgeInsets.all(16),
                       child: ListTile(
-                        leading: SizedBox(
-                            child: Image.asset(notification['imageUrl'])),
-                        trailing: Text(
-                          notification['time'],
+                        leading: Container(
+                            child: Image.asset('lib/images/user.png')),
+                        trailing: const Text(
+                          "5 minutes ago",
                         ),
                         title: Text(
                           notification['username'],

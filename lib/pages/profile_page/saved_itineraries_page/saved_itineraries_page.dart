@@ -59,7 +59,12 @@ class _SavedItinerariesState extends State<SavedItineraries> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved Itineraries'),
+        toolbarHeight: 100,
+        title: const Text(
+          'Saved Itineraries',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
+        backgroundColor: const Color(0xFFAD547F),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: getSavedItineraries(currentUserId),

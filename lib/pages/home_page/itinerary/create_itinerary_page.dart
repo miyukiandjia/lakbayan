@@ -98,17 +98,24 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Itinerary'),
+        toolbarHeight: 100,
+        title: const Text(
+          'Create Itinerary',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
+        backgroundColor: const Color(0xFFAD547F),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 100),
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: TextField(
                 controller: _itineraryNameController,
-                decoration: const InputDecoration(labelText: "Itinerary Name"),
+                decoration: const InputDecoration(
+                  labelText: "Itinerary Name",
+                ),
               ),
             ),
             Expanded(
@@ -160,7 +167,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.forward),
+        backgroundColor: const Color(0xFFAD547F),
         onPressed: () {
           if (_itineraryNameController.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -174,6 +181,7 @@ class _CreateItineraryPageState extends State<CreateItineraryPage> {
             ),
           ));
         },
+        child: const Icon(Icons.forward),
       ),
     );
   }

@@ -18,14 +18,19 @@ class OverviewItinerary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Itinerary Overview'),
+        toolbarHeight: 100,
+        title: const Text(
+          'Itinerary Overview',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
+        backgroundColor: const Color(0xFFAD547F),
       ),
       body: ListView(
         children: [
           // Display the Itinerary Name at the top
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text('Itinerary: $itineraryName',
+            padding: const EdgeInsets.all(50),
+            child: Text('Itinerary name: $itineraryName',
                 style:
                     const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
           ),
@@ -35,13 +40,16 @@ class OverviewItinerary extends StatelessWidget {
 
             return Card(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(50),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Day ${index + 1}',
                         style: const TextStyle(
                             fontSize: 40, fontWeight: FontWeight.bold)),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     Text('Date: ${day.date.toLocal().toString().split(' ')[0]}',
                         style: const TextStyle(fontSize: 30)),
                     Text('Day Name: ${day.name}',
@@ -52,6 +60,9 @@ class OverviewItinerary extends StatelessWidget {
                       if (location != null)
                         Text(location.name,
                             style: const TextStyle(fontSize: 30)),
+                    const SizedBox(
+                      height: 20,
+                    ),
                   ],
                 ),
               ),
@@ -60,7 +71,7 @@ class OverviewItinerary extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.save),
+        backgroundColor: const Color(0xFFAD547F),
         onPressed: () async {
           User? currentUser = FirebaseAuth.instance.currentUser;
           if (currentUser == null) {
@@ -115,6 +126,7 @@ class OverviewItinerary extends StatelessWidget {
           Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => ItinerariesPage()));
         },
+        child: const Icon(Icons.save),
       ),
     );
   }

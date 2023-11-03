@@ -219,7 +219,12 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Itineraries'),
+        toolbarHeight: 100,
+        title: const Text(
+          'Itineraries',
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 36),
+        ),
+        backgroundColor: const Color(0xFFAD547F),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -237,7 +242,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
             Container(
               constraints: const BoxConstraints(maxHeight: 150.0),
               child: const Material(
-                color: Colors.pink,
+                color: Color(0xFFAD547F),
                 child: TabBar(
                   indicatorColor: Colors.blue,
                   tabs: [
@@ -388,7 +393,8 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                   }
 
                   return Container(
-                      margin: const EdgeInsets.all(8.0),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 15),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(8.0),
@@ -411,7 +417,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                 Expanded(
                                   child: Text(
                                     itinerary['itineraryName'] ?? 'Unknown',
-                                    style: const TextStyle(fontSize: 30),
+                                    style: const TextStyle(fontSize: 28),
                                   ),
                                 ),
                                 const Text("Share"),
@@ -512,7 +518,7 @@ class _ItinerariesPageState extends State<ItinerariesPage> {
                                           style: const TextStyle(
                                               fontSize:
                                                   25.0), // Adjust the font size here
-                                        ))
+                                        )),
                                       ],
                                     );
                                   }).toList();

@@ -174,7 +174,7 @@ class _HomePageState extends State<HomePage> {
       height: imageSize,
       child: FittedBox(
         fit: BoxFit.cover,
-        child: Image.asset('lib/images/dvo_logo.png'),
+        child: Image.asset('lib/images/lakbayan-home-page.png'),
       ),
     );
   }
@@ -254,15 +254,22 @@ class _HomePageState extends State<HomePage> {
               Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: const Color(
-                        0xFFAD547F), // Set the background color of the container
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      colors: [
+                        Color(0xFFAD547F),
+                        Color.fromARGB(255, 244, 143, 177)
+                      ],
+                    ),
+                    // color: const Color(
+                    //     0xFFAD547F), // Set the background color of the container
                     borderRadius:
                         BorderRadius.circular(8.0), // Set rounded corners
                   ),
                   child: Column(
                     children: [
                       const Text(
-                        'LAKBAYAN FEED',
+                        'Lakbayan Feed',
                         style: TextStyle(
                           fontSize: 50, // Adjust the font size as needed
                           fontWeight: FontWeight.bold,
@@ -274,7 +281,9 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(
                           height: 20.0), // Adjust the spacing as needed
                       post.section(),
-                      const SizedBox(height: 20),
+                      const SizedBox(
+                        height: 20,
+                      ),
                       lakbayanFeed(context),
                     ],
                   )),

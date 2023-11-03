@@ -188,26 +188,16 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(
                   height: 80,
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(20),
                   child: Column(
                     children: <Widget>[
-                      SizedBox(
-                        height: 200,
-                      ),
-                      Text(
-                        "Welcome to Lakbayan!",
-                        style: TextStyle(
-                            fontSize: 48,
-                            fontFamily: 'Roboto',
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500),
-                      ),
+                      FittedBox(
+                        fit: BoxFit.cover,
+                        child: Image.asset('lib/images/lakbayan-text-2.png'),
+                      )
                     ],
                   ),
-                ),
-                const SizedBox(
-                  height: 400,
                 ),
                 Expanded(
                   child: Container(
