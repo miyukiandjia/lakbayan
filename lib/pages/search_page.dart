@@ -78,7 +78,7 @@ class _NavigationPageState extends State<NavigationPage> {
   Future<List<Location>> searchLocations(
       double lat, double lng, String searchTerm) async {
     final url =
-        "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyAXRlk4WJ4sqmtMArNRHBwIK1bmj7fYZao";
+        "$BASE_URL?query=$searchTerm&location=$lat,$lng&radius=1500&key=AIzaSyDLgheGs44zc3Qe7LbPxZC-g7TObcZsS34";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);

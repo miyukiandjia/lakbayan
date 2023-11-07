@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lakbayan/constants.dart';
-import 'package:lakbayan/pages/home_page/itinerary/edit_itinerary_page.dart';
 
 class SharedItineraryCard extends StatefulWidget {
   final Map<String, dynamic> itinerary;
@@ -51,13 +50,13 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     DocumentSnapshot userDoc = await userRef.get();
 
     Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-
+    
     Map<String, dynamic> updates = {};
 
     if (!userData.containsKey('profile_pic_url') ||
         userData['profile_pic_url'] == "") {
       // If the 'prof_pic_url' field doesn't exist or is empty, set a default value
-      updates['profile_pic_url'] =
+      updates['prof_pic_url'] =
           'https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg';
     }
     if (!userData.containsKey('username') || userData['username'] == "") {
@@ -80,6 +79,9 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
 
   Future<void> _checkIfLiked() async {
     final itineraryId = widget.itinerary['id'];
+    if (itineraryId == null) {
+  print('itineraryId is missing');
+}
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     DocumentSnapshot likeDoc = await FirebaseFirestore.instance
@@ -99,9 +101,7 @@ class _SharedItineraryCardState extends State<SharedItineraryCard> {
     print("Toggling like for user: ${widget.userData.id}");
     final itineraryId = widget.itinerary['id'];
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
-Map<String, dynamic> userData = (userDoc.data() as Map<String, dynamic>?) ?? {};
-String username = userData.containsKey('username') ? userData['username'] as String : 'Anonymous';
+
     if (isLiked) {
       await FirebaseFirestore.instance
           .collection('sharedItineraries')
@@ -120,8 +120,7 @@ String username = userData.containsKey('username') ? userData['username'] as Str
           .doc(itineraryId)
           .collection('likes')
           .doc(currentUserId)
-          .set({'likedAt': FieldValue.serverTimestamp(),
-          'username': username,});
+          .set({'likedAt': FieldValue.serverTimestamp()});
 
       await FirebaseFirestore.instance
           .collection('sharedItineraries')
@@ -452,150 +451,129 @@ String username = userData.containsKey('username') ? userData['username'] as Str
     );
   }
 
-  void _deleteItinerary() {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this itinerary?'),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel')
-          ),
-          TextButton(
-            onPressed: () async {
-              final itineraryId = widget.itinerary['id'];
-              await FirebaseFirestore.instance.collection('sharedItineraries').doc(itineraryId).delete();
-              Navigator.of(context).pop(); // Close the dialog
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
   @override
   Widget build(BuildContext context) {
     String profileImageUrl = widget.userData['profile_pic_url'] ?? "";
+    print('Building widget with userData: ${widget.userData.data()}');
     if (profileImageUrl.isEmpty) {
       profileImageUrl =
           "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg";
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundImage: NetworkImage(profileImageUrl),
-                  radius: 25,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  widget.userData['username'] ?? 'Unknown User',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Itinerary Name: ${widget.itinerary['itineraryName']}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            ...List.generate(widget.itinerary['days'].length, (index) {
-              final day = widget.itinerary['days'][index];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 200),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(70),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Text('Day ${index + 1}: ${day['name']}'),
-                  ...List.generate(day['locations'].length, (locIndex) {
-                    final location = day['locations'][locIndex];
-                    return Text('Location: ${location['name']}');
-                  }),
-                ],
-              );
-            }),
-            if (widget.itinerary['days'] is List)
-              _buildMap(widget.itinerary['days']),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: isLiked ? Colors.red : null,
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(profileImageUrl),
+                    radius: 25,
                   ),
-                  onPressed: _toggleLike,
-                ),
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('sharedItineraries')
-                      .doc(widget.itinerary['id'])
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-                    final itineraryData =
-                        snapshot.data!.data() as Map<String, dynamic>;
-                    return Text(itineraryData['likes']?.toString() ?? '0');
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    isSaved ? Icons.star : Icons.star_border,
-                    color: isSaved ? Colors.yellow : null,
-                  ),
-                  onPressed: _toggleSave,
-                ),
-                StreamBuilder<DocumentSnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('sharedItineraries')
-                      .doc(widget.itinerary['id'])
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-                    final itineraryData =
-                        snapshot.data!.data() as Map<String, dynamic>;
-                    return Text(itineraryData['saves']?.toString() ?? '0');
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.comment),
-                  onPressed: _showCommentsDialog,
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      showMap = !showMap;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFAD547F),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.userData['username'] ?? 'Unknown User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Text(showMap ? "Hide Map" : "View in Maps"),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Itinerary Name: ${widget.itinerary['itineraryName']}',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ...List.generate(widget.itinerary['days'].length, (index) {
+                final day = widget.itinerary['days'][index];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Day ${index + 1}: ${day['name']}'),
+                    ...List.generate(day['locations'].length, (locIndex) {
+                      final location = day['locations'][locIndex];
+                      return Text('Location: ${location['name']}');
+                    }),
+                    const SizedBox(height: 15),
+                  ],
+                );
+              }),
+              if (widget.itinerary['days'] is List)
+                _buildMap(widget.itinerary['days']),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: isLiked ? Colors.red : null,
+                    ),
+                    onPressed: _toggleLike,
+                  ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('sharedItineraries')
+                        .doc(widget.itinerary['id'])
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+                      final itineraryData =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      return Text(itineraryData['likes']?.toString() ?? '0');
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      isSaved ? Icons.star : Icons.star_border,
+                      color: isSaved ? Colors.yellow : null,
+                    ),
+                    onPressed: _toggleSave,
+                  ),
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('sharedItineraries')
+                        .doc(widget.itinerary['id'])
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const CircularProgressIndicator();
+                      }
+                      final itineraryData =
+                          snapshot.data!.data() as Map<String, dynamic>;
+                      return Text(itineraryData['saves']?.toString() ?? '0');
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.comment),
+                    onPressed: _showCommentsDialog,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showMap = !showMap;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFAD547F),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                    ),
+                    child: Text(showMap ? "Hide Map" : "View in Maps"),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

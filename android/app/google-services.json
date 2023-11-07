@@ -1,36 +1,27 @@
 {
   "project_info": {
-    "project_number": "229382080240",
-    "project_id": "lakbayanv2",
-    "storage_bucket": "lakbayanv2.appspot.com"
+    "project_number": "131776919189",
+    "firebase_url": "https://lakbayan-e1d48-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "lakbayan-e1d48",
+    "storage_bucket": "lakbayan-e1d48.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:229382080240:android:1d7ad4c3923db5ce12e435",
+        "mobilesdk_app_id": "1:131776919189:android:35122daf7c9d1ae73c4d9c",
         "android_client_info": {
           "package_name": "com.example.lakbayan"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "229382080240-59823e8569q0e6ouip0l2qio49v0d25r.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAXRlk4WJ4sqmtMArNRHBwIK1bmj7fYZao"
+          "current_key": "AIzaSyBiy2Lcy5KvaDrODJ0NqTUd06oSKWBa-EQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "229382080240-59823e8569q0e6ouip0l2qio49v0d25r.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCh22oFxLgeQVSwydgkrN36hZJ2_faoMfM</string>
+	<string>AIzaSyBbt9mzil_rNL0wm2bkrbZBI9H70jAHT2w</string>
 	<key>GCM_SENDER_ID</key>
 	<string>131776919189</string>
 	<key>PLIST_VERSION</key>
@@ -26,5 +26,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:131776919189:ios:b1b17757b46f08eb3c4d9c</string>
+	<key>DATABASE_URL</key>
+	<string>https://lakbayan-e1d48-default-rtdb.asia-southeast1.firebasedatabase.app</string>
 </dict>
 </plist>

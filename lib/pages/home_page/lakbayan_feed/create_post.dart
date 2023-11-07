@@ -67,97 +67,100 @@ class CreatePost {
     Navigator.pop(context);
   }
 
-  Widget section() {
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              _setLocalState = setState;
-              return FractionallySizedBox(
-                heightFactor: 0.75, // posting mode container height
-                child: Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8.0),
-                      topRight: Radius.circular(8.0),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              Navigator.pop(context); // Close the bottom sheet
-                            },
-                          ),
-                          ElevatedButton(
-                            onPressed: _create,
-                            child: const Text('Post'),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      Expanded(
-                        child: TextField(
-                          controller: _postController,
-                          decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Share Your Adventure!',
-                              hintStyle: TextStyle(fontFamily: 'Nunito')),
-                          maxLines: null,
-                        ),
-                      ),
-                      if (_selectedImage != null)
-                        Image.file(
-                          _selectedImage!,
-                          height: 300,
-                          width: 300,
-                          fit: BoxFit.cover,
-                        ),
-                      const SizedBox(height: 10.0),
-                      ElevatedButton(
-                        onPressed: () async {
-                          // ignore: deprecated_member_use
-                          final pickedFile = await _picker.getImage(
-                              source: ImageSource.gallery);
-                          if (pickedFile != null) {
-                            setState(() {
-                              _selectedImage = File(pickedFile.path);
-                            });
-                          }
-                        },
-                        child: const Text('Photo Upload',
-                            style: TextStyle(fontFamily: 'Nunito')),
-                      ),
-                    ],
+Widget section() {
+  return GestureDetector(
+    onTap: () {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) => StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            _setLocalState = setState;
+            return FractionallySizedBox(
+              heightFactor: 0.75, // posting mode container height
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8.0),
+                    topRight: Radius.circular(8.0),
                   ),
                 ),
-              );
-            },
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            Navigator.pop(context); // Close the bottom sheet
+                          },
+                        ),
+                        ElevatedButton(
+                          onPressed: _create,
+                          child: const Text('Post'),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Expanded(
+                      child: TextField(
+                        controller: _postController,
+                        decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Share Your Adventure!',
+                            hintStyle: TextStyle(fontFamily: 'Nunito')),
+                        maxLines: null,
+                      ),
+                    ),
+                    if (_selectedImage != null)
+                      Image.file(
+                        _selectedImage!,
+                        height: 300,
+                        width: 300,
+                        fit: BoxFit.cover,
+                      ),
+                    const SizedBox(height: 10.0),
+                    ElevatedButton(
+                      onPressed: () async {
+                        // ignore: deprecated_member_use
+                        final pickedFile = await _picker.getImage(
+                            source: ImageSource.gallery);
+                        if (pickedFile != null) {
+                          setState(() {
+                            _selectedImage = File(pickedFile.path);
+                          });
+                        }
+                      },
+                      child: const Text('Photo Upload',
+                          style: TextStyle(fontFamily: 'Nunito')),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-        child: const Center(
-          child: Text(
-            'Share Your Adventure!',
-            style: TextStyle(fontSize: 20),
-          ),
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.all(16.0),
+      constraints: BoxConstraints(
+        maxWidth: 600, // This is the maximum width you want for your button
+      ),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Center(
+        child: Text(
+          'Share Your Adventure!',
+          style: TextStyle(fontSize: 20),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

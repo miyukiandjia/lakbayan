@@ -93,7 +93,7 @@ class EnhancedSimulatedAnnealing {
     Random rand = Random();
 
     int iteration = 0;
-    int maxIterations = 10; // Setting the maximum iterations to 50
+    int maxIterations = 10; // Setting the maximum iterations to 10
 
     while (temperature > 0.01 && iteration < maxIterations) {
       List<Location> newRoute = perturbRoute(List.from(currentRoute));

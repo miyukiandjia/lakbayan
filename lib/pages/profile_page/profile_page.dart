@@ -256,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: const Icon(
                   Icons.save,
                   size: 35,
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 58, 70, 70),
                 ),
               ),
             ],
